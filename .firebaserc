@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "certaintyapp",
+    "dev": "certaintyapp",
+    "prod": "certaintyapp"
+  }
+}

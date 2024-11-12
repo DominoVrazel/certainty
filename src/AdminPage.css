@@ -1,0 +1,30 @@
+.AppBody {
+    background-color: rgb(255, 255, 255);
+    height: 60vw;
+  }
+  
+  h1 {
+      text-align: center;
+      padding-bottom: 30px;
+      padding-top: 15px;
+  }
+
+.container {
+    display: flex;
+    justify-content: flex-start; /* To ensure they are aligned at the start */
+    align-items: flex-start;     /* Align the items at the top */
+    gap: 40px; /* You can use gap for spacing between items */
+  }
+  
+  .list-group-container {
+    width: 50%; /* Adjust width to your liking */
+    padding: 10px; /* Add padding around the list group */
+  }
+
+  .message {
+    width: 45%; /* Adjust as necessary */
+  }
+  
+
+
+

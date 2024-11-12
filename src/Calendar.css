@@ -1,0 +1,405 @@
+@import url('https://fonts.googleapis.com/css2?family=Hedvig+Letters+Sans&family=Hedvig+Letters+Serif:opsz@12..24&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Sacramento&family=Schoolbell&family=Slabo+27px&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hedvig+Letters+Sans&family=Hedvig+Letters+Serif:opsz@12..24&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Sacramento&family=Schoolbell&family=Slabo+27px&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
+
+
+:root {
+  --primary-color: rgb(78, 99, 141);
+  --secondary-color: #399b3c;
+  --background-color: #f9f9f9;
+  --accent-color: #d4b7a0;
+  --weekend-color: #ac240c;
+  --border-color: rgb(79, 82, 88);
+  --button-hover-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
+  --font-family-sans: 'Noto Sans', sans-serif;
+  --font-family-serif: 'Roboto', sans-serif;
+}
+
+.current-week-container {
+  width: 90%;
+  margin: 1vw auto;
+  padding: 2vw;
+  background-color: var(--background-color);
+  border-radius: 16px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-family-sans);
+}
+
+.current-week-container button {
+  font-family: "Noto Sans", sans-serif;
+  font-weight: 400;
+}
+  .week-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1vw 0;
+  }
+
+    .navigate-backwards {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        flex: 1;
+        padding-left: 4vw;
+    }
+
+    .navigate-forwards {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex: 1;
+        padding-right: 4vw;
+    }
+    
+    .week-navigation button {
+      background-color: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--primary-color);
+      transition: transform 0.2s ease;
+    }
+
+    .week-navigation button:hover {
+      transform: scale(1.1);
+    }
+    
+  .calendar-week {
+    padding-top: 0.5vw;
+    padding-bottom: 1vw;
+    margin-left: 1.6vw;
+    margin-right: 1.6vw;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    
+    margin-top: 10px;
+    align-items: top;
+    justify-content: center;
+  }
+
+    .whole-day-info{
+      background-color: #ffffff;
+      padding-left: 0.3vw;
+      padding-right: 0.3vw;
+
+      border: 1px solid var(--border-color);
+      transition: background-color 0.3s ease;
+    }
+      .day{
+        padding-top: 1vw;
+        font-family: var(--font-family-serif);
+        font-weight: 500;
+        font-size: 0.85vw;
+        padding-bottom: 0.8vw;
+        background: linear-gradient(0deg, rgb(96, 117, 158) 0%, var(--primary-color) 100%);
+        margin-left: -0.3vw;
+        margin-right: -0.3vw;
+        border-bottom: 2px solid var(--border-color);
+        color: white;
+ 
+      }
+
+      .whole-day-info.weekend .day {
+        background:  linear-gradient(0deg, #cc3c22 0%, var(--weekend-color) 100%); 
+        color: #fff; 
+        padding-bottom: 0.8vw;
+        border-bottom: 2px solid #a5240d;
+      }
+    
+    .calendar-day {
+      padding: 0.2vw;
+      text-align: center;
+      height: 100%; 
+      box-sizing: border-box;
+    }
+
+      .line-container {
+        background: linear-gradient(0deg, rgb(223, 223, 223) 0%, rgb(182, 182, 182) 100%);
+        border-radius: 10px;
+        margin-top: 1.8vw;
+        padding-bottom: 0.8vw;
+      }
+
+        .res-container{
+          display: flex;
+          justify-content: center; 
+          align-items: center;
+          width: 90%;
+        }
+
+        .res-container.reserved {
+          background: rgb(226,210,198);
+          background: linear-gradient(0deg, #e6dcb8 0%, #db7438 86%);
+    
+          padding-top: 1vw;
+          border: 2px solid var(--border-color);
+          
+          color: white;
+          margin-top: 1vw;
+          margin-left: auto;
+          margin-right: auto;
+          border-radius: 10px;
+          border-top-left-radius: 0px;
+          box-shadow: 0 1px 2px 2px #5f5f5f;; 
+          transition: box-shadow 0.2s ease;
+        }
+          
+        .res-container.not-reserved {
+          background: rgb(195,223,223);
+          background: linear-gradient(0deg, rgba(195,223,223,1) 0%, rgba(124,200,165,1) 83%); 
+          padding-bottom: 1vw;
+          padding-top: 1vw;
+          border: 2px solid var(--border-color);
+          margin-top: 1vw;
+          border-radius: 10px;
+          border-top-left-radius: 0px;
+          box-shadow: 0 1px 2px 2px #5f5f5f;; 
+          transition: box-shadow 0.2s ease;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .res-container:hover {
+          box-shadow: var(--button-hover-shadow);
+          transform: scale(1.02);
+        }
+
+          .res-details-container {
+            display: flex;
+            flex-direction: column; 
+            align-items: flex-start; 
+            padding-top: 0.3vw;
+            font-size: 0.7vw;
+            width: 100%;
+          }
+
+            hr {
+              height: 2px;
+              background-color: #ffffff;
+              border: none;   
+              border-top: none !important;   
+              opacity: 1 !important;
+              width: 80%;
+              margin-top: 0.3vw !important;
+              margin-left: auto !important;
+              margin-right: auto !important;
+            }
+            .res-details{
+              margin-left: auto ;
+              margin-right: auto ;
+              text-align: center;
+              color: rgb(255, 255, 255);
+              width: 100%;
+              padding-top: 0.5vw;
+              font-family: var(--font-family-sans);
+              font-weight: 500;
+              
+            }
+            .session-course-times{
+              font-size: 0.95vw;
+              background-color: rgb(250, 250, 250);
+              margin-bottom: 0.8vw;
+              padding: 0.25vw;
+              border-bottom-right-radius: 10px;
+              border-bottom: 0.15vw solid var(--border-color);;
+              border-right: 0.15vw solid var(--border-color);;
+              color: rgb(53, 53, 53);
+              font-weight: bold;
+              margin-top: -1.3vw;	
+              margin-right: auto;
+              font-family: "Roboto", sans-serif;
+              font-weight: 500;
+            }
+
+            .session-course-lines{
+              font-size: 0.78vw;
+              font-weight: 500;
+              color: white;
+              background-color: rgb(77, 86, 104);
+              padding-left: 4vw;
+              padding-right: 4vw;
+              padding-top: 0.6vw;
+              padding-bottom: 0.6vw;
+              margin-top: -0.5vw;
+              border-top-left-radius: 10px;
+              border-top-right-radius: 10px;
+            }
+
+            button {
+              font-family: var(--font-family-sans);
+              font-weight: 600;
+              border: none;
+              cursor: pointer;
+              transition: box-shadow 0.2s ease;
+            }
+            
+            button:hover {
+              box-shadow: var(--button-hover-shadow);
+            }
+
+            .reservation-button{
+              background-color: var(--secondary-color);
+              border-radius: 5px;
+              color: rgb(255, 255, 255);
+              margin-top: 0.3vw;
+              margin-bottom: -0.3vw;
+              margin-left: auto;
+              margin-right: 0.5vw;
+              padding: 0.3vw;
+              font-size: 0.7vw;
+            }
+
+            .reservation-button:hover{
+              background-color: #79b37c !important;
+            }
+
+            .button-group {
+              display: flex; 
+              gap: 2.5vw; 
+              justify-content: center;           
+              width: 100%;
+              padding-top: 0.1vw;
+              padding-bottom: 0.1vw;
+              border-bottom-right-radius: 6px;
+              border-bottom-left-radius: 6px;
+            }
+
+            .handler-delete {
+              background-color: #ffffff00;
+              border: none;
+              color: var(--weekend-color);
+              font-size: 1vw;
+              font-weight: 600;
+              position: relative; 
+            }
+
+            .handler-delete:hover {
+              box-shadow: none !important;
+            }
+            
+            .handler-delete span {
+              font-size: 1rem;
+              display: none;
+              position: absolute; 
+              left: 50%; 
+              transform: translateX(-50%); 
+              bottom: 100%; 
+              white-space: nowrap; 
+              background-color: #4d4d4de3; 
+              color: white; 
+              padding: 0.2em 0.25em; 
+              border-radius: 0.2em; 
+              z-index: 1; 
+            }
+            
+            .handler-delete:hover span {
+              display: inline-block; 
+            }
+            
+            .handler-delete:hover i {
+              color: #c50d0d; 
+            }
+
+
+            .detail-button{
+              background-color: var(--primary-color);
+    
+              color: white;
+           
+              padding: 0.3vw;
+              font-size: 0.7vw;
+              font-weight:600;
+              width: 100%;
+            }
+
+            .detail-button:hover{
+              background-color: rgb(110, 122, 145) !important;
+            }
+
+            .handler-edit {
+              background-color: #fafafa00;
+              color: #ffffffe8;
+              font-size: 1vw;
+              font-weight:600;
+              margin-left: auto;
+              margin-top: -2vw;
+              padding-right: 0.75vw;
+            }
+
+            .handler-edit:hover{
+              box-shadow: none !important;
+            }
+
+            .handler-edit span {
+              margin-left: none !important;
+              margin-top: none !important;
+              font-size: 1rem;
+              display: none;
+              position: absolute; 
+              transform: translateX(-50%); 
+              left: 85%;
+              bottom: 95%; 
+              white-space: nowrap; /* Prevent the span from wrapping */
+              background-color: #4d4d4de3; 
+              color: white; 
+              padding: 0.2em 0.25em; 
+              border-radius: 0.2em; 
+              z-index: 1; /* Ensure the span is above other elements */
+            }
+            
+            .handler-edit:hover span {
+              display: inline-block; 
+            }
+            
+            .handler-edit:hover i {
+              color: rgb(197, 197, 197);; 
+            }
+
+            .add-to-training-button{
+              background-color: var(--secondary-color);
+              color: rgb(255, 255, 255);          
+              margin-bottom: 0.5vw;
+              /* border-bottom-left-radius: 5px;
+              border-bottom-right-radius: 5px; */
+              margin-left: auto;
+              margin-right: auto;
+              padding: 0.3vw;
+              font-size: 0.68vw;
+              width: 100%;
+            }
+
+            .add-to-training-button:hover{
+              background-color: #79b37c !important;
+            }
+
+            .clubs-dropdown-button {
+              display: flex; /* Enable Flexbox on the button */
+              width: 100%;
+              background-color: #dd5c12;
+              margin-top: 0.7vw;
+              justify-content: center;
+              color: rgb(255, 255, 255);
+              padding: 0.3vw;
+              font-size: 0.7vw;
+              gap: 0.35vw; /* Optional: Add space between icon and text */
+              /* border-top: 2px solid rgba(95, 95, 95, 0.897); */
+            }
+            
+            .clubs-dropdown-button i {
+              font-size: 1em; /* Adjust icon size if needed */
+              line-height: 0.9vw; /* Reset line height to avoid vertical misalignment */
+            }
+
+            .clubs-dropdown-button :hover{
+              background-color: #79b37c !important;
+            }
+
+            .dropdown-content {
+              padding-top: 0.6vw;
+              padding-bottom: 0.6vw;
+              background-color: rgb(77, 86, 104);
+              background: linear-gradient(0deg, #e6dcb800 0%, #dd5c12 100%);
+            }
+
+
