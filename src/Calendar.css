@@ -101,11 +101,11 @@
       }
 
       .whole-day-info.weekend .day {
-        background:  linear-gradient(0deg, rgb(184, 122, 86) 0%, var(--weekend-color) 100%);  
-        
+        background:  linear-gradient(0deg, rgba(179, 61, 15, 0.856) 0%, rgb(168, 62, 20) 100%);  
+        /* background: rgb(168, 62, 20) 100%; */
         color: #fff; 
         padding-bottom: 0.8vw;
-        border-bottom: 2px solid rgb(184, 122, 86);
+    
       }
     
     .calendar-day {
@@ -178,6 +178,10 @@
         }
 
         .res-container.potvrdená .clubs-dropdown-button {
+          color: #ffffff;
+        }
+
+        .res-container.potvrdená .detail-button{
           color: #ffffff;
         }
 
@@ -376,15 +380,21 @@
 
 
             .detail-button{
-              background-color: rgb(51, 84, 156);
-              color: white;
+              display: flex;
+              background-color: rgba(51, 84, 156, 0);
+              color: rgb(0, 0, 0);
               padding: 0.3vw;
               font-size: 0.7vw;
-              font-weight:600;
+              font-weight: 700 !important;
               width: 100%;
               margin-bottom: 0.5vw;
-              margin-left: auto;
-              margin-right: auto;
+              justify-content: center;
+              gap: 0.35vw;
+            }
+
+            .detail-button i {
+              font-size: 1.1rem; /* Adjust icon size if needed */
+              line-height: 0.9vw; /* Reset line height to avoid vertical misalignment */
             }
 
             .detail-button:hover{
@@ -392,7 +402,7 @@
             }   
 
             .add-to-training-button{
-              background-color: rgb(204, 137, 98);
+              background-color: rgb(96, 117, 158);
               color: rgb(255, 255, 255);          
               margin-left: auto;
               margin-right: auto;

@@ -625,6 +625,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                                               setIsDetailsModalOpen(true);
                                             }}
                                           >
+                                            <i className="fa fa-info-circle"></i>
                                             DETAIL
                                           </button>
 
