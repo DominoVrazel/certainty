@@ -1217,5 +1217,3 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
 };
 
 export default ResortPage;
-
-//first commit see canhges
