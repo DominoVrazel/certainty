@@ -5,10 +5,10 @@
 
 :root {
   --primary-color: rgb(78, 99, 141);
-  --secondary-color: #399b3c;
+  --secondary-color: #3b9238;
   --background-color: #f9f9f9;
   --accent-color: #d4b7a0;
-  --weekend-color: #ac240c;
+  --weekend-color: rgb(204, 137, 98);
   --border-color: rgb(79, 82, 88);
   --button-hover-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
   --font-family-sans: 'Noto Sans', sans-serif;
@@ -101,10 +101,11 @@
       }
 
       .whole-day-info.weekend .day {
-        background:  linear-gradient(0deg, #cc3c22 0%, var(--weekend-color) 100%); 
+        background:  linear-gradient(0deg, rgb(184, 122, 86) 0%, var(--weekend-color) 100%);  
+        
         color: #fff; 
         padding-bottom: 0.8vw;
-        border-bottom: 2px solid #a5240d;
+        border-bottom: 2px solid rgb(184, 122, 86);
       }
     
     .calendar-day {
@@ -128,13 +129,11 @@
           width: 90%;
         }
 
-        .res-container.reserved {
-          background: rgb(226,210,198);
-          background: linear-gradient(0deg, #e6dcb8 0%, #db7438 86%);
-    
+        .res-container.vytvorená {
+          /* background:#faf5e9 ; */
+          background: linear-gradient(0deg, #ece1c7 0%, #faf5e9 100%); 
           padding-top: 1vw;
           border: 2px solid var(--border-color);
-          
           color: white;
           margin-top: 1vw;
           margin-left: auto;
@@ -144,17 +143,56 @@
           box-shadow: 0 1px 2px 2px #5f5f5f;; 
           transition: box-shadow 0.2s ease;
         }
+
+        /* .res-container.vytvorená .handler-edit .fas.fa-pen {
+          color: #000000; 
+        } */
+
+        
+
+        .res-container.potvrdená {
+          /* background: #659c6a; */
+          background: linear-gradient(0deg, rgb(56, 153, 61) 0%, #659c6a 86%); 
+          padding-top: 1vw;
+          border: 2px solid var(--border-color);
+          color: white;
+          margin-top: 1vw;
+          margin-left: auto;
+          margin-right: auto;
+          border-radius: 10px;
+          border-top-left-radius: 0px;
+          box-shadow: 0 1px 2px 2px #5f5f5f;; 
+          transition: box-shadow 0.2s ease;
+        }
+
+        .res-container.potvrdená .res-details{
+          color: #fdfdfd !important;
+        }
+
+        .res-container.potvrdená hr{
+          background-color: #ffffff !important;
+        }
+
+        .res-container.potvrdená .handler-edit .fas.fa-pen {
+          color: #ffffff; 
+        }
+
+        .res-container.potvrdená .clubs-dropdown-button {
+          color: #ffffff;
+        }
+
+        
           
         .res-container.not-reserved {
           background: rgb(195,223,223);
-          background: linear-gradient(0deg, rgba(195,223,223,1) 0%, rgba(124,200,165,1) 83%); 
+          background: linear-gradient(0deg, rgb(219, 219, 219) 0%, rgb(233, 233, 233) 83%); 
           padding-bottom: 1vw;
           padding-top: 1vw;
           border: 2px solid var(--border-color);
           margin-top: 1vw;
           border-radius: 10px;
           border-top-left-radius: 0px;
-          box-shadow: 0 1px 2px 2px #5f5f5f;; 
+          box-shadow: 0 1px 2px 2px #5f5f5f;
           transition: box-shadow 0.2s ease;
           margin-left: auto;
           margin-right: auto;
@@ -176,7 +214,7 @@
 
             hr {
               height: 2px;
-              background-color: #ffffff;
+              background-color: #000000;
               border: none;   
               border-top: none !important;   
               opacity: 1 !important;
@@ -189,9 +227,9 @@
               margin-left: auto ;
               margin-right: auto ;
               text-align: center;
-              color: rgb(255, 255, 255);
+              color: rgb(0, 0, 0);
               width: 100%;
-              padding-top: 0.5vw;
+     
               font-family: var(--font-family-sans);
               font-weight: 500;
               
@@ -266,14 +304,14 @@
             .handler-delete {
               background-color: #ffffff00;
               border: none;
-              color: var(--weekend-color);
+              color: #c50909e8;
               font-size: 0.8vw;
               font-weight: 600;
             }
 
             .handler-edit {
               background-color: #fafafa00;
-              color: #ffffffe8;
+              color: #000000e8;
               font-size: 0.8vw;
               font-weight:600;
             }
@@ -338,14 +376,15 @@
 
 
             .detail-button{
-              background-color: var(--primary-color);
-    
+              background-color: rgb(51, 84, 156);
               color: white;
-           
               padding: 0.3vw;
               font-size: 0.7vw;
               font-weight:600;
               width: 100%;
+              margin-bottom: 0.5vw;
+              margin-left: auto;
+              margin-right: auto;
             }
 
             .detail-button:hover{
@@ -353,15 +392,15 @@
             }   
 
             .add-to-training-button{
-              background-color: var(--secondary-color);
+              background-color: rgb(204, 137, 98);
               color: rgb(255, 255, 255);          
-              border-bottom-left-radius: 5px;
-              border-bottom-right-radius: 5px; 
               margin-left: auto;
               margin-right: auto;
               padding: 0.3vw;
               font-size: 0.68vw;
               width: 100%;
+              margin-top: -0.5vw;
+              margin-bottom: 0.5vw;
             }
 
             .add-to-training-button:hover{
@@ -371,10 +410,10 @@
             .clubs-dropdown-button {
               display: flex; /* Enable Flexbox on the button */
               width: 100%;
-              background-color: #dd5c12;
+              background-color: #faf0d500;
               margin-top: 0.7vw;
               justify-content: center;
-              color: rgb(255, 255, 255);
+              color: rgb(0, 0, 0);
               padding: 0.3vw;
               font-size: 0.7vw;
               gap: 0.35vw; /* Optional: Add space between icon and text */
@@ -386,15 +425,11 @@
               line-height: 0.9vw; /* Reset line height to avoid vertical misalignment */
             }
 
-            .clubs-dropdown-button :hover{
-              background-color: #79b37c !important;
-            }
-
             .dropdown-content {
               padding-top: 0.6vw;
               padding-bottom: 0.6vw;
               background-color: rgb(77, 86, 104);
-              background: linear-gradient(0deg, #e6dcb800 0%, #dd5c12 100%);
+              background: linear-gradient(0deg, #e6dcb800 0%, #dd5c1200 100%);
             }
 
 

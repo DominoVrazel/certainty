@@ -445,7 +445,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                                     isClosed
                                       ? "closed"
                                       : isReserved
-                                      ? "reserved"
+                                      ? isReserved.status === "potvrdená"
+                                        ? "potvrdená"
+                                        : "vytvorená"
                                       : "not-reserved"
                                   }`}
                                   key={`${reservationKey}_${sessionIndex}`}
@@ -478,41 +480,68 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                                               ))) ||
                                           isAdmin ? (
                                             <>
-                                              {day.date !== today && (
-                                                <div className="delEditButtons-group">
-                                                  <button
-                                                    className="handler-edit"
-                                                    onClick={() =>
-                                                      handleEdit(isReserved)
-                                                    }
-                                                  >
-                                                    <i className="fas fa-pen"></i>
-                                                    <span>
-                                                      Upraviť rezerváciu
-                                                    </span>
-                                                  </button>
-                                                  <button
-                                                    className="handler-delete"
-                                                    onClick={() =>
-                                                      handleDelete(
-                                                        reservationExists[
-                                                          reservationKey
-                                                        ]?.id || "",
-                                                        isReserved.user.email,
-                                                        isReserved.user
-                                                          .firstName,
-                                                        isReserved.user
-                                                          .secondName
-                                                      )
-                                                    }
-                                                  >
-                                                    <i className="fas fa-trash-alt"></i>
-                                                    <span>
-                                                      Zmazať svoju rezerváciu
-                                                    </span>
-                                                  </button>
-                                                </div>
-                                              )}
+                                              {day.date !== today &&
+                                                (isReserved.status !==
+                                                  "potvrdená" ||
+                                                  isAdmin) && (
+                                                  <div className="delEditButtons-group">
+                                                    <button
+                                                      className="handler-edit"
+                                                      onClick={() =>
+                                                        handleEdit(isReserved)
+                                                      }
+                                                    >
+                                                      <i
+                                                        className={
+                                                          isReserved.user
+                                                            .email ===
+                                                            localStorage.getItem(
+                                                              "userEmail"
+                                                            ) || isAdmin
+                                                            ? "fas fa-pen"
+                                                            : "fa fa-wrench"
+                                                        }
+                                                      ></i>
+                                                      <span>
+                                                        {isReserved.user
+                                                          .email ===
+                                                          localStorage.getItem(
+                                                            "userEmail"
+                                                          ) || isAdmin
+                                                          ? "Upraviť rezerváciu"
+                                                          : "Editovať rezerváciu"}
+                                                      </span>
+                                                    </button>
+                                                    {(isReserved.user.email ===
+                                                      localStorage.getItem(
+                                                        "userEmail"
+                                                      ) ||
+                                                      isAdmin) && (
+                                                      <button
+                                                        className="handler-delete"
+                                                        onClick={() =>
+                                                          handleDelete(
+                                                            reservationExists[
+                                                              reservationKey
+                                                            ]?.id || "",
+                                                            isReserved.user
+                                                              .email,
+                                                            isReserved.user
+                                                              .firstName,
+                                                            isReserved.user
+                                                              .secondName
+                                                          )
+                                                        }
+                                                      >
+                                                        <i className="fas fa-trash-alt"></i>
+                                                        <span>
+                                                          Zmazať svoju
+                                                          rezerváciu
+                                                        </span>
+                                                      </button>
+                                                    )}
+                                                  </div>
+                                                )}
                                             </>
                                           ) : null}
 
@@ -558,7 +587,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                                                   }
                                                 >
                                                   <i className="fa fa-sort-down"></i>
-                                                  ZOBRAZIŤ KLUBY
+                                                  <b>ZOBRAZIŤ KLUBY</b>
                                                 </button>
                                                 {dropdownVisible[
                                                   reservationKey
@@ -1205,6 +1234,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
           reservationDetails={editReservationDetails} // Pass the reservation details
           onClose={() => setIsEditModalOpen(false)} // Close function
           isLoggedIn={isLoggedIn} // Pass login status if needed
+          isAdmin={isAdmin} // Pass admin status if needed
           onUpdate={handleUpdate}
         />
       )}

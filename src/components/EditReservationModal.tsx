@@ -26,6 +26,7 @@ interface EditReservationModalProps {
   onClose: () => void;
   onUpdate: () => void;
   isLoggedIn: boolean;
+  isAdmin: boolean;
 }
 
 const EditReservationModal: React.FC<EditReservationModalProps> = ({
@@ -33,6 +34,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
   onClose,
   onUpdate,
   isLoggedIn,
+  isAdmin,
 }) => {
   const db = getFirestore(); // Initialize Firestore
   const loggedInUserEmail = localStorage.getItem("userEmail");
@@ -72,24 +74,29 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
     try {
       const reservationRef = doc(db, "reservations", reservationDetails.id);
 
-      if (isOwner) {
-        const ownRacersDifference =
-          formData.ownRacers - reservationDetails.user.ownRacers;
-
-        // Update availableRacers based on the difference
-        const newAvailableRacers =
-          reservationDetails.availableRacers - ownRacersDifference;
-        if (newAvailableRacers < 0) {
-          alert("Nedostatok voľných miest pre zvolený počet pretekárov.");
-          return;
-        }
-        await updateDoc(reservationRef, {
-          availableRacers: newAvailableRacers,
+      if (isOwner || isAdmin) {
+        const updates: any = {
           discipline: formData.discipline,
           category: formData.category,
           status: formData.status,
-          "user.ownRacers": formData.ownRacers,
-        });
+        };
+
+        if (isOwner) {
+          const ownRacersDifference =
+            formData.ownRacers - reservationDetails.user.ownRacers;
+
+          // Update availableRacers based on the difference
+          const newAvailableRacers =
+            reservationDetails.availableRacers - ownRacersDifference;
+          if (newAvailableRacers < 0) {
+            alert("Nedostatok voľných miest pre zvolený počet pretekárov.");
+            return;
+          }
+          updates.availableRacers = newAvailableRacers;
+          updates["user.ownRacers"] = formData.ownRacers;
+        }
+
+        await updateDoc(reservationRef, updates);
       } else if (addedUser) {
         const ownRacersDifference = formData.ownRacers - addedUser.ownRacers;
 
@@ -145,7 +152,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
   const handleDelete = async () => {
     try {
       const reservationRef = doc(db, "reservations", reservationDetails.id);
-      if (isOwner) {
+      if (isOwner || isAdmin) {
         await deleteDoc(reservationRef);
       } else if (addedUser) {
         // Remove the added user from the subcollection
@@ -179,19 +186,21 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
         <form onSubmit={handleSave}>
           <h4>Upraviť rezerváciu</h4>
           <br></br>
-          <div className="form-group">
-            <label htmlFor="ownRacers">Počet pretekárov:</label>
-            <input
-              className="form-control"
-              type="number"
-              name="ownRacers"
-              value={formData.ownRacers}
-              onChange={handleInputChange}
-              min="1"
-              required
-            />
-          </div>
-          {isOwner && (
+          {!isAdmin && (
+            <div className="form-group">
+              <label htmlFor="ownRacers">Počet pretekárov:</label>
+              <input
+                className="form-control"
+                type="number"
+                name="ownRacers"
+                value={formData.ownRacers}
+                onChange={handleInputChange}
+                min="1"
+                required
+              />
+            </div>
+          )}
+          {(isOwner || isAdmin) && (
             <>
               <div className="form-group">
                 <label htmlFor="discipline">Disciplína:</label>
@@ -231,7 +240,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
             Uložiť
           </button>
         </form>
-        {!isOwner && addedUser && (
+        {!isOwner && addedUser && !isAdmin && (
           <button className="RegButton" onClick={handleDelete}>
             Zmazať rezerváciu
           </button>
