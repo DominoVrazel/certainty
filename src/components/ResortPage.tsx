@@ -405,22 +405,30 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                             {isAdmin && (
                               <button
                                 onClick={() => {
-                                  setCloseTrackDetails({
-                                    course,
-                                    lineNumber: index + 1,
-                                    date: day.date,
-                                  });
-                                  setIsCloseModalOpen(true);
+                                  if (isClosed) {
+                                    handleOpenTrack(
+                                      course,
+                                      index + 1,
+                                      day.date
+                                    );
+                                  } else {
+                                    setCloseTrackDetails({
+                                      course,
+                                      lineNumber: index + 1,
+                                      date: day.date,
+                                    });
+                                    setIsCloseModalOpen(true);
+                                  }
                                 }}
                               >
-                                Close Track
+                                {isClosed ? "Otvorit trať" : "Zavrieť trať"}
                               </button>
                             )}
                           </div>
 
                           {isClosed ? (
                             <div className="closed-reason">
-                              <strong>Closed Reason:</strong>{" "}
+                              <strong>Dôvod uzávierky:</strong>{" "}
                               {closedTrack.reason || "No reason provided"}
                             </div>
                           ) : (
@@ -471,17 +479,39 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                                           isAdmin ? (
                                             <>
                                               {day.date !== today && (
-                                                <button
-                                                  className="handler-edit"
-                                                  onClick={() =>
-                                                    handleEdit(isReserved)
-                                                  }
-                                                >
-                                                  <i className="fas fa-pen"></i>
-                                                  <span>
-                                                    Upraviť rezerváciu
-                                                  </span>
-                                                </button>
+                                                <div className="delEditButtons-group">
+                                                  <button
+                                                    className="handler-edit"
+                                                    onClick={() =>
+                                                      handleEdit(isReserved)
+                                                    }
+                                                  >
+                                                    <i className="fas fa-pen"></i>
+                                                    <span>
+                                                      Upraviť rezerváciu
+                                                    </span>
+                                                  </button>
+                                                  <button
+                                                    className="handler-delete"
+                                                    onClick={() =>
+                                                      handleDelete(
+                                                        reservationExists[
+                                                          reservationKey
+                                                        ]?.id || "",
+                                                        isReserved.user.email,
+                                                        isReserved.user
+                                                          .firstName,
+                                                        isReserved.user
+                                                          .secondName
+                                                      )
+                                                    }
+                                                  >
+                                                    <i className="fas fa-trash-alt"></i>
+                                                    <span>
+                                                      Zmazať svoju rezerváciu
+                                                    </span>
+                                                  </button>
+                                                </div>
                                               )}
                                             </>
                                           ) : null}
@@ -507,7 +537,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                                                 )
                                               ) : (
                                                 <div className="loading-indicator">
-                                                  Loading...
+                                                  Načítavam...
                                                 </div>
                                               )}
                                               <hr></hr>
@@ -558,52 +588,17 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                                               </div>
                                             </div>
                                           </div>
-                                          <div className="button-group">
-                                            {(isLoggedIn &&
-                                              isReserved.user.email ===
-                                                localStorage.getItem(
-                                                  "userEmail"
-                                                )) ||
-                                            isAdmin ? (
-                                              <>
-                                                {day.date !== today && (
-                                                  <div>
-                                                    <button
-                                                      className="handler-delete"
-                                                      onClick={() =>
-                                                        handleDelete(
-                                                          reservationExists[
-                                                            reservationKey
-                                                          ]?.id || "",
-                                                          isReserved.user.email,
-                                                          isReserved.user
-                                                            .firstName,
-                                                          isReserved.user
-                                                            .secondName
-                                                        )
-                                                      }
-                                                    >
-                                                      <i className="fas fa-trash-alt"></i>
-                                                      <span>
-                                                        Zmazať rezerváciu
-                                                      </span>
-                                                    </button>
-                                                  </div>
-                                                )}
-                                              </>
-                                            ) : null}
-                                            <button
-                                              className="detail-button"
-                                              onClick={() => {
-                                                setDetailsReservation(
-                                                  isReserved
-                                                );
-                                                setIsDetailsModalOpen(true);
-                                              }}
-                                            >
-                                              DETAIL
-                                            </button>
-                                          </div>
+
+                                          <button
+                                            className="detail-button"
+                                            onClick={() => {
+                                              setDetailsReservation(isReserved);
+                                              setIsDetailsModalOpen(true);
+                                            }}
+                                          >
+                                            DETAIL
+                                          </button>
+
                                           {((!isLoggedIn &&
                                             isReserved.availableRacers !== 0) ||
                                             (isReserved.availableRacers !== 0 &&
@@ -1123,8 +1118,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
   ) => {
     const trackKey = `${course}_${lineNumber}_${date}`;
     const db = getFirestore();
-    const closedTrackRef = doc(collection(db, "closedTracks"));
-
+    const closedTrackRef = doc(db, "closedTracks", trackKey);
     await setDoc(closedTrackRef, {
       course: course,
       lineNumber: lineNumber,
@@ -1134,6 +1128,31 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
     });
 
     setClosedTracks((prev) => ({ ...prev, [trackKey]: { reason } }));
+  };
+
+  const handleOpenTrack = async (
+    course: string,
+    lineNumber: number,
+    date: string
+  ) => {
+    const trackKey = `${course}_${lineNumber}_${date}`;
+    const db = getFirestore();
+    const closedTrackRef = doc(db, "closedTracks", trackKey); // Include the document ID
+
+    try {
+      await deleteDoc(closedTrackRef);
+
+      setClosedTracks((prev) => {
+        const newClosedTracks = { ...prev };
+        delete newClosedTracks[trackKey];
+        return newClosedTracks;
+      });
+
+      console.log(`Track ${trackKey} successfully reopened.`);
+    } catch (error) {
+      console.error("Error reopening track: ", error);
+      alert("Pri otváraní trate došlo k chybe.");
+    }
   };
 
   return (

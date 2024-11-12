@@ -197,7 +197,7 @@
               
             }
             .session-course-times{
-              font-size: 0.95vw;
+              font-size: 0.85vw;
               background-color: rgb(250, 250, 250);
               margin-bottom: 0.8vw;
               padding: 0.25vw;
@@ -254,43 +254,70 @@
               background-color: #79b37c !important;
             }
 
-            .button-group {
+            .delEditButtons-group {
               display: flex; 
-              gap: 2.5vw; 
-              justify-content: center;           
               width: 100%;
-              padding-top: 0.1vw;
-              padding-bottom: 0.1vw;
-              border-bottom-right-radius: 6px;
-              border-bottom-left-radius: 6px;
+              justify-content: right;
+              margin-top: -2vw;
+              margin-bottom: 0.5vw;
+              padding-right: 0.4vw;
             }
 
             .handler-delete {
               background-color: #ffffff00;
               border: none;
               color: var(--weekend-color);
-              font-size: 1vw;
+              font-size: 0.8vw;
               font-weight: 600;
-              position: relative; 
+            }
+
+            .handler-edit {
+              background-color: #fafafa00;
+              color: #ffffffe8;
+              font-size: 0.8vw;
+              font-weight:600;
             }
 
             .handler-delete:hover {
               box-shadow: none !important;
             }
             
+            .handler-edit:hover{
+              box-shadow: none !important;
+            }
+
             .handler-delete span {
+              margin-left: none !important;
+              margin-top: none !important;
               font-size: 1rem;
               display: none;
               position: absolute; 
-              left: 50%; 
               transform: translateX(-50%); 
-              bottom: 100%; 
+              left: 88%;
+              bottom: 95%; 
               white-space: nowrap; 
               background-color: #4d4d4de3; 
               color: white; 
               padding: 0.2em 0.25em; 
               border-radius: 0.2em; 
               z-index: 1; 
+            }
+
+            .handler-edit span {
+              margin-left: none !important;
+              margin-top: none !important;
+              font-size: 1rem;
+              display: none;
+              position: absolute; 
+              transform: translateX(-50%); 
+              left: 70%;
+              bottom: 95%; 
+              white-space: nowrap; /* Prevent the span from wrapping */
+              background-color: #4d4d4de3; 
+              color: white; 
+              padding: 0.2em 0.25em; 
+              border-radius: 0.2em; 
+              z-index: 1; /* Ensure the span is above other elements */
             }
             
             .handler-delete:hover span {
@@ -299,6 +326,14 @@
             
             .handler-delete:hover i {
               color: #c50d0d; 
+            }
+
+            .handler-edit:hover span {
+              display: inline-block; 
+            }
+            
+            .handler-edit:hover i {
+              color: rgb(197, 197, 197);; 
             }
 
 
@@ -315,53 +350,13 @@
 
             .detail-button:hover{
               background-color: rgb(110, 122, 145) !important;
-            }
-
-            .handler-edit {
-              background-color: #fafafa00;
-              color: #ffffffe8;
-              font-size: 1vw;
-              font-weight:600;
-              margin-left: auto;
-              margin-top: -2vw;
-              padding-right: 0.75vw;
-            }
-
-            .handler-edit:hover{
-              box-shadow: none !important;
-            }
-
-            .handler-edit span {
-              margin-left: none !important;
-              margin-top: none !important;
-              font-size: 1rem;
-              display: none;
-              position: absolute; 
-              transform: translateX(-50%); 
-              left: 85%;
-              bottom: 95%; 
-              white-space: nowrap; /* Prevent the span from wrapping */
-              background-color: #4d4d4de3; 
-              color: white; 
-              padding: 0.2em 0.25em; 
-              border-radius: 0.2em; 
-              z-index: 1; /* Ensure the span is above other elements */
-            }
-            
-            .handler-edit:hover span {
-              display: inline-block; 
-            }
-            
-            .handler-edit:hover i {
-              color: rgb(197, 197, 197);; 
-            }
+            }   
 
             .add-to-training-button{
               background-color: var(--secondary-color);
               color: rgb(255, 255, 255);          
-              margin-bottom: 0.5vw;
-              /* border-bottom-left-radius: 5px;
-              border-bottom-right-radius: 5px; */
+              border-bottom-left-radius: 5px;
+              border-bottom-right-radius: 5px; 
               margin-left: auto;
               margin-right: auto;
               padding: 0.3vw;
