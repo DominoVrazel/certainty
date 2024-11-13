@@ -44,12 +44,30 @@
         padding-left: 4vw;
     }
 
+    .navigate-backwards p {
+      margin-bottom: 0 !important;
+    }
+
+    .navigate-backwards button:hover {
+      background-color: none !important;
+      box-shadow: none !important;
+    }
+
     .navigate-forwards {
         display: flex;
         align-items: center;
         justify-content: flex-end;
         flex: 1;
         padding-right: 4vw;
+    }
+
+    .navigate-forwards p {
+      margin-bottom: 0 !important;
+    }
+
+    .navigate-forwards button:hover {
+      background-color: none !important;
+      box-shadow: none !important;
     }
     
     .week-navigation button {
@@ -189,6 +207,14 @@
           background-color: #ffffff;
           color: var(--secondary-color);
           font-weight: 700 !important;
+        }
+
+        .res-container.potvrdená .add-to-training-button:hover{
+          background-color: #e2e1e1 !important;
+        }
+
+        .res-container.vytvorená .add-to-training-button:hover{
+          background-color: #79b37c !important;
         }
 
         
@@ -432,7 +458,8 @@
             }
 
             .detail-button:hover{
-              background-color: rgb(110, 122, 145) !important;
+              background-color: rgb(84, 110, 196) !important;
+              color: #ffffff;
             }   
 
             .add-to-training-button{
@@ -446,10 +473,6 @@
               width: 100%;
               margin-top: -0.5vw;
               margin-bottom: 0.5vw;
-            }
-
-            .add-to-training-button:hover{
-              background-color: #79b37c !important;
             }
 
             .clubs-dropdown-button {

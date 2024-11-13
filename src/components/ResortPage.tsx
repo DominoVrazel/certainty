@@ -352,7 +352,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
               onClick={() => handlePreviousWeek(course)}
               disabled={currentDateForCourse <= new Date()}
             >
-              &#8592; {/* Left Arrow */}
+              <i className="fas fa-arrow-circle-left"></i>
             </button>
             <p>naspäť</p>
           </div>
@@ -368,7 +368,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                 addDays(currentDateForCourse, 7) > addDays(new Date(), 14)
               }
             >
-              &#8594; {/* Right Arrow */}
+              <i className="fas fa-arrow-circle-right"></i>
             </button>
           </div>
         </div>
