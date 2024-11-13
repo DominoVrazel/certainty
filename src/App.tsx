@@ -30,7 +30,7 @@ function App() {
   const [userFirstName, setUserFirstName] = useState<string | null>(null);
   const [userSecondName, setUserSecondName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [resorts, setResorts] = useState<string[]>([]);
+  const [resorts, setResorts] = useState<{ id: string; name: string }[]>([]);
 
   const db = getFirestore();
 
@@ -53,9 +53,11 @@ function App() {
     const fetchResorts = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "resorts"));
-        const resortsData: string[] = [];
+        const resortsData: { id: string; name: string }[] = [];
         querySnapshot.forEach((doc) => {
-          resortsData.push(doc.id); // Resort names from Firestore
+          // Assuming each document has a 'name' field in Firestore
+          const data = doc.data();
+          resortsData.push({ id: doc.id, name: data.name });
         });
 
         setResorts(resortsData);
@@ -92,9 +94,9 @@ function App() {
                 </li>
               )}
               {resorts.map((resort) => (
-                <li key={resort} className="nav-item">
-                  <Link to={`/resort/${resort}`} className="nav-link">
-                    {resort}
+                <li key={resort.id} className="nav-item">
+                  <Link to={`/resort/${resort.id}`} className="nav-link">
+                    {resort.name}
                   </Link>
                 </li>
               ))}
@@ -168,9 +170,11 @@ function App() {
         {/* Dynamic resort routes */}
         {resorts.map((resort) => (
           <Route
-            key={resort}
-            path={`/resort/${resort}`}
-            element={<ResortPage resortName={resort} isLoggedIn={isLoggedIn} />}
+            key={resort.id}
+            path={`/resort/${resort.id}`}
+            element={
+              <ResortPage resortId={resort.id} isLoggedIn={isLoggedIn} />
+            }
           />
         ))}
         {/* Register and Login routes */}

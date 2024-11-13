@@ -3,6 +3,11 @@ import { collection, doc, setDoc, getDocs } from "firebase/firestore";
 import { db } from "../services/FirebaseService"; // Ensure this path is correct
 import "../AddCourseData.css";
 
+interface Resort {
+  id: string;
+  name: string;
+}
+
 interface TimeSession {
   startTime: string;
   endTime: string;
@@ -13,8 +18,8 @@ interface AddCourseDataProps {
 }
 
 const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
-  const [resorts, setResorts] = useState<string[]>([]); // List of resorts fetched from Firestore
-  const [selectedResort, setSelectedResort] = useState<string>(""); // Resort selected from dropdown
+  const [resorts, setResorts] = useState<Resort[]>([]); // List of resorts fetched from Firestore
+  const [selectedResort, setSelectedResort] = useState<Resort | null>(null); // Resort selected from dropdown
   const [courseName, setCourseName] = useState<string>(""); // New course name input by user
   const [courseCapacity, setCourseCapacity] = useState<number>(0); // New state for course capacity
   const [individualLineCapacity, setIndividualLineCapacity] =
@@ -31,7 +36,10 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
       try {
         const resortCollectionRef = collection(db, "resorts");
         const resortSnapshot = await getDocs(resortCollectionRef);
-        const resortList = resortSnapshot.docs.map((doc) => doc.id); // Get resort document IDs (names)
+        const resortList = resortSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name || doc.id, // Get the 'name' field or fallback to the ID
+        }));
         setResorts(resortList); // Set the resorts in state
       } catch (err) {
         console.error("Chyba napájania kolekcie resorts: ", err);
@@ -95,7 +103,7 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
 
     try {
       // Reference to the selected resort's courses subcollection
-      const resortDocRef = doc(collection(db, "resorts"), selectedResort);
+      const resortDocRef = doc(collection(db, "resorts"), selectedResort.id);
       const courseDocRef = doc(
         collection(resortDocRef, "courses"),
         courseName.replace(/[^a-zA-Z0-9]/g, "_")
@@ -112,7 +120,7 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
       });
       onUpdate();
       alert(
-        `Trať "${courseName}" je pridaná do strediska "${selectedResort}" úspešne!`
+        `Trať "${courseName}" je pridaná do strediska "${selectedResort?.name}" úspešne!`
       );
     } catch (err) {
       console.error("Chyba pri pridávaní trate: ", err);
@@ -131,14 +139,18 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
         <label>
           Vyberte si stredisko:
           <select
-            value={selectedResort}
-            onChange={(e) => setSelectedResort(e.target.value)}
+            value={selectedResort?.id || ""}
+            onChange={(e) =>
+              setSelectedResort(
+                resorts.find((resort) => resort.id === e.target.value) || null
+              )
+            }
             disabled={loading}
           >
             <option value="">-- Vyberte si stredisko --</option>
             {resorts.map((resort) => (
-              <option key={resort} value={resort}>
-                {resort}
+              <option key={resort.id} value={resort.id}>
+                {resort.name}
               </option>
             ))}
           </select>

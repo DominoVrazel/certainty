@@ -30,7 +30,7 @@ import "../ResortPage.css";
 import "../Calendar.css";
 
 interface ResortPageProps {
-  resortName: string;
+  resortId: string;
   isLoggedIn: boolean;
 }
 
@@ -89,7 +89,7 @@ if (
   connectFunctionsEmulator(functions, "127.0.0.1", 5001);
 }
 
-const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
+const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   const [courses, setCourses] = useState<{ id: string; name: string }[]>([]);
   const [seasons, setSeasons] = useState<Record<string, Season[]>>({});
   const [currentDates, setCurrentDates] = useState<Record<string, Date>>({});
@@ -153,7 +153,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
     const fetchCoursesAndSeasons = async () => {
       try {
         const coursesSnapshot = await getDocs(
-          collection(db, "resorts", resortName, "courses")
+          collection(db, "resorts", resortId, "courses")
         );
         const fetchedCourses: { id: string; name: string }[] = [];
         const fetchedSeasons: Record<string, Season[]> = {};
@@ -172,7 +172,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
             collection(
               db,
               "resorts",
-              resortName,
+              resortId,
               "courses",
               courseName,
               "seasons"
@@ -280,7 +280,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
     fetchCoursesAndSeasons();
     fetchReservations();
     fetchClosedTracks();
-  }, [db, resortName]);
+  }, [db, resortId]);
 
   function formatDate(date: string) {
     return format(new Date(date), "dd.MM");
@@ -858,7 +858,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
           ownRacers: formData.racers,
         },
         reservationDetails: {
-          resort: resortName,
+          resort: resortId,
           course: selectedSession.course, // Ensure this is set correctly
         },
         lineNumber: selectedSession.lineNumber,

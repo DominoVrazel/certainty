@@ -16,10 +16,19 @@ const dayNames = {
   sk: ["Nedeľa", "Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok", "Sobota"],
 };
 
+interface Resort {
+  id: string;
+  name: string;
+}
+interface Course {
+  id: string;
+  name: string;
+}
+
 const AddSeasonData: React.FC = () => {
-  const [resorts, setResorts] = useState<string[]>([]);
+  const [resorts, setResorts] = useState<Resort[]>([]);
   const [selectedResort, setSelectedResort] = useState<string>("");
-  const [courses, setCourses] = useState<string[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [seasonName, setSeasonName] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -32,7 +41,10 @@ const AddSeasonData: React.FC = () => {
       try {
         const resortCollectionRef = collection(db, "resorts");
         const resortSnapshot = await getDocs(resortCollectionRef);
-        const resortList = resortSnapshot.docs.map((doc) => doc.id); // Get resort document IDs (names)
+        const resortList = resortSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name || doc.id, // Fallback to id if name field is missing
+        }));
         setResorts(resortList); // Set the resorts in state
       } catch (err) {
         console.error("Chyba napájania kolekcie resorts: ", err);
@@ -54,7 +66,10 @@ const AddSeasonData: React.FC = () => {
           "courses"
         );
         const coursesSnapshot = await getDocs(resortDocRef);
-        const courseList = coursesSnapshot.docs.map((doc) => doc.id);
+        const courseList = coursesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name || doc.id, // Fallback to id if name field is missing
+        }));
         setCourses(courseList); // Set the courses in state
       } catch (err) {
         console.error("Chyba napájania kolekcie courses: ", err);
@@ -173,8 +188,8 @@ const AddSeasonData: React.FC = () => {
           >
             <option value="">-- Vybrať stredisko --</option>
             {resorts.map((resort) => (
-              <option key={resort} value={resort}>
-                {resort}
+              <option key={resort.id} value={resort.id}>
+                {resort.name}
               </option>
             ))}
           </select>
@@ -193,8 +208,8 @@ const AddSeasonData: React.FC = () => {
             >
               <option value="">-- Vybrať trať --</option>
               {courses.map((course) => (
-                <option key={course} value={course}>
-                  {course}
+                <option key={course.id} value={course.id}>
+                  {course.name}
                 </option>
               ))}
             </select>

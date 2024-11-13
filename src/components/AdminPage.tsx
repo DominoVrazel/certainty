@@ -17,6 +17,16 @@ import AddSeasonData from "./AddSeasonData";
 import AddResortData from "./AddResortData";
 import AddCourseData from "./AddCourseData";
 
+interface Resort {
+  id: string;
+  name: string; // Resort name from Firestore
+}
+
+interface Course {
+  id: string;
+  name: string; // Course name from Firestore
+}
+
 interface Season {
   id: string; // Add an id for the document reference
   season: string; // This should match the structure in Firestore
@@ -38,9 +48,9 @@ if (
 function AdminPage() {
   const [firstName, setFirstName] = useState<string | null>(null);
   const [secondName, setSecondName] = useState<string | null>(null);
-  const [resorts, setResorts] = useState<string[]>([]);
+  const [resorts, setResorts] = useState<Resort[]>([]);
   const [selectedResort, setSelectedResort] = useState<string | null>(null);
-  const [courses, setCourses] = useState<string[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string | null>(null); // State to hold the selected season
@@ -60,9 +70,13 @@ function AdminPage() {
   const fetchResorts = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "resorts"));
-      const resortsData: string[] = [];
+      const resortsData: Resort[] = [];
       querySnapshot.forEach((doc) => {
-        resortsData.push(doc.id); // Resort names from Firestore
+        const data = doc.data();
+        resortsData.push({
+          id: doc.id,
+          name: data.name, // Assuming you have a "name" field in the resort document
+        });
       });
 
       setResorts(resortsData);
@@ -78,10 +92,14 @@ function AdminPage() {
   const handleUpdate = async () => {
     try {
       const resortsSnapshot = await getDocs(collection(db, "resorts"));
-      const resortsData: string[] = [];
+      const resortsData: Resort[] = [];
 
       resortsSnapshot.forEach((doc) => {
-        resortsData.push(doc.id); // Collect resort names or any other needed info
+        const data = doc.data();
+        resortsData.push({
+          id: doc.id,
+          name: data.name, // Assuming you have a "name" field in the resort document
+        });
       });
 
       // Optionally, update the state with fetched resorts
@@ -98,9 +116,13 @@ function AdminPage() {
           const coursesSnapshot = await getDocs(
             collection(db, "resorts", selectedResort, "courses")
           );
-          const coursesData: string[] = [];
+          const coursesData: Course[] = [];
           coursesSnapshot.forEach((doc) => {
-            coursesData.push(doc.id); // Course names from Firestore
+            const data = doc.data();
+            coursesData.push({
+              id: doc.id,
+              name: data.name, // Assuming you have a "name" field for each course
+            });
           });
           setCourses(coursesData);
         } catch (error) {
@@ -156,7 +178,7 @@ function AdminPage() {
     try {
       await deleteDoc(doc(db, "resorts", resortId));
       setResorts((prevResorts) =>
-        prevResorts.filter((resort) => resort !== resortId)
+        prevResorts.filter((resort) => resort.id !== resortId)
       );
       setSelectedResort(null);
       setSelectedCourse(null);
@@ -172,7 +194,7 @@ function AdminPage() {
     try {
       await deleteDoc(doc(db, "resorts", selectedResort, "courses", courseId));
       setCourses((prevCourses) =>
-        prevCourses.filter((course) => course !== courseId)
+        prevCourses.filter((course) => course.id !== courseId)
       );
       setSelectedCourse(null);
       setSelectedSeason(null);
@@ -281,10 +303,10 @@ function AdminPage() {
                 setSelectedSeason(null);
               }}
             >
-              <option value="">Vyber stredisko</option>
+              <option value="">Vyberte stredisko</option>
               {resorts.map((resort) => (
-                <option key={resort} value={resort}>
-                  {resort}
+                <option key={resort.id} value={resort.id}>
+                  {resort.name}
                 </option>
               ))}
             </select>
@@ -311,10 +333,10 @@ function AdminPage() {
                   setSelectedSeason(null); // Reset selected season when course changes
                 }}
               >
-                <option value="">Select Course</option>
+                <option value="">Vyberte trať</option>
                 {courses.map((course) => (
-                  <option key={course} value={course}>
-                    {course}
+                  <option key={course.id} value={course.id}>
+                    {course.name}
                   </option>
                 ))}
               </select>
