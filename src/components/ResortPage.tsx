@@ -401,9 +401,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                           }`}
                         >
                           <div className="session-course-lines">
-                            TRAŤ {index + 1}
+                            <span>TRAŤ {index + 1}</span>
                             {isAdmin && (
                               <button
+                                className="track-toggle-button"
                                 onClick={() => {
                                   if (isClosed) {
                                     handleOpenTrack(
@@ -421,7 +422,14 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                                   }
                                 }}
                               >
-                                {isClosed ? "Otvorit trať" : "Zavrieť trať"}
+                                <i
+                                  className={
+                                    isClosed ? "fa fa-unlock-alt" : "fa fa-lock"
+                                  }
+                                ></i>
+                                <span className="tooltip-text">
+                                  {isClosed ? "Otvorit trať" : "Zavrieť trať"}
+                                </span>
                               </button>
                             )}
                           </div>
@@ -502,7 +510,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                                                             : "fa fa-wrench"
                                                         }
                                                       ></i>
-                                                      <span>
+                                                      <span className="tooltip-text">
                                                         {isReserved.user
                                                           .email ===
                                                           localStorage.getItem(
@@ -534,7 +542,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortName, isLoggedIn }) => {
                                                         }
                                                       >
                                                         <i className="fas fa-trash-alt"></i>
-                                                        <span>
+                                                        <span className="tooltip-text">
                                                           Zmazať svoju
                                                           rezerváciu
                                                         </span>

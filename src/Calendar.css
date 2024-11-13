@@ -130,8 +130,8 @@
         }
 
         .res-container.vytvorená {
-          /* background:#faf5e9 ; */
-          background: linear-gradient(0deg, #ece1c7 0%, #faf5e9 100%); 
+          background:#f8e8d1 ;
+          /* background: linear-gradient(0deg, #ece1c7 0%, #faf5e9 100%);  */
           padding-top: 1vw;
           border: 2px solid var(--border-color);
           color: white;
@@ -183,6 +183,12 @@
 
         .res-container.potvrdená .detail-button{
           color: #ffffff;
+        }
+
+        .res-container.potvrdená .add-to-training-button{
+          background-color: #ffffff;
+          color: var(--secondary-color);
+          font-weight: 700 !important;
         }
 
         
@@ -255,18 +261,60 @@
             }
 
             .session-course-lines{
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5vw;
               font-size: 0.78vw;
               font-weight: 500;
               color: white;
               background-color: rgb(77, 86, 104);
-              padding-left: 4vw;
-              padding-right: 4vw;
+             
               padding-top: 0.6vw;
               padding-bottom: 0.6vw;
               margin-top: -0.5vw;
               border-top-left-radius: 10px;
               border-top-right-radius: 10px;
             }
+
+            .track-toggle-button {
+              position: relative;
+              margin-right: -1.5vw;
+              background: none;
+              border: none;
+              cursor: pointer;
+              color: inherit; /* Inherit text color */
+              font-size: 1em; /* Adjust the size as needed */
+            }
+
+            .track-toggle-button:hover{
+              box-shadow: none !important;
+            }
+
+            .tooltip-text {
+              visibility: hidden;
+              width: max-content;
+              background-color: #4d4d4d;
+              color: #fff;
+              text-align: center;
+              border-radius: 5px;
+              padding: 5px;
+              position: absolute;
+              z-index: 1;
+              bottom: 125%; /* Position above the button */
+              left: 50%;
+              transform: translateX(-50%);
+              opacity: 0;
+              transition: opacity 0.2s ease-in-out;
+              font-size: 1em; /* Adjust the size as needed */
+            }
+            
+            .track-toggle-button:hover .tooltip-text {
+              visibility: visible;
+              opacity: 1;
+            }
+
+            
 
             button {
               font-family: var(--font-family-sans);
@@ -328,38 +376,24 @@
               box-shadow: none !important;
             }
 
+            .handler-delete:hover .tooltip-text {
+              visibility: visible;
+              opacity: 1;
+            }
+
+            .handler-edit:hover .tooltip-text {
+              visibility: visible;
+              opacity: 1;
+            }
+
             .handler-delete span {
-              margin-left: none !important;
-              margin-top: none !important;
-              font-size: 1rem;
-              display: none;
-              position: absolute; 
-              transform: translateX(-50%); 
-              left: 88%;
-              bottom: 95%; 
-              white-space: nowrap; 
-              background-color: #4d4d4de3; 
-              color: white; 
-              padding: 0.2em 0.25em; 
-              border-radius: 0.2em; 
-              z-index: 1; 
+              left: 89%;
+              bottom: 97%; 
             }
 
             .handler-edit span {
-              margin-left: none !important;
-              margin-top: none !important;
-              font-size: 1rem;
-              display: none;
-              position: absolute; 
-              transform: translateX(-50%); 
-              left: 70%;
-              bottom: 95%; 
-              white-space: nowrap; /* Prevent the span from wrapping */
-              background-color: #4d4d4de3; 
-              color: white; 
-              padding: 0.2em 0.25em; 
-              border-radius: 0.2em; 
-              z-index: 1; /* Ensure the span is above other elements */
+              left: 74%;
+              bottom: 97%; 
             }
             
             .handler-delete:hover span {
@@ -402,12 +436,13 @@
             }   
 
             .add-to-training-button{
-              background-color: rgb(96, 117, 158);
+              background-color: var(--secondary-color);
               color: rgb(255, 255, 255);          
               margin-left: auto;
               margin-right: auto;
               padding: 0.3vw;
               font-size: 0.68vw;
+              font-weight: 500 !important;
               width: 100%;
               margin-top: -0.5vw;
               margin-bottom: 0.5vw;
