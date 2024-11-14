@@ -24,16 +24,22 @@ const CloseTrackModal: React.FC<CloseTrackModalProps> = ({
   return (
     <Modal show={isOpen} onClose={onClose}>
       <div className="reservation-modal">
-        <h2>Close Track</h2>
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Enter closing reason"
-          className="modal-textarea"
-        />
-        <div className="modal-actions">
-          <button onClick={handleSubmit}>Submit</button>
-        </div>
+        <h4>Zavrieť trať</h4>
+        <br></br>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Zadajte dôvod uzavretia trate"
+              className="form-control"
+              required
+            />
+          </div>
+          <button className="RegButton" type="submit">
+            Potvrdiť
+          </button>
+        </form>
       </div>
     </Modal>
   );

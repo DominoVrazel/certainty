@@ -43,6 +43,7 @@ interface EmailData {
     userFirstName: string ;
     userSecondName: string;
     course: string;
+    courseName: string;
     date: string;
     startTime: string;
     endTime: string;

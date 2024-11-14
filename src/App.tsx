@@ -160,7 +160,7 @@ function App() {
           path="/"
           element={
             resorts.length > 0 ? (
-              <Navigate to={`/resort/${resorts[0]}`} />
+              <Navigate to={`/resort/${resorts[0].id}`} />
             ) : (
               <EmptyResortsPage />
             )

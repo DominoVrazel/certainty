@@ -25,6 +25,8 @@
   font-family: var(--font-family-sans);
 }
 
+   
+
 .current-week-container button {
   font-family: "Noto Sans", sans-serif;
   font-weight: 400;
@@ -33,18 +35,33 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1vw 0;
+    align-content: center;
+    
   }
 
+    .curr-date-heading{
+      align-items: center;
+      align-content: center;
+      font-size: 1.2vw;
+      font-weight: 450;
+      margin-bottom: -1vw;
+    }
+  
     .navigate-backwards {
         display: flex;
         align-items: center;
         justify-content: flex-start;
         flex: 1;
-        padding-left: 4vw;
+        padding-left: 29vw;
     }
 
-    .navigate-backwards p {
+    .navigate-backwards span, .navigate-forwards span{
+      font-size: 0.7vw;
+      bottom: 100%; 
+    }
+
+    .navigate-backwards p,
+    .navigate-forwards p {
       margin-bottom: 0 !important;
     }
 
@@ -53,16 +70,18 @@
       box-shadow: none !important;
     }
 
+    .navigate-backwards button:hover .tooltip-text,
+    .navigate-forwards button:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }   
+
     .navigate-forwards {
         display: flex;
         align-items: center;
         justify-content: flex-end;
         flex: 1;
-        padding-right: 4vw;
-    }
-
-    .navigate-forwards p {
-      margin-bottom: 0 !important;
+        padding-right: 29vw;
     }
 
     .navigate-forwards button:hover {
@@ -73,28 +92,88 @@
     .week-navigation button {
       background-color: transparent;
       border: none;
-      font-size: 24px;
+      font-size: 1.4vw;
       cursor: pointer;
-      color: var(--primary-color);
+      color: rgb(88, 88, 88);
       transition: transform 0.2s ease;
     }
 
     .week-navigation button:hover {
       transform: scale(1.1);
     }
+  
+  .week-hints {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: -1vw;
+    font-size: 0.8vw;
+
+    margin-left: 1.2vw;
+    margin-right: 1.2vw;
+    padding-bottom: 0.2vw;
+  }
+
+    .hints-left{
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      flex: 1;
+      padding-left: 4vw;
+      gap: 0.5vw;
+    }
+
+    .hints-left-container{
+      display: flex;
+   
+      gap: 0.5vw;
+      align-items: center;
+    }
+
+    .hints-right{
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex: 1;
+      padding-right: 4vw;
+      gap: 0.5vw;
+    }
+
+    .hints-right .fa-circle.free {
+      color: rgb(233, 233, 233); /* Adjust the color as needed */
+      border: 1px solid #50505060;
+      border-radius: 15px;
+    }
+    
+    .hints-right .fa-circle.created {
+      color: #ffdaa7; /* Adjust the color as needed */
+  
+    }
+    
+    .hints-right .fa-circle.confirmed {
+      color: #64c26c; /* Adjust the color as needed */
+
+    }
     
   .calendar-week {
     padding-top: 0.5vw;
     padding-bottom: 1vw;
-    margin-left: 1.6vw;
-    margin-right: 1.6vw;
+    margin-left: 1.0vw;
+    margin-right: 1.0vw;
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    
     margin-top: 10px;
     align-items: top;
     justify-content: center;
   }
+    .unable-calendar-p {
+      
+      width: 700%;
+      font-weight: 600;
+      font-size: 1.1em; /* Adjust the font size as needed */
+      color: var(--primary-color); /* Adjust the color as needed */
+      margin: 0;
+    }
 
     .whole-day-info{
       background-color: #ffffff;
@@ -301,6 +380,12 @@
               margin-top: -0.5vw;
               border-top-left-radius: 10px;
               border-top-right-radius: 10px;
+            }
+
+            .closed-reason{
+              padding-top: 1vw;
+              padding-bottom: 1vw;
+              font-size: 0.75vw;
             }
 
             .track-toggle-button {

@@ -10,7 +10,6 @@ import {
   Button,
   Section,
   Row,
-  Tailwind,
 } from "@react-email/components";
 
 interface ReservationConfirmationProps {
@@ -59,9 +58,8 @@ export function ReservationConfirmation({
                 max-width: 500px;
                 padding: 20px;
                 margin: 0 auto;
-                border: 3px solid #e0e0e0;
-                border-radius: 8px;
-                background-color: #f9f9f9;
+                border: 2px solid #0e0e0e;
+                
               }
   
               .heading {

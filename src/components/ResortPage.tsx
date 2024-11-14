@@ -353,23 +353,36 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
               disabled={currentDateForCourse <= new Date()}
             >
               <i className="fas fa-arrow-circle-left"></i>
+              <span className="tooltip-text">naspäť</span>
             </button>
-            <p>naspäť</p>
           </div>
-          <h4>
-            Tréningy od {format(currentDateForCourse, "dd.MM.yyyy")} do{" "}
-            {format(addDays(currentDateForCourse, 6), "dd.MM.yyyy")}
-          </h4>
+          <div className="curr-date-heading">
+            <p>
+              Tréningy od {format(currentDateForCourse, "dd.MM.yy")} do{" "}
+              {format(addDays(currentDateForCourse, 6), "dd.MM.yy")}
+            </p>
+          </div>
           <div className="navigate-forwards">
-            <p>dopredu</p>
             <button
               onClick={() => handleNextWeek(course)}
               disabled={
                 addDays(currentDateForCourse, 7) > addDays(new Date(), 14)
               }
             >
+              <span className="tooltip-text">dopredu</span>
               <i className="fas fa-arrow-circle-right"></i>
             </button>
+          </div>
+        </div>
+
+        <div className="week-hints">
+          <div className="hints-left">
+            <i className="fas fa-glasses"></i> Informácie
+          </div>
+          <div className="hints-right">
+            <i className="fas fa-circle free"></i> Voľná
+            <i className="fas fa-circle created"></i> Vytvorená
+            <i className="fas fa-circle confirmed"></i> Potvrdená
           </div>
         </div>
         <div className="calendar-week">
@@ -436,7 +449,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
                           {isClosed ? (
                             <div className="closed-reason">
-                              <strong>Dôvod uzávierky:</strong>{" "}
+                              <strong>Dôvod uzávierky:</strong> <br></br>
                               {closedTrack.reason || "No reason provided"}
                             </div>
                           ) : (
@@ -708,7 +721,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
               );
             })
           ) : (
-            <p>Nedostupný žiadny tréning pre tento deň.</p>
+            <p className="unable-calendar-p">
+              Nedostupný žiadny ďalší tréningový deň.
+            </p>
           )}
         </div>
       </div>
@@ -720,6 +735,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     subject: string,
     recipient: string,
     course: string | undefined,
+    courseName: string | undefined,
     date: string | undefined,
     startTime: string | undefined,
     endTime: string | undefined,
@@ -738,6 +754,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         recipient: string;
         subject: string;
         course: string | undefined;
+        courseName: string | undefined;
         date: string | undefined;
         startTime: string | undefined;
         endTime: string | undefined;
@@ -758,6 +775,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           recipient,
           subject,
           course,
+          courseName,
           date,
           endTime,
           lineNumber,
@@ -832,6 +850,13 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       setIsLoading(true);
       const db = getFirestore();
 
+      const courseDoc = await getDoc(
+        doc(db, "resorts", resortId, "courses", selectedSession.course)
+      );
+      const courseName = courseDoc.exists()
+        ? courseDoc.data().name
+        : selectedSession.course;
+
       // Create a new document in the 'reservations' collection
       const reservationRef = doc(collection(db, "reservations"));
       const userEmail = localStorage.getItem("userEmail");
@@ -859,7 +884,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         },
         reservationDetails: {
           resort: resortId,
-          course: selectedSession.course, // Ensure this is set correctly
+          course: selectedSession.course,
+          courseName: courseName,
         },
         lineNumber: selectedSession.lineNumber,
       });
@@ -873,6 +899,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           reservationRef.id,
           useremailSubject,
           userEmail,
+          courseName,
           selectedSession.course,
           selectedSession.date,
           selectedSession.session.startTime,
@@ -900,6 +927,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           reservationRef.id,
           adminEmailSubject,
           adminEmailRecipient,
+          courseName,
           selectedSession.course,
           selectedSession.date,
           selectedSession.session.startTime,
@@ -989,6 +1017,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           undefined,
           useremailSubject,
           userEmail,
+          undefined,
           undefined,
           undefined,
           undefined,
