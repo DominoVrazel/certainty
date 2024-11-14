@@ -19,9 +19,8 @@
   width: 90%;
   margin: 1vw auto;
   padding: 2vw;
-  background-color: var(--background-color);
-  border-radius: 16px;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+
+  
   font-family: var(--font-family-sans);
 }
 
@@ -108,10 +107,15 @@
     align-items: center;
     margin-bottom: -1vw;
     font-size: 0.8vw;
-
-    margin-left: 1.2vw;
-    margin-right: 1.2vw;
-    padding-bottom: 0.2vw;
+    padding-top: 0.6vw;
+    padding-bottom: 0.8vw;
+    margin-top: 1vw;
+    margin-left: 0.5vw;
+    margin-right: 0.5vw;
+    background-color: white;
+    box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.356);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
   }
 
     .hints-left{
@@ -141,8 +145,6 @@
 
     .hints-right .fa-circle.free {
       color: rgb(233, 233, 233); /* Adjust the color as needed */
-      border: 1px solid #50505060;
-      border-radius: 15px;
     }
     
     .hints-right .fa-circle.created {
@@ -156,15 +158,19 @@
     }
     
   .calendar-week {
-    padding-top: 0.5vw;
+    background: linear-gradient(149deg, rgba(255, 255, 255, 1) 28%, rgb(250, 253, 255) 49%, rgba(255, 255, 255, 1) 85%);
+    margin-left: 0.5vw;
+    margin-right: 0.5vw;
+    padding-left: 1vw;
+    padding-right: 1vw;
     padding-bottom: 1vw;
-    margin-left: 1.0vw;
-    margin-right: 1.0vw;
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    margin-top: 10px;
+    margin-top: 0.8vw;
+ 
     align-items: top;
     justify-content: center;
+    box-shadow: 0px 6px 5px rgba(0, 0, 0, 0.356);
   }
     .unable-calendar-p {
       
@@ -176,11 +182,10 @@
     }
 
     .whole-day-info{
-      background-color: #ffffff;
-      padding-left: 0.3vw;
+      padding-left: 0.3vw;  
       padding-right: 0.3vw;
-
-      border: 1px solid var(--border-color);
+      border: 1px  solid  rgb(49, 49, 49);
+      margin-left: -1px;
       transition: background-color 0.3s ease;
     }
       .day{
@@ -215,8 +220,11 @@
       .line-container {
         background: linear-gradient(0deg, rgb(223, 223, 223) 0%, rgb(182, 182, 182) 100%);
         border-radius: 10px;
-        margin-top: 1.8vw;
+        margin-top: 1.5vw;
+        margin-bottom: 1vw;
         padding-bottom: 0.8vw;
+        border: 1px solid var(--border-color);
+        box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.356);
       }
 
         .res-container{
@@ -377,9 +385,9 @@
              
               padding-top: 0.6vw;
               padding-bottom: 0.6vw;
-              margin-top: -0.5vw;
-              border-top-left-radius: 10px;
-              border-top-right-radius: 10px;
+            
+              border-top-left-radius: 8px;
+              border-top-right-radius: 8px;
             }
 
             .closed-reason{

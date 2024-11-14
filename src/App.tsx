@@ -19,6 +19,8 @@ import { logoutUser } from "./services/FirebaseService";
 import Dropdown from "react-bootstrap/Dropdown";
 import "bootstrap/dist/css/bootstrap.min.css";
 
+import ZSLLogo from "./assets/images/ZSL-logo.png";
+
 import "./App.css";
 import "./Modal.css";
 import { getFirestore, collection, getDocs, doc } from "firebase/firestore";
@@ -78,62 +80,65 @@ function App() {
   return (
     <Router>
       {/* Navigation Menu */}
-      <div className="card text-center">
-        <div className="card-header">
-          <ul className="nav nav-tabs card-header-tabs">
-            <div className="navleft">
-              {isAdmin && (
-                <li className="nav-item">
-                  <Link
-                    to="/AdminPage"
-                    className="nav-link"
-                    aria-current="true"
-                  >
-                    Admin
-                  </Link>
-                </li>
-              )}
-              {resorts.map((resort) => (
-                <li key={resort.id} className="nav-item">
-                  <Link to={`/resort/${resort.id}`} className="nav-link">
-                    {resort.name}
-                  </Link>
-                </li>
-              ))}
-            </div>
-          </ul>
-          <div className="navright">
-            <div className="user-greeting">
-              {isLoggedIn ? `Ahoj ${userFirstName}.` : ""}
-            </div>
-            <div>
-              <Dropdown>
-                <Dropdown.Toggle variant="success" id="dropdown-basic">
-                  {isLoggedIn && userFirstName && userSecondName
-                    ? "Môj účet"
-                    : "Prihlásenie"}
-                </Dropdown.Toggle>
 
-                <Dropdown.Menu>
-                  {isLoggedIn ? (
-                    // Is logged in
-                    <Dropdown.Item onClick={handleLogout}>
-                      Odhlásiť
+      <div className="card-header">
+        <ul className="nav nav-tabs card-header-tabs">
+          <div className="navleft">
+            <img
+              src={ZSLLogo}
+              alt="logo"
+              style={{ width: "50px", height: "auto" }}
+            />
+            {isAdmin && (
+              <li className="nav-item">
+                <Link to="/AdminPage" className="nav-link" aria-current="true">
+                  Admin
+                </Link>
+              </li>
+            )}
+            {resorts.map((resort) => (
+              <li key={resort.id} className="nav-item">
+                <Link to={`/resort/${resort.id}`} className="nav-resort">
+                  {resort.name}
+                </Link>
+              </li>
+            ))}
+          </div>
+        </ul>
+        <div className="navright">
+          <div className="user-greeting">
+            {isLoggedIn ? `Ahoj ${userFirstName}.` : ""}
+          </div>
+          <div>
+            <Dropdown>
+              <Dropdown.Toggle
+                variant="success"
+                id="dropdown-basic"
+                className="dropdown"
+              >
+                <i className="fa fa-user-circle user-icon"></i>
+                {isLoggedIn && userFirstName && userSecondName
+                  ? "Môj účet"
+                  : "Prihlásenie"}
+              </Dropdown.Toggle>
+
+              <Dropdown.Menu>
+                {isLoggedIn ? (
+                  // Is logged in
+                  <Dropdown.Item onClick={handleLogout}>Odhlásiť</Dropdown.Item>
+                ) : (
+                  // Is logged out
+                  <>
+                    <Dropdown.Item onClick={() => setShowRegisterModal(true)}>
+                      Register
                     </Dropdown.Item>
-                  ) : (
-                    // Is logged out
-                    <>
-                      <Dropdown.Item onClick={() => setShowRegisterModal(true)}>
-                        Register
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setShowLoginModal(true)}>
-                        Login
-                      </Dropdown.Item>
-                    </>
-                  )}
-                </Dropdown.Menu>
-              </Dropdown>
-            </div>
+                    <Dropdown.Item onClick={() => setShowLoginModal(true)}>
+                      Login
+                    </Dropdown.Item>
+                  </>
+                )}
+              </Dropdown.Menu>
+            </Dropdown>
           </div>
         </div>
       </div>
