@@ -42,19 +42,19 @@ function LoginModal() {
     <>
       <div className="RegisterPage-body">
         <div className="regcontainer">
-          <h1>Prihlásenie</h1>
+          <h2>Prihlásenie</h2>
           <form onSubmit={handleLogin}>
             {" "}
             {/* Use form onSubmit */}
             <div className="mb3">
               <label htmlFor="login_email" className="form-label">
-                Zadajte Váš email
+                Zadajte Váš email:
               </label>
               <input
                 className="form-control"
                 type="email"
                 id="login_email" // Unique ID for email input
-                placeholder="Your email"
+                placeholder="Váš email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)} // Update email state on change
                 required // Makes the email input required
@@ -62,13 +62,13 @@ function LoginModal() {
             </div>
             <div className="mb3">
               <label htmlFor="login_password" className="form-label">
-                Zadajte Vaše heslo
+                Zadajte Vaše heslo:
               </label>
               <input
                 className="form-control"
                 type="password"
                 id="login_password" // Unique ID for password input
-                placeholder="Your password"
+                placeholder="Vaše heslo"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)} // Update password state on change
                 required // Makes the password input required

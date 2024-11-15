@@ -82,16 +82,16 @@ function App() {
       {/* Navigation Menu */}
 
       <div className="card-header">
-        <ul className="nav nav-tabs card-header-tabs">
-          <div className="navleft">
-            <img
-              src={ZSLLogo}
-              alt="logo"
-              style={{ width: "50px", height: "auto" }}
-            />
+        <div className="navleft">
+          <img
+            src={ZSLLogo}
+            alt="logo"
+            style={{ width: "50px", height: "auto" }}
+          />
+          <ul>
             {isAdmin && (
               <li className="nav-item">
-                <Link to="/AdminPage" className="nav-link" aria-current="true">
+                <Link to="/AdminPage" className="nav-admin" aria-current="true">
                   Admin
                 </Link>
               </li>
@@ -103,8 +103,8 @@ function App() {
                 </Link>
               </li>
             ))}
-          </div>
-        </ul>
+          </ul>
+        </div>
         <div className="navright">
           <div className="user-greeting">
             {isLoggedIn ? `Ahoj ${userFirstName}.` : ""}

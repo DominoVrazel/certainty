@@ -30,7 +30,7 @@ button:hover {
   margin-bottom: 0.1vw !important;
   padding-bottom: 0.5vw !important;
 
-  box-shadow: 0px 6px 2px rgba(102, 102, 102, 0.705) !important; /* Add shadow effect */
+  box-shadow: 0px 3px 2px rgba(102, 102, 102, 0.705) !important; /* Add shadow effect */
 }
 
 .nav {
@@ -41,9 +41,24 @@ button:hover {
 
 .navleft {
   display: flex;
- 
-  margin-left: 5vw;/* Match with your text color */
-  gap: 5rem !important;
+  align-items: center !important; 
+  align-content: center !important;
+  margin-left: 1.5vw !important; /* Match with your text color */
+  width: 70% !important;
+}
+
+.navleft ul {
+  display: flex;
+  flex-wrap: wrap; /* Allow items to wrap to the next line */
+  align-items: center !important; 
+  align-content: center !important;
+  margin-left: 2vw !important; /* Match with your text color */
+  gap: 0.2rem 4rem !important; 
+  width: 100% !important;
+  height: 100% !important;
+  list-style: none; /* Remove list item dots */
+  margin-top: 0.75vw !important;
+
 }
 
 .navright {
@@ -57,7 +72,19 @@ button:hover {
   align-items: center !important; /* Add some margin on the right side */
   align-content: center !important; /* Add some margin on the right side */
   text-align: center !important;
-  
+}
+
+.nav-admin {
+  color: rgb(48, 48, 48) !important;
+  background-color: #e2e2e2;
+  text-decoration: none !important;
+  font-weight: 500;
+  padding-left: 0.7vw !important;
+  padding-right: 0.7vw !important;
+  padding-top: 0.3vw !important;
+  padding-bottom: 0.5vw !important;
+  border-radius: 10px !important;
+  font-size: 0.9vw !important;
 }
 
 .nav-resort{
@@ -67,6 +94,8 @@ button:hover {
   padding-left: 0.5vw !important;
   padding-right: 0.5vw !important;
   font-size: 0.9vw !important;
+  align-items: center !important; /* Add some margin on the right side */
+  align-content: center !important; 
 }
 
 .nav-resort:hover{
@@ -82,7 +111,8 @@ button:hover {
 }
 
 .user-greeting {
-  font-size: 1rem; /* Adjust font size if necessary */
+  font-size: 0.8vw !important; /* Adjust font size if necessary */
+  font-weight: 500 !important;
   margin-right: 10px; /* Add some margin on the right side */
 }
 

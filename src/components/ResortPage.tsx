@@ -24,6 +24,7 @@ import EditReservationModal from "./EditReservationModal";
 import ReservationDetailsModal from "./ReservationDetailsModal";
 import AddToTrainingModal from "./AddToTrainigModal";
 import CloseTrackModal from "./CloseTrackModal";
+import ShowInfoModal from "./ShowInfoModal";
 
 import "../Modal.css";
 import "../ResortPage.css";
@@ -147,6 +148,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     date: string;
   } | null>(null);
 
+  const [isShowInfoModalOpen, setisShowInfoModalOpen] = useState(false);
+  const handleInfoClick = () => {
+    setisShowInfoModalOpen(true);
+  };
   const isAdmin = localStorage.getItem("userAdmin") === "true";
 
   useEffect(() => {
@@ -377,7 +382,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
         <div className="week-hints">
           <div className="hints-left">
-            <i className="fas fa-glasses"></i> Informácie
+            <button onClick={handleInfoClick} className="info-button">
+              <i className="fas fa-glasses"></i> Informácie
+            </button>
           </div>
           <div className="hints-right">
             <i className="fas fa-circle free"></i> Voľná
@@ -1297,6 +1304,14 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
             );
             setIsCloseModalOpen(false);
           }}
+        />
+      )}
+
+      {/* Info Modal */}
+      {isShowInfoModalOpen && (
+        <ShowInfoModal
+          isOpen={isShowInfoModalOpen}
+          onClose={() => setisShowInfoModalOpen(false)}
         />
       )}
     </div>
