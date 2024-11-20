@@ -120,21 +120,27 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
             </div>
             <div className="mb3">
               <label htmlFor="exampleFormControlInput1" className="form-label">
-                Heslo (minimum 6 pismen):
+                Heslo:
+                <span
+                  className="info-icon"
+                  data-tooltip="Heslo musí obsahovať aspoň jedno veľké písmeno, jedno malé písmeno, jedno číslo a musí mať minimálne 6 znakov."
+                >
+                  <i className="fas fa-info-circle"></i>
+                </span>
               </label>
               <input
                 className="form-control"
                 type="password"
                 name="password"
                 id="exampleFormControlInput1"
-                placeholder="Zadajte heslo"
+                placeholder="napríklad: Jablko123"
                 value={formData.password}
                 onChange={handleInputChange}
               />
             </div>
             <div className="mb3">
               <label htmlFor="exampleFormControlInput1" className="form-label">
-                Potvrdiť heslo (minimum 6 pismen):
+                Potvrdiť heslo:
               </label>
               <input
                 className="form-control"
@@ -163,14 +169,14 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
 
             <div className="mb3">
               <label htmlFor="exampleFormControlInput1" className="form-label">
-                Telefónne číslo:
+                Telefónne číslo (s predvoľbou):
               </label>
               <input
                 className="form-control"
-                type="number"
+                type="text"
                 name="tel_number"
                 id="exampleFormControlInput1"
-                placeholder="Vaše telefónne číslo"
+                placeholder="napríklad: +421905010001"
                 value={formData.tel_number}
                 onChange={handleInputChange}
               />

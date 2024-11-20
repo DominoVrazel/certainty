@@ -43,7 +43,7 @@ export const registerUser = async (
   tel_number: string
 ): Promise<boolean> => {
   try {
-    if (!first_name || !second_name || !email || !password || !sport_club) {
+    if (!first_name || !second_name || !email || !password || !sport_club || !tel_number) {
       alert("Vyplňte všetky polia");
       return false; 
     }
@@ -51,6 +51,15 @@ export const registerUser = async (
       alert("Neplatné overenie hesla");
       return false;
     } 
+    else if (!isStrongPassword(password)) {
+      alert("Heslo musí obsahovať aspoň jedno veľké písmeno, jedno malé písmeno, jedno číslo a musí mať minimálne 6 znakov.");
+      return false;
+    }
+    else if (!isValidPhoneNumber(tel_number)) {
+      alert("Neplatné telefónne číslo.");
+      console.log(tel_number);
+      return false;
+    }
     //creating a new user with the email and password
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -79,7 +88,7 @@ export const registerUser = async (
       alert("Neplatný email");
     }
     else if(error.code === "auth/weak-password"){
-      alert("Slabé heslo (Minimum 6 písmen)")
+      alert("Slabé heslo")
     }
     else {
       console.error("Registrácia používateľa zlyhala: ", error);
@@ -87,6 +96,16 @@ export const registerUser = async (
     }
     return false;
   }
+};
+
+const isStrongPassword = (password: string): boolean => {
+  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/;
+  return strongPasswordRegex.test(password);
+};
+
+const isValidPhoneNumber = (tel_number: string): boolean => {
+  const phoneNumberRegex = /^\+\d{3}\d{9}$/;
+  return phoneNumberRegex.test(tel_number);
 };
 
 export const loginUser = async (email: string, password: string): Promise<any> => {
