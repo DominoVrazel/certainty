@@ -7,6 +7,7 @@ import UserEmailRES from './emails/UserEmailRES';
 import AdminEmailRES from './emails/AdminEmailRES';
 import UserEmailRESAccepted from './emails/UserEmailRESAccepted';
 import UserEmailRESDeleted from './emails/UserEmailRESDeleted';
+import UserEmailForgottenPass from './emails/UserEmailForgottenPass';
 import e from 'express';
 
 
@@ -33,6 +34,7 @@ const gmailUser = defineSecret("GMAIL_USER");
 const gmailToken = defineSecret("GMAIL_TOKEN");
 
 const reservationBaseUrl = defineString("RESERVATIONS_BASE_URL");
+const resetPassBaseUrl = defineString("RESET_PASS_BASE_URL");
 
 interface EmailData {
   reservationId: string,
@@ -58,7 +60,8 @@ enum EmailType {
   EmailUserRes = 'USER_SUCCESS_RES',
   EmailAdminRes = 'ADMIN_SUCCESS_RES',
   EmailUserResAccepted = 'USER_ACCEPTED_RES',
-  EmailUserResDeleted = "USER_DELETE_RES"
+  EmailUserResDeleted = "USER_DELETE_RES",
+  EmailForgottenPassword = "USER_FORGOTTEN_PASSWORD"
 }
 
 // The POST endpoint that handles email sending
@@ -95,6 +98,7 @@ app.post('*', async (request, response) => {
   
 
   const reservationUrl = `${reservationBaseUrl.value()}/${data.reservationId}`;
+  const resetPassUrl = `${resetPassBaseUrl.value()}?email=${encodeURIComponent(data.emailData.recipient)}`;
 
   let html = '';
   if(data.emailData.emailIdentifier === EmailType.EmailUserRes) {
@@ -108,6 +112,9 @@ app.post('*', async (request, response) => {
   }
   if(data.emailData.emailIdentifier === EmailType.EmailUserResDeleted) {
     html = await render(UserEmailRESDeleted ({ ... data.emailData }));
+  }
+  if(data.emailData.emailIdentifier === EmailType.EmailForgottenPassword) {
+    html = await render(UserEmailForgottenPass ({... data.emailData, resetLink: resetPassUrl}));
   }
 
 

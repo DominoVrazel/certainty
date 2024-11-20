@@ -1,0 +1,43 @@
+
+  
+  .ForgottenPass-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f4f4f4;
+  }
+  
+  .ForgottenPass-container {
+    margin-top: -7vw;
+    margin-bottom: 0.5vw;
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 400px !important;
+    width: 100%;
+    display: flex;
+    flex-direction: column; /* Ensure elements are stacked vertically */
+  }
+  
+  h2 {
+    text-align: center !important;
+    color: #333333;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    font-size: 1vw;
+  }
+  
+  form {
+    width: 100% !important;
+  }
+
+  .pass1{
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+
+
+  
+  

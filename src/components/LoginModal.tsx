@@ -1,11 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { loginUser } from "../services/FirebaseService";
+import {
+  httpsCallable,
+  getFunctions,
+  connectFunctionsEmulator,
+} from "firebase/functions";
 
 function LoginModal() {
   // State to store form data
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const functions = getFunctions();
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
+    connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  }
 
   //const navigate = useNavigate();
 
@@ -35,6 +49,59 @@ function LoginModal() {
       }
     } catch (error) {
       setMessage("Chyba pri prihlasovaní. Skúste znova."); // Set error message if login fails
+    }
+  };
+
+  // const handlePasswordReset = async (event: React.FormEvent<HTMLFormElement>) => {
+  //   event.preventDefault();
+  //   try {
+  //     await sendPasswordResetEmail(resetEmail);
+  //     setMessage("Email na obnovenie hesla bol odoslaný.");
+  //     setShowResetPassword(false);
+  //   } catch (error) {
+  //     setMessage("Chyba pri odosielaní emailu na obnovenie hesla. Skúste znova.");
+  //   }
+  // };
+
+  const sendEmail = async (
+    subject: string,
+    recipient: string,
+    emailIdentifier: string
+  ) => {
+    const sendEmailFunction = httpsCallable<{
+      emailData: {
+        recipient: string;
+        subject: string;
+        emailIdentifier: string;
+      };
+    }>(functions, "sendEmail");
+    try {
+      const result = await sendEmailFunction({
+        emailData: {
+          recipient,
+          subject,
+          emailIdentifier,
+        },
+      });
+      console.log("Email sent:", result);
+    } catch (error) {
+      console.error("Error sending email:", error);
+    }
+  };
+
+  const handlePasswordResSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    try {
+      const useremailIdentifier = "USER_FORGOTTEN_PASSWORD";
+      await sendEmail("Obnovenie hesla", resetEmail, useremailIdentifier);
+      setMessage("Email na obnovenie hesla bol odoslaný.");
+      setShowResetPassword(false);
+    } catch (error) {
+      setMessage(
+        "Chyba pri odosielaní emailu na obnovenie hesla. Skúste znova."
+      );
     }
   };
 
@@ -74,6 +141,12 @@ function LoginModal() {
                 required // Makes the password input required
               />
             </div>
+            <div className="mb3">
+              <p>Zabudnuté heslo ?</p>
+              <button type="button" onClick={() => setShowResetPassword(true)}>
+                obnoviť
+              </button>
+            </div>
             <button className="RegButton" type="submit">
               Prihlásiť
             </button>{" "}
@@ -83,6 +156,36 @@ function LoginModal() {
           </form>
         </div>
       </div>
+
+      {showResetPassword && (
+        <div className="RegisterPage-body">
+          <div className="regcontainer">
+            <h2>Obnovenie hesla</h2>
+            <form onSubmit={handlePasswordResSubmit}>
+              <div className="mb3">
+                <label htmlFor="reset_email" className="form-label">
+                  Zadajte Váš email pre obnovenie hesla:
+                </label>
+                <input
+                  className="form-control"
+                  type="email"
+                  id="reset_email"
+                  placeholder="Váš email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <button className="RegButton" type="submit">
+                Odoslať
+              </button>
+              <button type="button" onClick={() => setShowResetPassword(false)}>
+                Zrušiť
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

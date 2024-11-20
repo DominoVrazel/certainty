@@ -184,6 +184,7 @@ function validate_email(email: any){
   }
 }
 
+
 export const logoutUser = async (): Promise<void> => {
   const auth = getAuth();
   try {

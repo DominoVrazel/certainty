@@ -14,6 +14,7 @@ import Modal from "./components/Modal";
 import EmptyResortsPage from "./components/EmptyResortsPage";
 
 import ReservationConfirm from "./components/ReservationConfirm";
+import ForgottenPassword from "./components/ForgottenPassword";
 import { logoutUser } from "./services/FirebaseService";
 
 import Dropdown from "react-bootstrap/Dropdown";
@@ -200,6 +201,8 @@ function App() {
             <ReservationConfirm isAdminLoggedIn={isLoggedIn && isAdmin} />
           }
         />
+
+        <Route path="/reset-password" element={<ForgottenPassword />} />
       </Routes>
     </Router>
   );

@@ -107,6 +107,40 @@ input {
   font-size: 1.5vw;
 }
 
+.info-icon {
+  margin-left: 0.5rem;
+  cursor: pointer;
+  position: relative;
+  color: #4f84e7;
+  font-size: 0.8vw;
+}
+
+.info-icon::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.836);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  font-size: 0.8rem;
+  width: max-content;
+  max-width: 200px; /* Adjust max-width as needed */
+  text-align: center;
+  word-wrap: break-word; /* Ensure text wraps to the next line */
+  white-space: normal;
+}
+
+.info-icon:hover::before {
+  opacity: 1;
+}
+
 
 /* Responsive styles */
 @media (max-width: 768px) {
