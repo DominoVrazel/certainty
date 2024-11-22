@@ -241,7 +241,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
           </button>
         </form>
         {!isOwner && addedUser && !isAdmin && (
-          <button className="RegButton" onClick={handleDelete}>
+          <button className="ResDelButton" onClick={handleDelete}>
             Zmazať rezerváciu
           </button>
         )}

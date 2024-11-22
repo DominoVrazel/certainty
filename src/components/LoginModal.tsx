@@ -104,7 +104,9 @@ function LoginModal() {
 
       const useremailIdentifier = "USER_FORGOTTEN_PASSWORD";
       await sendEmail("Obnovenie hesla", resetEmail, useremailIdentifier);
-      setMessage("Email na obnovenie hesla bol odoslaný.");
+      setMessage(
+        "Email na obnovenie hesla bol odoslaný. <br /><br /> (Ak email neprichádza: počkajte 10 minút alebo skontrolujte SPAM.)"
+      );
       setShowResetPassword(false);
     } catch (error) {
       setMessage(
@@ -164,7 +166,10 @@ function LoginModal() {
             </button>{" "}
             {/* React's onClick handler */}
             {/* Display message to user */}
-            <div className="user_message">{message}</div>
+            <div
+              className="user_message"
+              dangerouslySetInnerHTML={{ __html: message }}
+            ></div>
           </form>
         </div>
       </div>

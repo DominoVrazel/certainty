@@ -35,7 +35,16 @@
     justify-content: space-between;
     align-items: center;
     align-content: center;
-    
+    background-color: #ffffff;
+    margin-left: 29vw;
+    margin-right: 29vw;
+    padding-bottom: 0.5vw;
+    padding-top: 0.5vw;
+    padding-left: 0.5vw;
+    padding-right: 0.5vw;
+    border-top-left-radius: 10px; 
+    border-top-right-radius: 10px;
+    box-shadow: 0px 6px 5px rgba(0, 0, 0, 0.356);
   }
 
     .curr-date-heading{
@@ -51,7 +60,6 @@
         align-items: center;
         justify-content: flex-start;
         flex: 1;
-        padding-left: 29vw;
     }
 
     .navigate-backwards span, .navigate-forwards span{
@@ -80,7 +88,6 @@
         align-items: center;
         justify-content: flex-end;
         flex: 1;
-        padding-right: 29vw;
     }
 
     .navigate-forwards button:hover {
@@ -93,7 +100,7 @@
       border: none;
       font-size: 1.4vw;
       cursor: pointer;
-      color: rgb(88, 88, 88);
+      color: rgb(77, 86, 104);
       transition: transform 0.2s ease;
     }
 
@@ -109,7 +116,6 @@
     font-size: 0.8vw;
     padding-top: 0.6vw;
     padding-bottom: 0.8vw;
-    margin-top: 1vw;
     margin-left: 0.5vw;
     margin-right: 0.5vw;
     background-color: white;
@@ -554,7 +560,7 @@
             }
 
             .detail-button i {
-              font-size: 1.1rem; /* Adjust icon size if needed */
+              font-size: 1vw; /* Adjust icon size if needed */
               line-height: 0.9vw; /* Reset line height to avoid vertical misalignment */
             }
 
