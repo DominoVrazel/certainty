@@ -8,6 +8,7 @@ interface AddResortDataProps {
 
 const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
   const [resortName, setResortName] = useState("");
+  const [resortEmail, setResorEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +28,7 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
         collection(db, "resorts"),
         resortName.replace(/[^a-zA-Z0-9]/g, "_")
       );
-      await setDoc(resortDocRef, { name: resortName });
+      await setDoc(resortDocRef, { name: resortName, email: resortEmail });
 
       alert("Stredisko úspešne pridané do databázy!");
       //onUpdate();
@@ -50,6 +51,16 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
             type="text"
             value={resortName}
             onChange={(e) => setResortName(e.target.value)}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Administrátorský email:
+          <input
+            type="text"
+            value={resortEmail}
+            onChange={(e) => setResorEmail(e.target.value)}
           />
         </label>
       </div>

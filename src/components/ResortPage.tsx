@@ -154,6 +154,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   };
   const isAdmin = localStorage.getItem("userAdmin") === "true";
 
+  const [resortEmail, setResortEmail] = useState<string | null>(null); // State to store resort email
+
   useEffect(() => {
     const fetchCoursesAndSeasons = async () => {
       try {
@@ -214,6 +216,20 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         setIndividualLineCapacities(individualLineCapacities);
       } catch (error) {
         console.error("Error fetching data: ", error);
+      }
+    };
+
+    const fetchResortEmail = async () => {
+      try {
+        const resortDoc = await getDoc(doc(db, "resorts", resortId));
+        if (resortDoc.exists()) {
+          const resortData = resortDoc.data();
+          setResortEmail(resortData.email);
+        } else {
+          console.error("Resort document does not exist.");
+        }
+      } catch (error) {
+        console.error("Error fetching resort email: ", error);
       }
     };
 
@@ -283,6 +299,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     };
 
     fetchCoursesAndSeasons();
+    fetchResortEmail();
     fetchReservations();
     fetchClosedTracks();
   }, [db, resortId]);
@@ -925,7 +942,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       }
 
       const adminEmailSubject = "Potvrdenie rezervácie tréningu";
-      const adminEmailRecipient = import.meta.env.VITE_ADMIN_EMAIL as string;
+      const adminEmailRecipient = resortEmail || "";
       const adminemailIdentifier = "ADMIN_SUCCESS_RES";
       //send email to admin
 

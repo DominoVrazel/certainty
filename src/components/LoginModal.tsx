@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { loginUser } from "../services/FirebaseService";
+import { loginUser, checkIfEmailExists } from "../services/FirebaseService";
 import {
   httpsCallable,
   getFunctions,
@@ -89,11 +89,19 @@ function LoginModal() {
     }
   };
 
-  const handlePasswordResSubmit = async (
+  const handleForgottenPassSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
     try {
+      const emailExists = await checkIfEmailExists(resetEmail);
+      if (!emailExists) {
+        setMessage(
+          "Používateľ neexistuje. Skontrolujte správnosť svojho emailu."
+        );
+        return;
+      }
+
       const useremailIdentifier = "USER_FORGOTTEN_PASSWORD";
       await sendEmail("Obnovenie hesla", resetEmail, useremailIdentifier);
       setMessage("Email na obnovenie hesla bol odoslaný.");
@@ -141,10 +149,14 @@ function LoginModal() {
                 required // Makes the password input required
               />
             </div>
-            <div className="mb3">
-              <p>Zabudnuté heslo ?</p>
-              <button type="button" onClick={() => setShowResetPassword(true)}>
-                obnoviť
+            <div className="ForgottenPassCon">
+              <p className="ForgottenPassText">Zabudnuté heslo ?</p>
+              <button
+                className="ForgottenPassButton"
+                type="button"
+                onClick={() => setShowResetPassword(true)}
+              >
+                obnoviť heslo
               </button>
             </div>
             <button className="RegButton" type="submit">
@@ -152,16 +164,16 @@ function LoginModal() {
             </button>{" "}
             {/* React's onClick handler */}
             {/* Display message to user */}
-            <div id="user_message">{message}</div>
+            <div className="user_message">{message}</div>
           </form>
         </div>
       </div>
 
       {showResetPassword && (
-        <div className="RegisterPage-body">
+        <div className="ForgottenPassDropdown">
           <div className="regcontainer">
             <h2>Obnovenie hesla</h2>
-            <form onSubmit={handlePasswordResSubmit}>
+            <form onSubmit={handleForgottenPassSubmit}>
               <div className="mb3">
                 <label htmlFor="reset_email" className="form-label">
                   Zadajte Váš email pre obnovenie hesla:
@@ -176,10 +188,14 @@ function LoginModal() {
                   required
                 />
               </div>
-              <button className="RegButton" type="submit">
+              <button className="SendForgottenPass" type="submit">
                 Odoslať
               </button>
-              <button type="button" onClick={() => setShowResetPassword(false)}>
+              <button
+                className="CancelForgottenPass"
+                type="button"
+                onClick={() => setShowResetPassword(false)}
+              >
                 Zrušiť
               </button>
             </form>

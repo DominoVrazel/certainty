@@ -169,7 +169,13 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
 
             <div className="mb3">
               <label htmlFor="exampleFormControlInput1" className="form-label">
-                Telefónne číslo (s predvoľbou):
+                Telefónne číslo:
+                <span
+                  className="info-icon"
+                  data-tooltip="Číslo s predvoľbou bez medzier."
+                >
+                  <i className="fas fa-info-circle"></i>
+                </span>
               </label>
               <input
                 className="form-control"

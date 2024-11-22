@@ -153,3 +153,64 @@ button:hover {
   color: #757575;
 }
 
+.ForgottenPassDropdown{
+  margin-top: 1vw;
+  background-color: #f3f3f3;
+  padding-left: 1vw;
+  padding-right: 1vw;
+  padding-top: 1vw;
+  padding-bottom: 1vw;
+  border-radius: 10px;
+}
+
+.SendForgottenPass{
+  padding: 0.5vw;
+  font-size: 0.8vw;
+  font-weight: 500;
+  background-color: #3b9238;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.SendForgottenPass:hover{
+  background-color: #297427 !important;
+}
+
+.CancelForgottenPass{
+  padding: 0.5vw;
+  font-size: 0.8vw;
+  font-weight: 500;
+  background-color: #4f84e7;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.CancelForgottenPass:hover{
+  background-color: #3963b3 !important;
+}
+
+.ForgottenPassCon{
+  display: flex;
+  align-items: center;
+  align-content: center;
+
+}
+
+.ForgottenPassButton{
+  padding: none !important;
+  background-color: #ffffff00;
+  color: #3b9238;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.ForgottenPassButton:hover{
+  color: #1f5a1d;
+  box-shadow: none !important;
+}
+
+.ForgottenPassText{
+  margin-bottom: 0vw !important;
+}

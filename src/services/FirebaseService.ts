@@ -73,6 +73,7 @@ export const registerUser = async (
       tel_number: tel_number,
       sportClub: sport_club,
       isAdmin: false,
+      isVerified: false,
       createdAt: new Date(),
     });
 
@@ -183,6 +184,12 @@ function validate_email(email: any){
     return false
   }
 }
+
+export const checkIfEmailExists = async (email: string): Promise<boolean> => {
+  const userQuery = query(collection(db, "users"), where("email", "==", email));
+  const querySnapshot = await getDocs(userQuery);
+  return !querySnapshot.empty;
+};
 
 
 export const logoutUser = async (): Promise<void> => {

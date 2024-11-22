@@ -79,7 +79,7 @@ const ForgottenPassword: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <div className="pass1">
               <label htmlFor="forgottenpassInput" className="form-label">
-                Heslo:
+                Nové heslo:
                 <span
                   className="info-icon"
                   data-tooltip="Heslo musí obsahovať aspoň jedno veľké písmeno, jedno malé písmeno, jedno číslo a musí mať minimálne 6 znakov."

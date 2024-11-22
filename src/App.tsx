@@ -131,10 +131,10 @@ function App() {
                   // Is logged out
                   <>
                     <Dropdown.Item onClick={() => setShowRegisterModal(true)}>
-                      Register
+                      Registrovať
                     </Dropdown.Item>
                     <Dropdown.Item onClick={() => setShowLoginModal(true)}>
-                      Login
+                      Prihlásiť
                     </Dropdown.Item>
                   </>
                 )}
