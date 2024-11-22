@@ -1,18 +1,19 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
-  getAuth,
   signInWithEmailAndPassword,
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
+  getAuth,
 } from "firebase/auth";
 import "../ForgottenPass.css";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const ForgottenPassword: React.FC = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const email = queryParams.get("email");
+  const uuid = queryParams.get("uuid") as string;
 
   const [formData, setFormData] = useState({
     password: "",
@@ -29,7 +30,6 @@ const ForgottenPassword: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Email:", email);
 
     if (formData.password !== formData.ConfirmPassword) {
       //   setMessage("Heslá sa nezhodujú.");
@@ -41,27 +41,17 @@ const ForgottenPassword: React.FC = () => {
       );
       return false;
     }
+    const functions = getFunctions();
 
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
+    const resetPassword = httpsCallable<{
+      uuid: string;
+      newPassword: string;
+    }>(functions, "resetPassword");
 
-      if (!user) {
-        throw new Error("No user is currently authenticated.");
-      }
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email!,
-        formData.password
-      );
-      //   const user = userCredential.user;
-
-      await updatePassword(user, formData.password);
-      setMessage("Heslo bolo úspešne obnovené.");
-    } catch (error: any) {
-      console.error("Error updating password:", error);
-      setMessage("Chyba pri obnove hesla. Skúste znova.");
-    }
+    await resetPassword({
+      uuid: uuid,
+      newPassword: formData.password,
+    });
   };
 
   const isStrongPassword = (password: string): boolean => {

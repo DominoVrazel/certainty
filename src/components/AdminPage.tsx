@@ -16,6 +16,7 @@ import {
 import AddSeasonData from "./AddSeasonData";
 import AddResortData from "./AddResortData";
 import AddCourseData from "./AddCourseData";
+import { getAuth } from "firebase/auth";
 
 interface Resort {
   id: string;
@@ -58,6 +59,8 @@ function AdminPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const db = getFirestore();
   const lang = "sk";
+
+  console.log("dfdfdfdffd", getAuth().currentUser);
 
   // Retrieve the user's details from session storage when the component mounts
   useEffect(() => {

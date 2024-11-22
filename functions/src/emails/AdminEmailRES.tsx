@@ -51,6 +51,7 @@ export function ReservationConfirmation({
                 font-family: Helvetica, sans-serif;
                 margin: 0;
                 padding: 0;
+                background-color: #ececec;
               }
               
               .container {
@@ -58,8 +59,9 @@ export function ReservationConfirmation({
                 max-width: 500px;
                 padding: 20px;
                 margin: 0 auto;
-                border: 2px solid #0e0e0e;
-                
+                background-color: #ffffff;
+                border-radius: 8px;
+                box-shadow: 0px 6px 5px rgba(0, 0, 0, 0.356);
               }
   
               .heading {

@@ -914,7 +914,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         lineNumber: selectedSession.lineNumber,
       });
 
-      const useremailSubject = "Úspešná rezervácie tréningu";
+      const useremailSubject = `Úspešná rezervácie tréningu na ${selectedSession.date}`;
       const useremailIdentifier = "USER_SUCCESS_RES";
 
       // send email to user
@@ -941,7 +941,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         console.error("User email is null. Cannot send email.");
       }
 
-      const adminEmailSubject = "Potvrdenie rezervácie tréningu";
+      const adminEmailSubject = `Potvrdenie rezervácie tréningu na ${selectedSession.date}`;
       const adminEmailRecipient = resortEmail || "";
       const adminemailIdentifier = "ADMIN_SUCCESS_RES";
       //send email to admin

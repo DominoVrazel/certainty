@@ -4,6 +4,7 @@ import Modal from "./Modal";
 import { useState, useEffect } from "react";
 import "../Modal.css";
 import "../App.css";
+
 import { getApp } from "firebase/app";
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
 import { send } from "vite";
@@ -67,7 +68,7 @@ const ReservationConfirmRouteComponent: React.FC<ReservatinConfirmProps> = ({
         setIsReservationConfirmed(true);
         console.log("Reservation status updated to 'potvrdená'");
 
-        const useremailSubject = "Vaša rezervácia bola potvrdená";
+        const useremailSubject = `Vaša rezervácia na ${reservationData.date} bola potvrdená `;
         const useremailIdentifier = "USER_ACCEPTED_RES";
 
         if (userEmail && userFirstName && userSecondName) {
@@ -91,19 +92,21 @@ const ReservationConfirmRouteComponent: React.FC<ReservatinConfirmProps> = ({
 
   return (
     <>
-      <Modal show={showLoginModal} onClose={() => setShowLoginModal(false)}>
-        <LoginModal />
-      </Modal>
-      {isAdminLoggedIn ? (
-        <>
-          <h1>Rezervácia bola úspešne potvredná</h1>
-          {isReservationConfirmed && <p>Nový status rezervácie: potvrdená</p>}
-        </>
-      ) : (
-        <>
-          <h1>Rezerváciu môže potvrdiť iba admin</h1>
-        </>
-      )}
+      <div className="ReservationConfirmPage">
+        <Modal show={showLoginModal} onClose={() => setShowLoginModal(false)}>
+          <LoginModal />
+        </Modal>
+        {isAdminLoggedIn ? (
+          <>
+            <h1>Rezervácia bola úspešne potvredná</h1>
+            {isReservationConfirmed && <p>Nový status rezervácie: potvrdená</p>}
+          </>
+        ) : (
+          <>
+            <h1>Rezerváciu môže potvrdiť iba admin</h1>
+          </>
+        )}
+      </div>
     </>
   );
 

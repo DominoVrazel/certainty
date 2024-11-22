@@ -5,6 +5,7 @@ import {
   getFunctions,
   connectFunctionsEmulator,
 } from "firebase/functions";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
 
 function LoginModal() {
   // State to store form data
@@ -66,13 +67,15 @@ function LoginModal() {
   const sendEmail = async (
     subject: string,
     recipient: string,
-    emailIdentifier: string
+    emailIdentifier: string,
+    uuid: string
   ) => {
     const sendEmailFunction = httpsCallable<{
       emailData: {
         recipient: string;
         subject: string;
         emailIdentifier: string;
+        uuid: string;
       };
     }>(functions, "sendEmail");
     try {
@@ -81,6 +84,7 @@ function LoginModal() {
           recipient,
           subject,
           emailIdentifier,
+          uuid,
         },
       });
       console.log("Email sent:", result);
@@ -103,7 +107,16 @@ function LoginModal() {
       }
 
       const useremailIdentifier = "USER_FORGOTTEN_PASSWORD";
-      await sendEmail("Obnovenie hesla", resetEmail, useremailIdentifier);
+
+      const uuid = crypto.randomUUID();
+      const db = getFirestore();
+
+      await addDoc(collection(db, "user_sessions"), {
+        uuid: uuid,
+        email: resetEmail,
+      });
+
+      await sendEmail("Obnovenie hesla", resetEmail, useremailIdentifier, uuid);
       setMessage(
         "Email na obnovenie hesla bol odoslaný. <br /><br /> (Ak email neprichádza: počkajte 10 minút alebo skontrolujte SPAM.)"
       );

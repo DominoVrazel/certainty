@@ -9,10 +9,19 @@ import UserEmailRESAccepted from './emails/UserEmailRESAccepted';
 import UserEmailRESDeleted from './emails/UserEmailRESDeleted';
 import UserEmailForgottenPass from './emails/UserEmailForgottenPass';
 import e from 'express';
+import { ResetPasswordController } from './controllers/reset-password.controller';
+import { getAuth } from 'firebase-admin/auth';
+import admin from 'firebase-admin';
+
+
 
 
 // Create an Express app
-const app = express();
+const emailApp = express();
+const resetPasswordApp = express();
+
+
+
 
 // Create a rate limiter that allows 1 request per 15 minutes
 // const rateLimiter = rateLimit({
@@ -53,8 +62,24 @@ interface EmailData {
     emailIdentifier: string;
     discipline: string;
     category: string;
+    uuid: string;
   }
 }
+
+
+// interface EmailUserResData {
+//   type: EmailType.EmailUserRes,
+//   reservationUrl: string;
+// }
+
+// interface EmailAdminRes {
+//   type: EmailType.EmailAdminRes,
+//   baseUrl: string;
+// }
+
+// type EmnailData2 = EmailUserResData | EmailAdminRes;
+
+
 
 enum EmailType {
   EmailUserRes = 'USER_SUCCESS_RES',
@@ -64,8 +89,33 @@ enum EmailType {
   EmailForgottenPassword = "USER_FORGOTTEN_PASSWORD"
 }
 
+
+// const data: EmnailData2 = {};
+
+// if (data.type === EmailType.EmailUserRes) {
+//   data.reservationUrl
+// }
+
+
+// if (data.type === EmailType.EmailAdminRes) {
+//   data.
+// }
+
+// tagged unions
+
+
+const firebaseAdminApp = admin.initializeApp();
+const adminAuth = getAuth();
+const db = admin.firestore(firebaseAdminApp);
+const resetPasswordController = new ResetPasswordController(firebaseAdminApp, adminAuth, db);
+
+
+resetPasswordApp.post('*', (req, res) => {
+  return resetPasswordController.resetPassword(req, res);
+});
+
 // The POST endpoint that handles email sending
-app.post('*', async (request, response) => {
+emailApp.post('*', async (request, response) => {
 
   // Create a Nodemailer transporter using SMTP
   const transporter = createTransport({
@@ -98,7 +148,6 @@ app.post('*', async (request, response) => {
   
 
   const reservationUrl = `${reservationBaseUrl.value()}/${data.reservationId}`;
-  const resetPassUrl = `${resetPassBaseUrl.value()}?email=${encodeURIComponent(data.emailData.recipient)}`;
 
   let html = '';
   if(data.emailData.emailIdentifier === EmailType.EmailUserRes) {
@@ -114,7 +163,8 @@ app.post('*', async (request, response) => {
     html = await render(UserEmailRESDeleted ({ ... data.emailData }));
   }
   if(data.emailData.emailIdentifier === EmailType.EmailForgottenPassword) {
-    html = await render(UserEmailForgottenPass ({... data.emailData, resetLink: resetPassUrl}));
+    const resetLink = `${resetPassBaseUrl.value()}?uuid=${data.emailData.uuid}`;
+    html = await render(UserEmailForgottenPass ({... data.emailData, resetLink: resetLink}));
   }
 
 
@@ -140,4 +190,12 @@ export const sendEmail = onRequest({
     'http://127.0.0.1:5002',
     'https://www.your-allowed-domain.com',
   ],
-}, app);
+}, emailApp);
+
+export const resetPassword = onRequest({
+  cors: [
+    'http://localhost:5002', 
+    'http://127.0.0.1:5002',
+    'https://www.your-allowed-domain.com',
+  ],
+}, resetPasswordApp);

@@ -214,3 +214,8 @@ button:hover {
 .ForgottenPassText{
   margin-bottom: 0vw !important;
 }
+
+.ReservationConfirmPage{
+  background-color: rgb(240, 240, 240);
+  height: 50vw;
+}
