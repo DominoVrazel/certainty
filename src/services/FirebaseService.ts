@@ -57,7 +57,6 @@ export const registerUser = async (
     }
     else if (!isValidPhoneNumber(tel_number)) {
       alert("Neplatné telefónne číslo.");
-      console.log(tel_number);
       return false;
     }
     //creating a new user with the email and password
@@ -78,7 +77,7 @@ export const registerUser = async (
     });
 
     console.log("Používateľ pridaný do databázy!");
-    alert("Registrácia prebehla úspešne!");
+    alert("Registrácia prebehla úspešne . Na váš email sme odoslali potvrdenie.");
     return true;
 
   } catch (error: any) {

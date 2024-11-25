@@ -25,6 +25,7 @@ import ZSLLogo from "./assets/images/Logo-ZSL.jpg";
 import "./App.css";
 import "./Modal.css";
 import { getFirestore, collection, getDocs, doc } from "firebase/firestore";
+import VerifyUser from "./components/VerifyUser";
 
 function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -203,6 +204,9 @@ function App() {
         />
 
         <Route path="/reset-password" element={<ForgottenPassword />} />
+        <Route path="/verify-user" element={<VerifyUser />} />
+
+        
       </Routes>
     </Router>
   );

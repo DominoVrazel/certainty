@@ -1,9 +1,43 @@
 import React, { useState } from "react";
 import { registerUser } from "../services/FirebaseService";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { addDoc, collection, getFirestore } from "firebase/firestore";
 
 interface RegisterModalProps {
   setShowRegisterModal: (show: boolean) => void;
   setShowLoginModal: (show: boolean) => void;
+}
+
+async function sendRegistrationEmail(email: string, firstName: string) {
+  const functions = getFunctions();
+
+  const sendVerifyEmail = httpsCallable<{
+    emailData: {
+      recipient: string;
+      subject: string;
+      userFirstName: string;
+      emailIdentifier: string;
+      uuid: string;
+    };
+  }>(functions, "sendEmail");
+
+  const uuid = crypto.randomUUID();
+  const db = getFirestore();
+
+  await addDoc(collection(db, "verify_user_sessions"), {
+    uuid: uuid,
+    email,
+  });
+
+  await sendVerifyEmail({
+    emailData: {
+      recipient: email,
+      subject: "Overenie emailu",
+      userFirstName: firstName,
+      emailIdentifier: "USER_VERIFY_EMAIL",
+      uuid,
+    },
+  });
 }
 
 const RegisterModal: React.FC<RegisterModalProps> = ({
@@ -45,7 +79,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
       tel_number,
     } = formData; // This line already captures ConfirmPassword
     try {
-      const isSuccess: boolean = await registerUser(
+      const isSuccess = await registerUser(
         first_name,
         second_name,
         email,
@@ -59,6 +93,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
         // Only navigate if registration was successful
         setShowRegisterModal(false);
         setShowLoginModal(true);
+        await sendRegistrationEmail(email, first_name);
         //window.location.reload();
       } else {
         // Reset submitting flag if registration failed
