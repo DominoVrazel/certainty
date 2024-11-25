@@ -93,7 +93,15 @@ export function ReservationNotification({
               o potvrdení rezervácie môžete sledovať na rezervačnej stránke v{" "}
               <b>DETAILE</b> Vašej rezervácie.
             </p>
+
+            <p> S pozdravom,</p>
           </Text>
+          <Img
+            src="https://www.timing.sk/online14/ski/stsl.png"
+            alt="ZSL Logo"
+            width="100"
+            style={{}}
+          />
         </Container>
       </Body>
     </Html>

@@ -20,7 +20,7 @@ import { logoutUser } from "./services/FirebaseService";
 import Dropdown from "react-bootstrap/Dropdown";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-import ZSLLogo from "./assets/images/ZSL-logo.png";
+import ZSLLogo from "./assets/images/Logo-ZSL.jpg";
 
 import "./App.css";
 import "./Modal.css";
@@ -87,7 +87,7 @@ function App() {
           <img
             src={ZSLLogo}
             alt="logo"
-            style={{ width: "50px", height: "auto" }}
+            style={{ width: "120px", height: "auto" }}
           />
           <ul>
             {isAdmin && (

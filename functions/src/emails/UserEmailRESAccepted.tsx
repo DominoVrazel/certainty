@@ -46,6 +46,7 @@ export function ReservationAcceptedNotification({
             padding-left: 2vw;
             padding-right: 2vw;
             padding-top: 2vw;
+            padding-bottom: 2vw;
             border-radius: 1vw;
             margin-top: 4vw;
             margin-bottom: 1vw;
@@ -65,13 +66,19 @@ export function ReservationAcceptedNotification({
           <Heading>Dobrý deň {userFirstName},</Heading>
           <Text>
             <p>
-              <b>
-                Vaša rezervácia bola{" "}
-                <span className="ResCreatedText">POTVRDENÁ</span> strediskom.
-              </b>
+              Vaša rezervácia bola{" "}
+              <span className="ResCreatedText">POTVRDENÁ</span> strediskom.
+              Tešíme sa na Vašu návštevu a prajeme úspešný tréning.
             </p>
-            <p> Tešíme sa na Vašu návštevu a prajeme úspešný tréning</p>
+
+            <p> S pozdravom,</p>
           </Text>
+          <Img
+            src="https://www.timing.sk/online14/ski/stsl.png"
+            alt="ZSL Logo"
+            width="100"
+            style={{}}
+          />
         </Container>
       </Body>
     </Html>

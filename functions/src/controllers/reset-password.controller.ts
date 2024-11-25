@@ -21,7 +21,7 @@ export class ResetPasswordController {
         private auth: Auth,
         private db: Firestore
     ) {}
-
+    //try catch upravit nema to tam byt
     async resetPassword(req: Request, res: Response) {
     try {
         const body = req.body.data as ResetPasswordData;

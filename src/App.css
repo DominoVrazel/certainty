@@ -43,7 +43,7 @@ button:hover {
   display: flex;
   align-items: center !important; 
   align-content: center !important;
-  margin-left: 1.5vw !important; /* Match with your text color */
+  margin-left: 3vw !important; /* Match with your text color */
   width: 70% !important;
 }
 
@@ -52,7 +52,7 @@ button:hover {
   flex-wrap: wrap; /* Allow items to wrap to the next line */
   align-items: center !important; 
   align-content: center !important;
-  margin-left: 2vw !important; /* Match with your text color */
+  margin-left: 3vw !important; /* Match with your text color */
   gap: 0.2rem 4rem !important; 
   width: 100% !important;
   height: 100% !important;
@@ -62,7 +62,7 @@ button:hover {
 }
 
 .navright {
-  padding-right: 5vw;
+  padding-right: 3vw;
   display: flex; /* Use flexbox to align elements side by side */
   align-items: center; /* Align items vertically */
   gap: 10px; /* Space between the greeting and the dropdown */
