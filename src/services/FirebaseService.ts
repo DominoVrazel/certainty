@@ -1,5 +1,11 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, Auth, signOut } from "firebase/auth";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  Auth,
+  signOut,
+} from "firebase/auth";
 import {
   getFirestore,
   Firestore,
@@ -21,7 +27,19 @@ const firebaseConfig = {
   measurementId: "G-K5NVX8S4WV",
 };
 
-export { db, auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, setDoc, getDocs, collection, doc, query, where };
+export {
+  db,
+  auth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  setDoc,
+  getDocs,
+  collection,
+  doc,
+  query,
+  where,
+};
 
 let app: FirebaseApp;
 if (!getApps().length) {
@@ -30,7 +48,7 @@ if (!getApps().length) {
   app = getApps()[0]; // Use the existing initialized app
 }
 
-const auth: Auth = getAuth(app);  
+const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
 
 export const registerUser = async (
@@ -43,28 +61,38 @@ export const registerUser = async (
   tel_number: string
 ): Promise<boolean> => {
   try {
-    if (!first_name || !second_name || !email || !password || !sport_club || !tel_number) {
+    if (
+      !first_name ||
+      !second_name ||
+      !email ||
+      !password ||
+      !sport_club ||
+      !tel_number
+    ) {
       alert("Vyplňte všetky polia");
-      return false; 
-    }
-    else if (password != ConfirmPassword){
+      return false;
+    } else if (password != ConfirmPassword) {
       alert("Neplatné overenie hesla");
       return false;
-    } 
-    else if (!isStrongPassword(password)) {
-      alert("Heslo musí obsahovať aspoň jedno veľké písmeno, jedno malé písmeno, jedno číslo a musí mať minimálne 6 znakov.");
+    } else if (!isStrongPassword(password)) {
+      alert(
+        "Heslo musí obsahovať aspoň jedno veľké písmeno, jedno malé písmeno, jedno číslo a musí mať minimálne 6 znakov."
+      );
       return false;
-    }
-    else if (!isValidPhoneNumber(tel_number)) {
+    } else if (!isValidPhoneNumber(tel_number)) {
       alert("Neplatné telefónne číslo.");
       return false;
     }
     //creating a new user with the email and password
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
     const user = userCredential.user;
 
     // Add user data to Firestore
-    const userDocRef = doc(collection(db, "users"), user.uid); 
+    const userDocRef = doc(collection(db, "users"), user.uid);
     await setDoc(userDocRef, {
       firstName: first_name,
       secondName: second_name,
@@ -77,20 +105,18 @@ export const registerUser = async (
     });
 
     console.log("Používateľ pridaný do databázy!");
-    alert("Registrácia prebehla úspešne . Na váš email sme odoslali potvrdenie.");
+    alert(
+      "Registrácia prebehla úspešne . Na váš email sme odoslali potvrdenie."
+    );
     return true;
-
   } catch (error: any) {
     if (error.code === "auth/email-already-in-use") {
       alert("Zadaný email sa už používa. Zadajte iný email.");
-    }
-    else if(error.code === "auth/invalid-email"){
+    } else if (error.code === "auth/invalid-email") {
       alert("Neplatný email");
-    }
-    else if(error.code === "auth/weak-password"){
-      alert("Slabé heslo")
-    }
-    else {
+    } else if (error.code === "auth/weak-password") {
+      alert("Slabé heslo");
+    } else {
       console.error("Registrácia používateľa zlyhala: ", error);
       alert(error.message);
     }
@@ -108,7 +134,10 @@ const isValidPhoneNumber = (tel_number: string): boolean => {
   return phoneNumberRegex.test(tel_number);
 };
 
-export const loginUser = async (email: string, password: string): Promise<any> => {
+export const loginUser = async (
+  email: string,
+  password: string
+): Promise<any> => {
   const auth = getAuth();
   try {
     // Validate email and password input
@@ -121,7 +150,10 @@ export const loginUser = async (email: string, password: string): Promise<any> =
       return;
     }
 
-    const userQuery = query(collection(db, "users"), where("email", "==", email));
+    const userQuery = query(
+      collection(db, "users"),
+      where("email", "==", email)
+    );
     const querySnapshot = await getDocs(userQuery);
 
     if (querySnapshot.empty) {
@@ -130,28 +162,39 @@ export const loginUser = async (email: string, password: string): Promise<any> =
       return;
     }
 
+    const userData = querySnapshot.docs[0].data();
+
+    // Check if the user is verified
+    if (!userData.isVerified) {
+      alert(
+        "Váš účet nie je overený. Skontrolujte svoj email a overte svoj účet."
+      ); // "Your account is not verified."
+      return;
+    }
+
     // Firebase sign-in with email and password
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
     const user = userCredential.user;
 
-    const userData = querySnapshot.docs[0].data();
     // Successful login
     console.log(`Prihlásený užívateľ: ${user.email}`);
-    
+
     localStorage.setItem("userEmail", email);
     localStorage.setItem("userFirstName", userData.firstName);
     localStorage.setItem("userSecondName", userData.secondName);
     localStorage.setItem("userSportClub", userData.sportClub);
     localStorage.setItem("userAdmin", userData.isAdmin);
+    localStorage.setItem("userVerified", userData.isVerified);
 
-    
-    if (userData.isAdmin === true){
-      alert(`Vitaj admin`)
-    }
-    else{
+    if (userData.isAdmin === true) {
+      alert(`Vitaj admin`);
+    } else {
       alert(`Dobrý deň ${userData.firstName} prihlásenie prebehlo úspešne`);
     }
-    
 
     return {
       email: user.email,
@@ -159,28 +202,26 @@ export const loginUser = async (email: string, password: string): Promise<any> =
       secondName: userData.secondName,
       sportClub: userData.sportClub,
       isAdmin: userData.isAdmin,
+      isVerified: userData.isVerified,
     };
-
   } catch (error: any) {
     // Handle login errors
 
     if (error.code === "auth/invalid-credential") {
       alert("Nesprávne heslo."); // "Invalid credentials."
-    } 
-    else {
+    } else {
       console.error("Chyba pri prihlasovaní: ", error); // "Error during login: "
       alert(`Chyba pri prihlasovaní: ${error.message}`); // "Error during login: [error message]"
     }
   }
 };
 
-function validate_email(email: any){
-  const expression = /^[^@]+@\w+(\.\w+)+\w$/
-  if (expression.test(email) == true){
-    return true
-  }
-  else {
-    return false
+function validate_email(email: any) {
+  const expression = /^[^@]+@\w+(\.\w+)+\w$/;
+  if (expression.test(email) == true) {
+    return true;
+  } else {
+    return false;
   }
 }
 
@@ -189,7 +230,6 @@ export const checkIfEmailExists = async (email: string): Promise<boolean> => {
   const querySnapshot = await getDocs(userQuery);
   return !querySnapshot.empty;
 };
-
 
 export const logoutUser = async (): Promise<void> => {
   const auth = getAuth();
@@ -200,6 +240,8 @@ export const logoutUser = async (): Promise<void> => {
     localStorage.removeItem("userFirstName");
     localStorage.removeItem("userSecondName");
     localStorage.removeItem("userSportClub");
+    localStorage.removeItem("userAdmin");
+    localStorage.removeItem("userVerified");
     alert("Odhlásenie prebehlo úspešne."); // "Logout successful."
   } catch (error: unknown) {
     if (error instanceof Error) {

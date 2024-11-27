@@ -37,8 +37,9 @@ function LoginModal() {
       // Call the loginUser function with email and password
       const userData = await loginUser(email, password); // Assuming this returns user data including sportclub
 
-      if (userData && userData.sportClub) {
+      if (userData && userData.sportClub && userData.isVerified) {
         localStorage.setItem("sportClub", userData.sportClub); // Store sport club in session storage
+        localStorage.setItem("isVerified", userData.isVerified); // Store verification status in session storage
       }
 
       // After successful login, retrieve user details from session storage
@@ -52,17 +53,6 @@ function LoginModal() {
       setMessage("Chyba pri prihlasovaní. Skúste znova."); // Set error message if login fails
     }
   };
-
-  // const handlePasswordReset = async (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
-  //   try {
-  //     await sendPasswordResetEmail(resetEmail);
-  //     setMessage("Email na obnovenie hesla bol odoslaný.");
-  //     setShowResetPassword(false);
-  //   } catch (error) {
-  //     setMessage("Chyba pri odosielaní emailu na obnovenie hesla. Skúste znova.");
-  //   }
-  // };
 
   const sendEmail = async (
     subject: string,

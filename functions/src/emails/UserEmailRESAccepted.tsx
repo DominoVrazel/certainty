@@ -77,7 +77,7 @@ export function ReservationAcceptedNotification({
             src="https://www.timing.sk/online14/ski/stsl.png"
             alt="ZSL Logo"
             width="100"
-            style={{}}
+            style={{ paddingBottom: "1vw" }}
           />
         </Container>
       </Body>

@@ -20,7 +20,7 @@ import { logoutUser } from "./services/FirebaseService";
 import Dropdown from "react-bootstrap/Dropdown";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-import ZSLLogo from "./assets/images/Logo-ZSL.jpg";
+import ZSLLogo from "./assets/images/Logo-ZSL.png";
 
 import "./App.css";
 import "./Modal.css";
@@ -203,10 +203,11 @@ function App() {
           }
         />
 
-        <Route path="/reset-password" element={<ForgottenPassword />} />
+        <Route
+          path="/reset-password"
+          element={<ForgottenPassword resorts={resorts} />}
+        />
         <Route path="/verify-user" element={<VerifyUser />} />
-
-        
       </Routes>
     </Router>
   );

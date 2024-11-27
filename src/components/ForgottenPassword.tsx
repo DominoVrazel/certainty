@@ -1,17 +1,24 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
-import {
-  signInWithEmailAndPassword,
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-  getAuth,
-} from "firebase/auth";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../ForgottenPass.css";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
-const ForgottenPassword: React.FC = () => {
+interface ResetPasswordResponse {
+  status: string;
+}
+
+interface Resort {
+  id: string;
+  name: string;
+}
+
+interface ForgottenPasswordProps {
+  resorts: Resort[];
+}
+
+const ForgottenPassword: React.FC<ForgottenPasswordProps> = ({ resorts }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const uuid = queryParams.get("uuid") as string;
 
@@ -42,16 +49,34 @@ const ForgottenPassword: React.FC = () => {
       return false;
     }
     const functions = getFunctions();
-
     const resetPassword = httpsCallable<{
       uuid: string;
       newPassword: string;
     }>(functions, "resetPassword");
 
-    await resetPassword({
-      uuid: uuid,
-      newPassword: formData.password,
-    });
+    try {
+      const response = await resetPassword({
+        uuid: uuid,
+        newPassword: formData.password,
+      });
+
+      // Check if response.data is defined and has the expected structure
+      if (response.data && (response.data as ResetPasswordResponse).status) {
+        const responseData = response.data as ResetPasswordResponse;
+
+        if (responseData.status === "Updated") {
+          alert("Heslo bolo úspešne aktualizované.");
+          navigate(`/resort/${resorts[0].id}`);
+        } else {
+          alert("Pri aktualizácii hesla došlo k chybe.");
+        }
+      } else {
+        alert("Pri aktualizácii hesla došlo k chybe.");
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      alert("Pri aktualizácii hesla došlo k chybe.");
+    }
   };
 
   const isStrongPassword = (password: string): boolean => {

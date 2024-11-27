@@ -1,58 +1,55 @@
-import {Request, Response} from 'express';
-import { App, initializeApp } from 'firebase-admin/app';
-import { Auth, getAuth } from 'firebase-admin/auth';
-import admin from 'firebase-admin';
-import { Firestore } from 'firebase-admin/firestore';
-
+import { Request, Response } from "express";
+import { App, initializeApp } from "firebase-admin/app";
+import { Auth, getAuth } from "firebase-admin/auth";
+import admin from "firebase-admin";
+import { Firestore } from "firebase-admin/firestore";
 
 interface ResetPasswordData {
-    uuid: string;
-    newPassword: string;
+  uuid: string;
+  newPassword: string;
 }
 
 interface UserSession {
-    uuid: string;
-    email: string;
+  uuid: string;
+  email: string;
 }
 
 export class ResetPasswordController {
-    constructor(   
-        private app: App,
-        private auth: Auth,
-        private db: Firestore
-    ) {}
-    //try catch upravit nema to tam byt
-    async resetPassword(req: Request, res: Response) {
+  constructor(private app: App, private auth: Auth, private db: Firestore) {}
+  //try catch upravit nema to tam byt
+  async resetPassword(req: Request, res: Response) {
     try {
-        const body = req.body.data as ResetPasswordData;
+      const body = req.body.data as ResetPasswordData;
 
-        const snapshot = await this.db.collection("user_sessions").where("uuid", "==", body.uuid).get();
+      const snapshot = await this.db
+        .collection("user_sessions")
+        .where("uuid", "==", body.uuid)
+        .get();
 
-        if (snapshot.empty) {
-            return res.status(404).send("User not found 1");
-        }
+      if (snapshot.empty) {
+        return res.status(404).send("User session not found");
+      }
 
-        const userSession = snapshot.docs[0].data() as UserSession;
-        const userEmail = userSession.email;
+      const userSession = snapshot.docs[0].data() as UserSession;
+      const userEmail = userSession.email;
 
-        let userAuth;
-        try {
-            userAuth =  await this.auth.getUserByEmail(userEmail);
-        } catch (error) {
-            return res.status(404).send("User not found 2");
-        }
+      let userAuth;
+      try {
+        userAuth = await this.auth.getUserByEmail(userEmail);
+      } catch (error) {
+        return res.status(404).send("User not found");
+      }
 
-        await this.auth.updateUser(userAuth.uid, {
-            password: body.newPassword
-        });
+      await this.auth.updateUser(userAuth.uid, {
+        password: body.newPassword,
+      });
 
-        return res.status(200).send({ data: {status: "Updated" }});
-    } catch(err) {
-        if (err instanceof Error)
-         return res.status(500).send({err: err, message: err.message, body: req.body});
+      return res.status(200).send({ data: { status: "Updated" } });
+    } catch (err) {
+      if (err instanceof Error)
+        return res
+          .status(500)
+          .send({ err: err, message: err.message, body: req.body });
     }
-
-    }
-
-
+  }
 }

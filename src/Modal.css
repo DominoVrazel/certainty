@@ -1,5 +1,10 @@
 .modal-backdrop {
-  background-color: rgba(255, 255, 255, 0) !important; /* Light background color */
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0
+  ) !important; /* Light background color */
   opacity: 1 !important; /* Make it fully opaque */
   z-index: 1000 !important; /* Ensure it stays below modal if needed */
 }
@@ -13,12 +18,12 @@
   background-color: rgba(253, 253, 253, 0.5); /* Semi-transparent black */
   display: flex;
   justify-content: center; /* Center modal */
-  align-items: center;     /* Center modal vertically */
-  z-index: 1000;          /* Ensure it appears above everything else */
+  align-items: center; /* Center modal vertically */
+  z-index: 1000; /* Ensure it appears above everything else */
 }
 
 .modal-container {
-  background-color: rgb(255, 255, 255);
+  background-color: rgb(247, 247, 247);
   border-radius: 8px;
   padding: 20px;
   z-index: 1001; /* Ensure the modal is on top of the backdrop */
@@ -31,7 +36,7 @@
   max-height: 60vw;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   margin: 0 auto;
   font-size: 0.8vw;
 }
@@ -80,8 +85,8 @@ form {
 }
 
 input {
-  margin-bottom: 15px;        /* Space between the form elements */
-  padding: 10px;              /* Padding inside the input fields */
+  margin-bottom: 15px; /* Space between the form elements */
+  padding: 10px; /* Padding inside the input fields */
   font-size: 16px;
 }
 
@@ -120,7 +125,7 @@ input {
   box-shadow: none !important;
 }
 
-.regcontainer h2{
+.regcontainer h2 {
   margin-bottom: 1vw;
   font-size: 1.5vw;
 }
@@ -158,7 +163,6 @@ input {
 .info-icon:hover::before {
   opacity: 1;
 }
-
 
 /* Responsive styles */
 @media (max-width: 768px) {

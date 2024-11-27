@@ -1,26 +1,43 @@
-.resort-page{
-    text-align: center;
-    background-color: rgb(240, 240, 240);
-    padding-bottom: 1vw;
-    margin-top: 0.2vw;
+:root {
+  --font-family-sans: "Noto Sans", sans-serif;
+  --font-family-serif: "Roboto", sans-serif;
 }
 
-    .calendar-container {
-        padding-top: 2vw;
-    }
+.resort-page {
+  text-align: center;
+  padding-bottom: 1vw;
+}
 
+.calendar-container {
+  padding-top: 2vw;
+}
 
 .deleting-notification {
-    position: fixed; /* Position fixed to overlay on other content */
-    top: 50%; /* Center vertically */
-    left: 50%; /* Center horizontally */
-    transform: translate(-50%, -50%); /* Offset for center alignment */
-    background-color: rgba(0, 0, 0, 0.7); /* Dark background */
-    color: rgb(255, 255, 255); /* Text color */
-    padding: 20px; /* Padding around text */
-    border-radius: 8px; /* Rounded corners */
-    z-index: 999; /* Ensure it appears above other content */
+  position: fixed; /* Position fixed to overlay on other content */
+  top: 50%; /* Center vertically */
+  left: 50%; /* Center horizontally */
+  transform: translate(-50%, -50%); /* Offset for center alignment */
+  background-color: rgba(0, 0, 0, 0.7); /* Dark background */
+  color: rgb(255, 255, 255); /* Text color */
+  padding: 20px; /* Padding around text */
+  border-radius: 8px; /* Rounded corners */
+  z-index: 999; /* Ensure it appears above other content */
 }
 
-    
-    
+.training-courses {
+  padding-top: 1vw;
+  padding-bottom: 1vw;
+  font-family: "Roboto", sans-serif;
+  font-size: 1.3vw;
+  font-weight: 450;
+  font-family: var(--font-family-sans);
+  /* background-color: white; */
+}
+
+.custom-dropdown {
+  border: none;
+  outline: none; /* Optional: Remove the outline as well */
+  background-color: transparent; /* Optional: Make the background transparent */
+  padding: 5px; /* Optional: Add some padding */
+  background-color: none !important;
+}

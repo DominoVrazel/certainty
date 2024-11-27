@@ -93,6 +93,7 @@ if (
 const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   const [courses, setCourses] = useState<{ id: string; name: string }[]>([]);
   const [seasons, setSeasons] = useState<Record<string, Season[]>>({});
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [currentDates, setCurrentDates] = useState<Record<string, Date>>({});
   const [courseCapacities, setCourseCapacities] = useState<
     Record<string, number>
@@ -214,6 +215,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         setSeasons(fetchedSeasons);
         setCourseCapacities(courseCapacities);
         setIndividualLineCapacities(individualLineCapacities);
+
+        if (fetchedCourses.length > 0) {
+          setSelectedCourse(fetchedCourses[0].id);
+        }
       } catch (error) {
         console.error("Error fetching data: ", error);
       }
@@ -380,7 +385,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           </div>
           <div className="curr-date-heading">
             <p>
-              Tréningy od {format(currentDateForCourse, "dd.MM.yy")} do{" "}
+              REZERVÁCIE od {format(currentDateForCourse, "dd.MM.yy")} do{" "}
               {format(addDays(currentDateForCourse, 6), "dd.MM.yy")}
             </p>
           </div>
@@ -1246,23 +1251,38 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     }
   };
 
+  const toggleDropdown = () => {
+    setDropdownVisible((prev) => ({
+      ...prev,
+      dropdown: !prev.dropdown,
+    }));
+  };
+
   return (
     <div className="resort-page">
       <DeletingNotification />
-      {courses.map((course) => (
-        <div key={course.id}>
-          <h2>Zjazdovka: {course.name}</h2>
-          <div className="calendar-container">
-            {seasons[course.id]?.map((season) => (
-              <div key={season.id}>
-                {" "}
-                {/* Make sure each season has a unique ID */}
-                {renderCalendar(season.weeks, course.id)}
-              </div>
+      <div className="training-courses">
+        TRÉNINGOVÉ ZJAZDOVKY:
+        {dropdownVisible && (
+          <select
+            onChange={(e) => setSelectedCourse(e.target.value)}
+            value={selectedCourse || ""}
+            className="custom-dropdown"
+          >
+            {courses.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.name}
+              </option>
             ))}
+          </select>
+        )}
+      </div>
+      {selectedCourse &&
+        seasons[selectedCourse]?.map((season) => (
+          <div key={season.id}>
+            {renderCalendar(season.weeks, selectedCourse)}
           </div>
-        </div>
-      ))}
+        ))}
 
       {/* Modal to reserve a session */}
       {selectedSession && (

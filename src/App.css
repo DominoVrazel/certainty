@@ -2,7 +2,6 @@ button:hover {
   background-color: #ebebeb00 !important;
 }
 
-
 .btn-success {
   background-color: #007bff !important; /* Match with your nav tab color */
   border-color: #007bff !important; /* Match with your nav tab color */
@@ -26,11 +25,10 @@ button:hover {
   display: flex; /* Use flexbox for layout */
   justify-content: space-between; /* Space between left and right elements */
   align-items: center; /* Center vertically */
-  margin-top: 0.5vw !important;
-  margin-bottom: 0.1vw !important;
+  padding-top: 0.5vw !important;
+  border-bottom: 2px solid #ebeaea !important; /* Add a border at the bottom */
   padding-bottom: 0.5vw !important;
-
-  box-shadow: 0px 3px 2px rgba(102, 102, 102, 0.705) !important; /* Add shadow effect */
+  background-color: #f8f8f8 !important;
 }
 
 .nav {
@@ -41,7 +39,7 @@ button:hover {
 
 .navleft {
   display: flex;
-  align-items: center !important; 
+  align-items: center !important;
   align-content: center !important;
   margin-left: 3vw !important; /* Match with your text color */
   width: 70% !important;
@@ -50,15 +48,14 @@ button:hover {
 .navleft ul {
   display: flex;
   flex-wrap: wrap; /* Allow items to wrap to the next line */
-  align-items: center !important; 
+  align-items: center !important;
   align-content: center !important;
   margin-left: 3vw !important; /* Match with your text color */
-  gap: 0.2rem 4rem !important; 
+  gap: 0.2rem 4rem !important;
   width: 100% !important;
   height: 100% !important;
   list-style: none; /* Remove list item dots */
   margin-top: 0.75vw !important;
-
 }
 
 .navright {
@@ -87,7 +84,7 @@ button:hover {
   font-size: 0.9vw !important;
 }
 
-.nav-resort{
+.nav-resort {
   color: inherit !important;
   text-decoration: none !important;
   font-weight: 500;
@@ -95,12 +92,12 @@ button:hover {
   padding-right: 0.5vw !important;
   font-size: 0.9vw !important;
   align-items: center !important; /* Add some margin on the right side */
-  align-content: center !important; 
+  align-content: center !important;
 }
 
-.nav-resort:hover{
+.nav-resort:hover {
   padding-top: 0.3vw !important;
- 
+
   padding-left: 0.5vw !important;
   text-decoration: underline !important;
   text-underline-offset: 0.5em;
@@ -123,10 +120,10 @@ button:hover {
 
 .dropdown {
   align-items: center !important; /* Add some margin on the right side */
-  align-content: center !important; 
+  align-content: center !important;
 }
 
-.btn-success{
+.btn-success {
   display: flex !important;
   background-color: #4f84e7 !important; /* Match with your nav tab color */
   border: none !important; /* Match with your nav tab color */
@@ -134,7 +131,7 @@ button:hover {
   padding-bottom: 0.4vw !important;
   border-radius: 10px !important;
   align-items: center !important; /* Add some margin on the right side */
-  align-content: center !important; 
+  align-content: center !important;
   font-size: 0.9vw !important;
 }
 
@@ -153,7 +150,7 @@ button:hover {
   color: #757575;
 }
 
-.ForgottenPassDropdown{
+.ForgottenPassDropdown {
   margin-top: 1vw;
   background-color: #f3f3f3;
   padding-left: 1vw;
@@ -163,7 +160,7 @@ button:hover {
   border-radius: 10px;
 }
 
-.SendForgottenPass{
+.SendForgottenPass {
   padding: 0.5vw;
   font-size: 0.8vw;
   font-weight: 500;
@@ -173,11 +170,11 @@ button:hover {
   cursor: pointer;
 }
 
-.SendForgottenPass:hover{
+.SendForgottenPass:hover {
   background-color: #297427 !important;
 }
 
-.CancelForgottenPass{
+.CancelForgottenPass {
   padding: 0.5vw;
   font-size: 0.8vw;
   font-weight: 500;
@@ -187,18 +184,17 @@ button:hover {
   cursor: pointer;
 }
 
-.CancelForgottenPass:hover{
+.CancelForgottenPass:hover {
   background-color: #3963b3 !important;
 }
 
-.ForgottenPassCon{
+.ForgottenPassCon {
   display: flex;
   align-items: center;
   align-content: center;
-
 }
 
-.ForgottenPassButton{
+.ForgottenPassButton {
   padding: none !important;
   background-color: #ffffff00;
   color: #3b9238;
@@ -206,16 +202,16 @@ button:hover {
   text-decoration: underline;
 }
 
-.ForgottenPassButton:hover{
+.ForgottenPassButton:hover {
   color: #1f5a1d;
   box-shadow: none !important;
 }
 
-.ForgottenPassText{
+.ForgottenPassText {
   margin-bottom: 0vw !important;
 }
 
-.ReservationConfirmPage{
+.ReservationConfirmPage {
   background-color: rgb(240, 240, 240);
   height: 50vw;
 }
