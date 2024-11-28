@@ -40,7 +40,7 @@ export function ReservationNotification({
           }
           
           .heading{
-            font-size: 24px;
+            font-size: 28px;
           }
 
           p{
@@ -100,7 +100,7 @@ export function ReservationNotification({
             src="https://www.timing.sk/online14/ski/stsl.png"
             alt="ZSL Logo"
             width="100"
-            style={{}}
+            style={{ paddingBottom: "30px" }}
           />
         </Container>
       </Body>

@@ -32,7 +32,7 @@ export function UserEmailVerify({
           }
           
           .heading{
-            font-size: 24px;
+            font-size: 28px;
           }
 
           p{
@@ -87,15 +87,25 @@ export function UserEmailVerify({
       </Head>
       <Body className="body">
         <Container className="container">
+          <Img
+            src="https://sp-ao.shortpixel.ai/client/to_webp,q_glossy,ret_img,w_1020,h_994/https://www.zvazslovenskeholyzovania.sk/wp-content/uploads/zsl-rysko-zjazdove-lyzovanie-1024x998.png"
+            alt="Reservation Image"
+            width="100"
+            style={{ paddingLeft: "1vw" }}
+          />
           <Heading className="heading">Dobrý deň {userFirstName},</Heading>
-          <Text>Prosím overte svoj email kliknútím na tlačidlo nižšie.</Text>
+          <Text>
+            <p>Prosím overte svoj email kliknútím na tlačidlo nižšie.</p>
+          </Text>
 
           <div className="button-container">
             <Button href={verifyLink} className="accept-button">
               POTVRDIŤ EMAIL
             </Button>
           </div>
-
+          <Text>
+            <p>S pozdravom,</p>
+          </Text>
           <Img
             src="https://www.timing.sk/online14/ski/stsl.png"
             alt="ZSL Logo"

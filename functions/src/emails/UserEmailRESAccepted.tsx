@@ -22,14 +22,14 @@ export function ReservationAcceptedNotification({
       <Head>
         <style>
           {`
-          .ResCreatedText{
+          .ResAcceptedText{
             color: #008000;
             font-size: 20px;
             font-weight: bold;
           }
           
           .heading{
-            font-size: 24px;
+            font-size: 28px;
           }
 
           p{
@@ -63,11 +63,11 @@ export function ReservationAcceptedNotification({
             width="100"
             style={{ paddingLeft: "1vw" }}
           />
-          <Heading>Dobrý deň {userFirstName},</Heading>
+          <Heading className="heading">Dobrý deň {userFirstName},</Heading>
           <Text>
             <p>
               Vaša rezervácia bola{" "}
-              <span className="ResCreatedText">POTVRDENÁ</span> strediskom.
+              <span className="ResAcceptedText">POTVRDENÁ</span> strediskom.
               Tešíme sa na Vašu návštevu a prajeme úspešný tréning.
             </p>
 
@@ -77,7 +77,7 @@ export function ReservationAcceptedNotification({
             src="https://www.timing.sk/online14/ski/stsl.png"
             alt="ZSL Logo"
             width="100"
-            style={{ paddingBottom: "1vw" }}
+            style={{ paddingBottom: "10px" }}
           />
         </Container>
       </Body>
