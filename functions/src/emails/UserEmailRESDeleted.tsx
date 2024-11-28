@@ -38,6 +38,7 @@ export function ReservationDeletedNotification({
 
           .body{
             display: flex;
+            font-family: Helvetica, sans-serif;
           }
 
           .container{

@@ -19,10 +19,12 @@ export function UserEmailForgottenPass({ resetLink }: { resetLink: string }) {
           
           .heading{
             font-size: 20px;
+            text-align: center;
           }
 
           .body{
             display: flex;
+            font-family: Helvetica, sans-serif;
           }
 
           .container{

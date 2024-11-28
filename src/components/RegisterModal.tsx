@@ -57,9 +57,10 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: name === "tel_number" ? value.replace(/\s+/g, "") : value, // Remove spaces from tel_number
     });
   };
 

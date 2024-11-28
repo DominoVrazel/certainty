@@ -49,6 +49,7 @@ export function ReservationNotification({
 
           .body{
             display: flex;
+            font-family: Helvetica, sans-serif;
           }
 
           .container{

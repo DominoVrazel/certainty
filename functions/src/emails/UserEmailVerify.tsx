@@ -33,14 +33,21 @@ export function UserEmailVerify({
           
           .heading{
             font-size: 28px;
+            text-align: center;
           }
 
           p{
             font-size: 18px;
+            text-align: center;
+          }
+
+          .regards {
+            text-align: left;
           }
 
           .body{
             display: flex;
+            font-family: Helvetica, sans-serif;
           }
 
           .container{
@@ -91,7 +98,7 @@ export function UserEmailVerify({
             src="https://sp-ao.shortpixel.ai/client/to_webp,q_glossy,ret_img,w_1020,h_994/https://www.zvazslovenskeholyzovania.sk/wp-content/uploads/zsl-rysko-zjazdove-lyzovanie-1024x998.png"
             alt="Reservation Image"
             width="100"
-            style={{ paddingLeft: "1vw" }}
+            style={{ marginLeft: "auto", marginRight: "auto" }}
           />
           <Heading className="heading">Dobrý deň {userFirstName},</Heading>
           <Text>
@@ -104,7 +111,7 @@ export function UserEmailVerify({
             </Button>
           </div>
           <Text>
-            <p>S pozdravom,</p>
+            <p className="regards">S pozdravom,</p>
           </Text>
           <Img
             src="https://www.timing.sk/online14/ski/stsl.png"
