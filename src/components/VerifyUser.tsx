@@ -76,7 +76,6 @@ const VerifyUser: React.FC = () => {
     LoaderState.Loading
   );
 
-
   const queryParams = new URLSearchParams(location.search);
   const uuid = queryParams.get("uuid") as string;
 
@@ -90,14 +89,14 @@ const VerifyUser: React.FC = () => {
       } catch (error) {
         console.log("Error: ", error);
         setStatus(VerifyUserStatus.EmailNotFound);
-        setVerifyLoadingState(LoaderState.Finsihed);
+        setVerifyLoadingState(LoaderState.Finished);
         return;
       }
 
       const isVerified = await isUserVerified(db, userEmail);
       if (isVerified) {
         setStatus(VerifyUserStatus.AlreadyVerified);
-        setVerifyLoadingState(LoaderState.Finsihed);
+        setVerifyLoadingState(LoaderState.Finished);
         return;
       }
       try {
@@ -105,13 +104,12 @@ const VerifyUser: React.FC = () => {
       } catch (error) {
         console.log("Error: ", error);
         setStatus(VerifyUserStatus.Fail);
-        setVerifyLoadingState(LoaderState.Finsihed);
+        setVerifyLoadingState(LoaderState.Finished);
         return;
       }
 
       setStatus(VerifyUserStatus.Success);
-      setVerifyLoadingState(LoaderState.Finsihed);
-
+      setVerifyLoadingState(LoaderState.Finished);
     };
 
     verifyUserLogic();

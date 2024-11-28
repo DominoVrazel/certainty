@@ -3,11 +3,11 @@ import "./style.css";
 
 export enum LoaderState {
   Loading,
-  Finsihed,
+  Finished,
 }
 
 const loadingAnimation: React.FC<{ state: LoaderState }> = ({ state }) => {
-  if (state === LoaderState.Finsihed) {
+  if (state === LoaderState.Finished) {
     return null;
   }
 
@@ -15,8 +15,8 @@ const loadingAnimation: React.FC<{ state: LoaderState }> = ({ state }) => {
     <div className="loading-animation-container">
       <svg
         className="spinner"
-        width="65px"
-        height="65px"
+        width="50px"
+        height="50px"
         viewBox="0 0 66 66"
         xmlns="http://www.w3.org/2000/svg"
       >

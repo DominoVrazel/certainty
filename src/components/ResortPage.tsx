@@ -26,6 +26,8 @@ import AddToTrainingModal from "./AddToTrainigModal";
 import CloseTrackModal from "./CloseTrackModal";
 import ShowInfoModal from "./ShowInfoModal";
 
+import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
+
 import "../Modal.css";
 import "../ResortPage.css";
 import "../Calendar.css";
@@ -119,7 +121,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   const [reservationExists, setReservationExists] = useState<
     Record<string, ReservationDetails | null>
   >({});
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State to control edit modal
   const [editReservationDetails, setEditReservationDetails] =
     useState<ReservationDetails | null>(null); // State for the reservation being edited
@@ -138,7 +139,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   const [dropdownVisible, setDropdownVisible] = useState<
     Record<string, boolean>
   >({});
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
   const [closedTracks, setClosedTracks] = useState<
     Record<string, { reason: string }>
   >({});
@@ -155,7 +155,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   };
   const isAdmin = localStorage.getItem("userAdmin") === "true";
 
-  const [resortEmail, setResortEmail] = useState<string | null>(null); // State to store resort email
+  const [resortEmail, setResortEmail] = useState<string | null>(null);
+  const [verifyLoadingState, setVerifyLoadingState] = useState(
+    LoaderState.Loading
+  );
 
   useEffect(() => {
     const fetchCoursesAndSeasons = async () => {
@@ -278,6 +281,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         }
 
         setReservationExists(reservations);
+        setVerifyLoadingState(LoaderState.Finished);
       } catch (error) {
         console.error("Error fetching reservations: ", error);
       }
@@ -370,9 +374,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
     return (
       <div className="current-week-container">
-        {isLoading && (
-          <div className="loading-indicator">Vytváram rezerváciu...</div>
-        )}
         <div className="week-navigation">
           <div className="navigate-backwards">
             <button
@@ -871,12 +872,12 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
   const handleReservationSubmit = async (formData: any) => {
     try {
+      setVerifyLoadingState(LoaderState.Loading);
       if (!selectedSession) {
         console.error("Error: selectedSession is undefined or null.");
         return;
       }
 
-      setIsLoading(true);
       const db = getFirestore();
 
       const courseDoc = await getDoc(
@@ -975,7 +976,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       }
 
       console.log("Rezervácia úspešne uložená!");
-      alert("Ďakujeme za rezerváciu, tešíme sa na vás.");
 
       const reservationKey = `${selectedSession.date}_${selectedSession.session.startTime}_${selectedSession.session.endTime}_${selectedSession.course}_${selectedSession.lineNumber}`;
 
@@ -998,11 +998,12 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       }));
       setSelectedSession(null);
       await handleUpdate();
-      setIsLoading(false);
+
+      setVerifyLoadingState(LoaderState.Finished);
+      alert("Ďakujeme za rezerváciu, tešíme sa na vás.");
     } catch (error) {
       console.error("Error saving reservation: ", error);
       alert("There was an error saving the reservation.");
-      setIsLoading(false);
     }
   };
 
@@ -1021,9 +1022,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       return;
     }
 
-    setIsDeleting(true);
-
     try {
+      setVerifyLoadingState(LoaderState.Loading);
       // Create a reference to the specific reservation document using reservationId
       const reservationRef = doc(db, "reservations", reservationId);
       await deleteDoc(reservationRef);
@@ -1036,7 +1036,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       alert("Pri zrušení rezervácie došlo k chybe.");
     } finally {
       // Reset loading state
-      setIsDeleting(false);
       handleUpdate();
 
       const useremailSubject = "Vaša rezervácia bola zrušená";
@@ -1066,22 +1065,13 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     }
   };
 
-  const DeletingNotification = () => {
-    if (!isDeleting) return null;
-
-    return (
-      <div className="deleting-notification">
-        <p>Mažem rezerváciu...</p>
-      </div>
-    );
-  };
-
   const handleEdit = (existingDetails: ReservationDetails) => {
     setEditReservationDetails(existingDetails); // Set the reservation details to be edited
     setIsEditModalOpen(true); // Open the edit modal
   };
 
   const handleUpdate = async () => {
+    setVerifyLoadingState(LoaderState.Loading);
     const reservationsSnapshot = await getDocs(collection(db, "reservations"));
     const reservations: Record<string, ReservationDetails> = {};
 
@@ -1114,6 +1104,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     }
 
     setReservationExists(reservations);
+    setVerifyLoadingState(LoaderState.Finished);
   };
 
   const handleAddToTrainingClick = (
@@ -1130,6 +1121,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     if (!addToTrainingSession) return;
 
     try {
+      setVerifyLoadingState(LoaderState.Loading);
       const { date, session, course, lineNumber } = addToTrainingSession;
       const db = getFirestore();
       const userEmail = localStorage.getItem("userEmail");
@@ -1190,8 +1182,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           });
 
           console.log("Successfully added to training!");
+          await handleUpdate();
+          setVerifyLoadingState(LoaderState.Finished);
           alert("Boli ste úspešne pridaní na tréning.");
-          handleUpdate();
         } else {
           console.error("User already added to this training.");
           alert("Už ste pridaní na tento tréning.");
@@ -1260,7 +1253,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
   return (
     <div className="resort-page">
-      <DeletingNotification />
       <div className="training-courses">
         TRÉNINGOVÉ ZJAZDOVKY:
         {dropdownVisible && (
@@ -1277,79 +1269,87 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           </select>
         )}
       </div>
-      {selectedCourse &&
-        seasons[selectedCourse]?.map((season) => (
-          <div key={season.id}>
-            {renderCalendar(season.weeks, selectedCourse)}
-          </div>
-        ))}
+      {verifyLoadingState === LoaderState.Loading ? (
+        <div className="loading-animation-container">
+          <LoadingAnimation state={verifyLoadingState} />
+        </div>
+      ) : (
+        <>
+          {selectedCourse &&
+            seasons[selectedCourse]?.map((season) => (
+              <div key={season.id}>
+                {renderCalendar(season.weeks, selectedCourse)}
+              </div>
+            ))}
 
-      {/* Modal to reserve a session */}
-      {selectedSession && (
-        <ReservationModal
-          date={selectedSession.date}
-          session={selectedSession.session}
-          onClose={handleCloseModal}
-          onSubmit={handleReservationSubmit}
-          onUpdate={handleUpdate}
-          course={selectedSession.course}
-          isExistingReservation={Boolean(selectedSession.existingDetails)} // Indicate if it's an existing reservation
-          existingDetails={selectedSession.existingDetails} // Pass existing reservation details // Pass delete function
-          isLoggedIn={isLoggedIn} // Pass login status
-        />
-      )}
+          {/* Modal to reserve a session */}
+          {selectedSession && (
+            <ReservationModal
+              date={selectedSession.date}
+              session={selectedSession.session}
+              onClose={handleCloseModal}
+              onSubmit={handleReservationSubmit}
+              onUpdate={handleUpdate}
+              course={selectedSession.course}
+              isExistingReservation={Boolean(selectedSession.existingDetails)} // Indicate if it's an existing reservation
+              existingDetails={selectedSession.existingDetails} // Pass existing reservation details // Pass delete function
+              isLoggedIn={isLoggedIn} // Pass login status
+            />
+          )}
 
-      {/* Modal for adding to training */}
-      {isAddToTrainingModalOpen && addToTrainingSession && (
-        <AddToTrainingModal
-          date={addToTrainingSession.date}
-          session={addToTrainingSession.session}
-          onClose={() => setIsAddToTrainingModalOpen(false)}
-          onSubmit={handleAddToTrainingSubmit}
-          course={addToTrainingSession.course}
-        />
-      )}
+          {/* Modal for adding to training */}
+          {isAddToTrainingModalOpen && addToTrainingSession && (
+            <AddToTrainingModal
+              date={addToTrainingSession.date}
+              session={addToTrainingSession.session}
+              onClose={() => setIsAddToTrainingModalOpen(false)}
+              onSubmit={handleAddToTrainingSubmit}
+              course={addToTrainingSession.course}
+            />
+          )}
 
-      {/* Modal for editing reservation */}
-      {isEditModalOpen && editReservationDetails && (
-        <EditReservationModal
-          reservationDetails={editReservationDetails} // Pass the reservation details
-          onClose={() => setIsEditModalOpen(false)} // Close function
-          isLoggedIn={isLoggedIn} // Pass login status if needed
-          isAdmin={isAdmin} // Pass admin status if needed
-          onUpdate={handleUpdate}
-        />
-      )}
+          {/* Modal for editing reservation */}
+          {isEditModalOpen && editReservationDetails && (
+            <EditReservationModal
+              reservationDetails={editReservationDetails} // Pass the reservation details
+              onClose={() => setIsEditModalOpen(false)} // Close function
+              isLoggedIn={isLoggedIn} // Pass login status if needed
+              isAdmin={isAdmin} // Pass admin status if needed
+              onUpdate={handleUpdate}
+            />
+          )}
 
-      {isDetailsModalOpen && detailsReservation && (
-        <ReservationDetailsModal
-          reservationDetails={detailsReservation}
-          onClose={() => setIsDetailsModalOpen(false)}
-        />
-      )}
+          {isDetailsModalOpen && detailsReservation && (
+            <ReservationDetailsModal
+              reservationDetails={detailsReservation}
+              onClose={() => setIsDetailsModalOpen(false)}
+            />
+          )}
 
-      {isCloseModalOpen && closeTrackDetails && (
-        <CloseTrackModal
-          isOpen={isCloseModalOpen}
-          onClose={() => setIsCloseModalOpen(false)}
-          onSubmit={(reason) => {
-            handleCloseTrack(
-              closeTrackDetails.course,
-              closeTrackDetails.lineNumber,
-              closeTrackDetails.date,
-              reason
-            );
-            setIsCloseModalOpen(false);
-          }}
-        />
-      )}
+          {isCloseModalOpen && closeTrackDetails && (
+            <CloseTrackModal
+              isOpen={isCloseModalOpen}
+              onClose={() => setIsCloseModalOpen(false)}
+              onSubmit={(reason) => {
+                handleCloseTrack(
+                  closeTrackDetails.course,
+                  closeTrackDetails.lineNumber,
+                  closeTrackDetails.date,
+                  reason
+                );
+                setIsCloseModalOpen(false);
+              }}
+            />
+          )}
 
-      {/* Info Modal */}
-      {isShowInfoModalOpen && (
-        <ShowInfoModal
-          isOpen={isShowInfoModalOpen}
-          onClose={() => setisShowInfoModalOpen(false)}
-        />
+          {/* Info Modal */}
+          {isShowInfoModalOpen && (
+            <ShowInfoModal
+              isOpen={isShowInfoModalOpen}
+              onClose={() => setisShowInfoModalOpen(false)}
+            />
+          )}
+        </>
       )}
     </div>
   );

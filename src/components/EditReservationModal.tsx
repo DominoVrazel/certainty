@@ -3,6 +3,8 @@ import Modal from "./Modal";
 import { updateDoc, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore"; // Ensure you import Firestore methods
 
+import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
+
 interface User {
   email: string;
   firstName: string;
@@ -140,7 +142,6 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
           availableRacers: newAvailableRacers,
         });
       }
-
       onUpdate();
       onClose(); // Close the modal
     } catch (error) {
