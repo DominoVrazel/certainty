@@ -5,6 +5,7 @@ import { getFirestore, doc, deleteDoc } from "firebase/firestore";
 interface ReservationModalProps {
   date: string;
   session: { startTime: string; endTime: string };
+  individualLineCapacity: number;
   onClose: () => void;
   onSubmit: (formData: any) => void;
   onUpdate: () => void;
@@ -17,6 +18,7 @@ interface ReservationModalProps {
 const ReservationModal: React.FC<ReservationModalProps> = ({
   date,
   session,
+  individualLineCapacity,
   onClose,
   onSubmit,
   onUpdate,
@@ -72,7 +74,9 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
             </p>
             {/* Number of racers input */}
             <div className="form-group">
-              <label htmlFor="racers">Počet pretekárov:</label>
+              <label htmlFor="racers">
+                Počet pretekárov: (maximum {individualLineCapacity})
+              </label>
               <input
                 className="form-control"
                 id="racers"

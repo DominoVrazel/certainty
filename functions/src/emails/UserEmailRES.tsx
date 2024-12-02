@@ -18,6 +18,7 @@ interface ReservationNotificationProps {
   endTime: string;
   lineNumber: number;
   baseUrl: string;
+  promoCodesString: string;
 }
 
 export function ReservationNotification({
@@ -27,6 +28,7 @@ export function ReservationNotification({
   startTime,
   endTime,
   lineNumber,
+  promoCodesString,
 }: ReservationNotificationProps) {
   return (
     <Html>
@@ -94,6 +96,14 @@ export function ReservationNotification({
               o potvrdení rezervácie môžete sledovať na rezervačnej stránke v{" "}
               <b>DETAILE</b> Vašej rezervácie.
             </p>
+
+            {promoCodesString && (
+              <p>
+                <b>Promo kódy:</b>
+                <br />
+                {promoCodesString}
+              </p>
+            )}
 
             <p> S pozdravom,</p>
           </Text>

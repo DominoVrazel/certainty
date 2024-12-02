@@ -8,7 +8,6 @@ import AdminEmailRES from "./emails/AdminEmailRES";
 import UserEmailRESAccepted from "./emails/UserEmailRESAccepted";
 import UserEmailRESDeleted from "./emails/UserEmailRESDeleted";
 import UserEmailForgottenPass from "./emails/UserEmailForgottenPass";
-import e from "express";
 import { ResetPasswordController } from "./controllers/reset-password.controller";
 import { getAuth } from "firebase-admin/auth";
 import admin from "firebase-admin";
@@ -55,6 +54,7 @@ interface EmailData {
     endTime: string;
     lineNumber: number;
     emailIdentifier: string;
+    promoCodesString: string;
     discipline: string;
     category: string;
     uuid: string;

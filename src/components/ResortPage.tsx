@@ -25,6 +25,7 @@ import ReservationDetailsModal from "./ReservationDetailsModal";
 import AddToTrainingModal from "./AddToTrainigModal";
 import CloseTrackModal from "./CloseTrackModal";
 import ShowInfoModal from "./ShowInfoModal";
+import { fetchPromoCodes, deletePromoCodes } from "./getPromoCodes";
 
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
 
@@ -774,6 +775,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     discipline: string | undefined,
     category: string | undefined,
     tickets: number | undefined,
+    promoCodesString: string | undefined,
     userFirstName: string,
     userSecondName: string,
     emailIdentifier: string
@@ -793,6 +795,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         discipline: string | undefined;
         category: string | undefined;
         tickets: number | undefined;
+        promoCodesString: string | undefined;
         userFirstName: string;
         userSecondName: string;
         emailIdentifier: string;
@@ -814,6 +817,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           discipline,
           category,
           tickets,
+          promoCodesString,
           userFirstName,
           userSecondName,
           emailIdentifier,
@@ -887,6 +891,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         ? courseDoc.data().name
         : selectedSession.course;
 
+      const promoCodes = await fetchPromoCodes(resortId, formData.tickets);
+      const promoCodesString = promoCodes.map((promo) => promo.code).join("\n");
+      await deletePromoCodes(resortId, promoCodes);
+
       // Create a new document in the 'reservations' collection
       const reservationRef = doc(collection(db, "reservations"));
       const userEmail = localStorage.getItem("userEmail");
@@ -895,6 +903,13 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
       const availableRacers =
         individualLineCapacities[selectedSession.course] - formData.racers;
+
+      if (availableRacers < 0) {
+        console.error("Not enough available racers.");
+        alert("Nedostatok voľných miest.");
+        setVerifyLoadingState(LoaderState.Finished);
+        return;
+      }
 
       await setDoc(reservationRef, {
         date: selectedSession?.date || "",
@@ -939,6 +954,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           formData.discipline,
           formData.category,
           formData.tickets,
+          promoCodesString,
           userFirstName,
           userSecondName,
           useremailIdentifier
@@ -967,6 +983,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           formData.discipline,
           formData.category,
           formData.tickets,
+          undefined,
           userFirstName,
           userSecondName,
           adminemailIdentifier
@@ -1045,6 +1062,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           undefined,
           useremailSubject,
           userEmail,
+          undefined,
           undefined,
           undefined,
           undefined,
@@ -1287,6 +1305,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
             <ReservationModal
               date={selectedSession.date}
               session={selectedSession.session}
+              individualLineCapacity={
+                individualLineCapacities[selectedSession.course]
+              }
               onClose={handleCloseModal}
               onSubmit={handleReservationSubmit}
               onUpdate={handleUpdate}

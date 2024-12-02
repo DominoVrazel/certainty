@@ -6,6 +6,8 @@ import {
   getDocs,
   doc,
   deleteDoc,
+  getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { initializeApp, getApp, getApps } from "firebase/app";
 import {
@@ -34,6 +36,11 @@ interface Season {
   weeks: Array<any>; // This can be typed more specifically based on your data structure
 }
 
+interface PromoCode {
+  id: string;
+  code: string;
+}
+
 const app = getApp();
 console.log("App: ", app);
 const functions = getFunctions(app);
@@ -57,6 +64,7 @@ function AdminPage() {
   const [selectedSeason, setSelectedSeason] = useState<string | null>(null); // State to hold the selected season
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0); // State for current week index
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const db = getFirestore();
   const lang = "sk";
 
@@ -124,7 +132,7 @@ function AdminPage() {
             const data = doc.data();
             coursesData.push({
               id: doc.id,
-              name: data.name, // Assuming you have a "name" field for each course
+              name: data.name,
             });
           });
           setCourses(coursesData);
@@ -169,6 +177,53 @@ function AdminPage() {
     }
   }, [selectedResort, selectedCourse, db]);
 
+  useEffect(() => {
+    if (selectedResort) {
+      const fetchPromoCodes = async () => {
+        try {
+          console.log("Fetching promo codes for resort:", selectedResort); // Debugging log
+          const resortDoc = await getDoc(doc(db, "resorts", selectedResort));
+          if (resortDoc.exists()) {
+            const data = resortDoc.data();
+            const promoCodesData = data.promocodes.map(
+              (promo: any, index: number) => ({
+                id: index.toString(),
+                code: promo.promocode,
+              })
+            );
+            console.log("Fetched promo codes:", promoCodesData); // Debugging log
+            setPromoCodes(promoCodesData);
+          } else {
+            console.log("No such document!");
+          }
+        } catch (error) {
+          console.error("Chyba napájania kolekcie promocodes: ", error);
+        }
+      };
+      fetchPromoCodes();
+    }
+  }, [selectedResort, db]);
+
+  const handleDeletePromoCode = async (promoCodeId: string) => {
+    if (!selectedResort) return;
+    try {
+      const resortDocRef = doc(db, "resorts", selectedResort);
+      const resortDoc = await getDoc(resortDocRef);
+      if (resortDoc.exists()) {
+        const data = resortDoc.data();
+        const updatedPromoCodes = data.promocodes.filter(
+          (promo: any, index: number) => index.toString() !== promoCodeId
+        );
+        await updateDoc(resortDocRef, { promocodes: updatedPromoCodes });
+        setPromoCodes((prevPromoCodes) =>
+          prevPromoCodes.filter((promoCode) => promoCode.id !== promoCodeId)
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting promo code: ", error);
+    }
+  };
+
   const handleNextWeek = () => {
     setCurrentWeekIndex((prevIndex) => prevIndex + 1);
   };
@@ -186,6 +241,7 @@ function AdminPage() {
       setSelectedResort(null);
       setSelectedCourse(null);
       setSelectedSeason(null);
+      setPromoCodes([]);
     } catch (error) {
       console.error("Error deleting resort: ", error);
     }
@@ -294,8 +350,51 @@ function AdminPage() {
           </form>
         </div>
 
+        <div className="promocodes">
+          <h4>Zobrazit promo kody</h4>
+          <label>Vyberte si stredisko:</label>
+          <div>
+            <select
+              value={selectedResort || ""}
+              onChange={(e) => {
+                setSelectedResort(e.target.value);
+                setPromoCodes([]); // Reset promo codes when resort changes
+              }}
+            >
+              <option value="">Vyberte stredisko</option>
+              {resorts.map((resort) => (
+                <option key={resort.id} value={resort.id}>
+                  {resort.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <h3>Promo Codes</h3>
+          {promoCodes.length > 0 ? (
+            <div className="promo-codes">
+              <ul>
+                {promoCodes.map((promoCode) => (
+                  <li key={promoCode.id}>
+                    {promoCode.code}
+                    <button
+                      onClick={() => handleDeletePromoCode(promoCode.id)}
+                      style={{ marginLeft: "10px" }}
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p>Žiadne promo kódy</p>
+          )}
+        </div>
+
         {/* Resort Dropdown */}
         <div>
+          <br></br>
+          <h4>Sprava dokumentov</h4>
           <label>Vyberte si stredisko:</label>
           <div style={{ display: "flex", alignItems: "center" }}>
             <select
