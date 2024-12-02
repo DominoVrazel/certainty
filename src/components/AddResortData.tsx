@@ -31,6 +31,7 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
   const [resortName, setResortName] = useState("");
   const [resortEmail, setResorEmail] = useState("");
   const [csvData, setCsvData] = useState<any[]>([]);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +40,11 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
   ) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.type !== "text/csv") {
+        alert("Neplatný formát súboru. Prosím nahrajte CSV súbor.");
+        return;
+      }
+      setCsvFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         const csvString = e.target?.result as string;
@@ -50,12 +56,29 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
     }
   };
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const addResortToDatabase = async () => {
     setLoading(true);
     setError(null);
 
     if (!resortName) {
       alert("Prosím zadajte názov strediska.");
+      setLoading(false);
+      return;
+    }
+
+    if (!validateEmail(resortEmail)) {
+      alert("Neplatný email.");
+      setLoading(false);
+      return;
+    }
+
+    if (!csvFile) {
+      alert("Prosím nahrajte CSV súbor.");
       setLoading(false);
       return;
     }
@@ -78,8 +101,6 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
     } catch (err) {
       console.error("Chyba pri pridávaní strediska do databázy: ", err);
       setError("Chyba pri pridávaní strediska do databázy.");
-    } finally {
-      setLoading(false);
     }
   };
 
