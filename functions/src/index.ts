@@ -34,6 +34,7 @@ const resetPasswordApp = express();
 
 const gmailUser = defineSecret("GMAIL_USER");
 const gmailToken = defineSecret("GMAIL_TOKEN");
+const appDomain = defineString("APP_DOMAIN");
 
 const reservationBaseUrl = defineString("RESERVATIONS_BASE_URL");
 const resetPassBaseUrl = defineString("RESET_PASS_BASE_URL");
@@ -187,7 +188,9 @@ emailApp.post("*", async (request, response) => {
         response.status(200).json({ result: "Email sent successfully" });
       })
       .catch((error) => {
-        response.status(500).json({ error: `Error sending email: ${error}` });
+        response.status(500).json({
+          error: `Error sending email: ${error}`,
+        });
       });
   } catch (error) {
     response.status(500).json({ error: `Error sending email: ${error}` });
@@ -197,22 +200,17 @@ emailApp.post("*", async (request, response) => {
 // Export the Express app with rate limiter applied and CORS enabled
 export const sendEmail = onRequest(
   {
-    cors: [
-      "http://localhost:5002",
-      "http://127.0.0.1:5002",
-      "https://www.your-allowed-domain.com",
-    ],
+    secrets: [gmailUser, gmailToken],
+
+    cors: ["http://localhost:5002", "http://127.0.0.1:5002", appDomain.value()],
   },
   emailApp
 );
 
 export const resetPassword = onRequest(
   {
-    cors: [
-      "http://localhost:5002",
-      "http://127.0.0.1:5002",
-      "https://www.your-allowed-domain.com",
-    ],
+    secrets: [gmailUser, gmailToken],
+    cors: ["http://localhost:5002", "http://127.0.0.1:5002", appDomain.value()],
   },
   resetPasswordApp
 );
