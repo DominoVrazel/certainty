@@ -357,7 +357,7 @@
 }
 
 hr {
-  height: 2px;
+  height: 0.1vw;
   background-color: #000000;
   border: none;
   border-top: none !important;

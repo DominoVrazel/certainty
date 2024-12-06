@@ -9,7 +9,6 @@ interface PromoCode {
 
 export const fetchPromoCodes = async (
   selectedResort: string | null,
-  tickets: number,
   ZSL_code: string
 ): Promise<PromoCode[]> => {
   const db = getFirestore();
@@ -42,8 +41,8 @@ export const fetchPromoCodes = async (
       console.log("Filtered promo codes:", filteredPromoCodes); // Debugging log
 
       // Ensure the array size matches the tickets variable
-      if (filteredPromoCodes.length >= tickets) {
-        return filteredPromoCodes.slice(0, tickets);
+      if (filteredPromoCodes.length > 0) {
+        return [filteredPromoCodes[0]];
       } else {
         console.error("Not enough promo codes available.");
         return filteredPromoCodes;

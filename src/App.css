@@ -129,7 +129,7 @@ button:hover {
   border: none !important; /* Match with your nav tab color */
   padding-top: 0.4vw !important;
   padding-bottom: 0.4vw !important;
-  border-radius: 10px !important;
+  border-radius: 1vw !important;
   align-items: center !important; /* Add some margin on the right side */
   align-content: center !important;
   font-size: 0.9vw !important;

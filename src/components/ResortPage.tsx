@@ -893,14 +893,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
       const ZSL_code = localStorage.getItem("userZSL_code") || "";
 
-      const promoCodes = await fetchPromoCodes(
-        resortId,
-        formData.tickets,
-        ZSL_code
-      );
-      const promoCodesString = promoCodes.map((promo) => promo.code).join(", ");
+      const promoCodes = await fetchPromoCodes(resortId, ZSL_code);
+      const promoCodesString = promoCodes.map((promo) => promo.code).join(",");
 
-      alert("Promo codes: " + promoCodesString);
       await deletePromoCodes(resortId, promoCodes);
 
       // Create a new document in the 'reservations' collection

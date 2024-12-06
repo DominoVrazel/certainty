@@ -127,7 +127,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
               >
                 <option value="Predžiaci">Predžiaci u10/u12</option>
                 <option value="Žiaci">Žiaci u14/u16</option>
-                <option value="Juniori">Junuiori/FIS</option>
+                <option value="Juniori">Juniori/FIS</option>
               </select>
             </div>
 

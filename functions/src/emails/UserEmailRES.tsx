@@ -107,7 +107,7 @@ export function ReservationNotification({
 
             <p>
               <b>Kódy môžete uplatniť na:</b>
-              <a href="https://bachledka.skiperformance.com/">
+              <a href="https://bachledka.skiperformance.com/sk/All-Year/store#/sk/All-Year/buy?is_promo=1&is_promo_offer=0&promo_connector_id=200">
                 Link na stránku.
               </a>
             </p>
