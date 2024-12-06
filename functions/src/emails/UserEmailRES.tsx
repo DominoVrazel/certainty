@@ -105,6 +105,13 @@ export function ReservationNotification({
               </p>
             )}
 
+            <p>
+              <b>Kódy môžete uplatniť na:</b>
+              <a href="https://bachledka.skiperformance.com/">
+                Link na stránku.
+              </a>
+            </p>
+
             <p> S pozdravom,</p>
           </Text>
           <Img

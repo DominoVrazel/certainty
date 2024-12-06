@@ -58,7 +58,8 @@ export const registerUser = async (
   password: string,
   ConfirmPassword: string,
   sport_club: string,
-  tel_number: string
+  tel_number: string,
+  ZSL_code: string
 ): Promise<boolean> => {
   try {
     if (
@@ -82,6 +83,9 @@ export const registerUser = async (
     } else if (!isValidPhoneNumber(tel_number)) {
       alert("Neplatné telefónne číslo.");
       return false;
+    } else if (ZSL_code && !isValidZSL_code(ZSL_code)) {
+      alert("Nesprávne registračné číslo ZSL.");
+      return false;
     }
     //creating a new user with the email and password
     const userCredential = await createUserWithEmailAndPassword(
@@ -99,6 +103,7 @@ export const registerUser = async (
       email: email,
       tel_number: tel_number,
       sportClub: sport_club,
+      ZSL_code: ZSL_code,
       isAdmin: false,
       isVerified: false,
       createdAt: new Date(),
@@ -132,6 +137,11 @@ const isStrongPassword = (password: string): boolean => {
 const isValidPhoneNumber = (tel_number: string): boolean => {
   const phoneNumberRegex = /^\+\d{3}\d{9}$/;
   return phoneNumberRegex.test(tel_number);
+};
+
+const isValidZSL_code = (ZSL_code: string): boolean => {
+  const zslCodeRegex = /^(\d{3}|\d{6})$/;
+  return zslCodeRegex.test(ZSL_code);
 };
 
 export const loginUser = async (
@@ -189,6 +199,7 @@ export const loginUser = async (
     localStorage.setItem("userSportClub", userData.sportClub);
     localStorage.setItem("userAdmin", userData.isAdmin);
     localStorage.setItem("userVerified", userData.isVerified);
+    localStorage.setItem("userZSL_code", userData.ZSL_code);
 
     if (userData.isAdmin === true) {
       alert(`Vitaj admin`);
@@ -203,6 +214,7 @@ export const loginUser = async (
       sportClub: userData.sportClub,
       isAdmin: userData.isAdmin,
       isVerified: userData.isVerified,
+      ZSL_code: userData.ZSL_code,
     };
   } catch (error: any) {
     // Handle login errors
@@ -242,6 +254,7 @@ export const logoutUser = async (): Promise<void> => {
     localStorage.removeItem("userSportClub");
     localStorage.removeItem("userAdmin");
     localStorage.removeItem("userVerified");
+    localStorage.removeItem("userZSL_code");
     alert("Odhlásenie prebehlo úspešne."); // "Logout successful."
   } catch (error: unknown) {
     if (error instanceof Error) {

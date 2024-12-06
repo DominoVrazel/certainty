@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 interface PromoCode {
   id: string;
   code: string;
+  Promo_name: string;
 }
 
 export const fetchPromoCodes = async (
   selectedResort: string | null,
-  tickets: number
+  tickets: number,
+  ZSL_code: string
 ): Promise<PromoCode[]> => {
   const db = getFirestore();
   if (!selectedResort) {
@@ -24,17 +26,27 @@ export const fetchPromoCodes = async (
       const promoCodesData = data.promocodes.map(
         (promo: any, index: number) => ({
           id: index.toString(),
-          code: promo.promocode,
+          code: promo.Code,
+          Promo_name: promo.Promo_name,
         })
       );
       console.log("Fetched promo codes:", promoCodesData); // Debugging log
+      console.log("ZSL code:", ZSL_code);
+
+      const filteredPromoCodes = promoCodesData.filter((promo: PromoCode) =>
+        ZSL_code
+          ? promo.Promo_name === "test_SK"
+          : promo.Promo_name === "test_WW"
+      );
+
+      console.log("Filtered promo codes:", filteredPromoCodes); // Debugging log
 
       // Ensure the array size matches the tickets variable
-      if (promoCodesData.length >= tickets) {
-        return promoCodesData.slice(0, tickets);
+      if (filteredPromoCodes.length >= tickets) {
+        return filteredPromoCodes.slice(0, tickets);
       } else {
         console.error("Not enough promo codes available.");
-        return promoCodesData;
+        return filteredPromoCodes;
       }
     } else {
       console.log("No such document!");
@@ -62,8 +74,7 @@ export const deletePromoCodes = async (
     if (resortDoc.exists()) {
       const data = resortDoc.data();
       const updatedPromoCodes = data.promocodes.filter(
-        (promo: any) =>
-          !promoCodes.some((code) => code.code === promo.promocode)
+        (promo: any) => !promoCodes.some((code) => code.code === promo.Code)
       );
       await updateDoc(resortDocRef, { promocodes: updatedPromoCodes });
       console.log("Deleted promo codes:", promoCodes);

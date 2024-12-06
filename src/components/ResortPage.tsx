@@ -891,8 +891,16 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         ? courseDoc.data().name
         : selectedSession.course;
 
-      const promoCodes = await fetchPromoCodes(resortId, formData.tickets);
-      const promoCodesString = promoCodes.map((promo) => promo.code).join("\n");
+      const ZSL_code = localStorage.getItem("userZSL_code") || "";
+
+      const promoCodes = await fetchPromoCodes(
+        resortId,
+        formData.tickets,
+        ZSL_code
+      );
+      const promoCodesString = promoCodes.map((promo) => promo.code).join(", ");
+
+      alert("Promo codes: " + promoCodesString);
       await deletePromoCodes(resortId, promoCodes);
 
       // Create a new document in the 'reservations' collection
@@ -1146,6 +1154,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       const userFirstName = localStorage.getItem("userFirstName");
       const userSecondName = localStorage.getItem("userSecondName");
       const sportClub = localStorage.getItem("sportClub");
+      const ZSL_code = localStorage.getItem("userZSL_code") || "";
 
       if (!userEmail || !userFirstName || !userSecondName) {
         console.error("User information is missing. Cannot add to training.");

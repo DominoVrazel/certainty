@@ -52,6 +52,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
     ConfirmPassword: "",
     sport_club: "",
     tel_number: "",
+    ZSL_code: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,6 +79,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
       ConfirmPassword,
       sport_club,
       tel_number,
+      ZSL_code,
     } = formData; // This line already captures ConfirmPassword
     try {
       const isSuccess = await registerUser(
@@ -87,7 +89,8 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
         password,
         ConfirmPassword,
         sport_club,
-        tel_number
+        tel_number,
+        ZSL_code
       );
 
       if (isSuccess) {
@@ -113,50 +116,50 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
           <h2>Registrácia</h2>
           <form onSubmit={handleSubmit}>
             <div className="mb3">
-              <label htmlFor="exampleFormControlInput1" className="form-label">
-                Krstné meno:
+              <label htmlFor="nameInput" className="form-label">
+                <span style={{ color: "red" }}>*</span> Krstné meno:
               </label>
               <input
                 className="form-control"
                 type="text"
                 name="first_name"
-                id="exampleFormControlInput1"
+                id="nameInput"
                 placeholder="Vaše krstné meno"
                 value={formData.first_name}
                 onChange={handleInputChange}
               />
             </div>
             <div className="mb3">
-              <label htmlFor="exampleFormControlInput1" className="form-label">
-                Priezvisko:
+              <label htmlFor="surnameInput" className="form-label">
+                <span style={{ color: "red" }}>*</span> Priezvisko:
               </label>
               <input
                 className="form-control"
                 type="text"
                 name="second_name"
-                id="exampleFormControlInput1"
+                id="surnameInput"
                 placeholder="Vaše priezvisko"
                 value={formData.second_name}
                 onChange={handleInputChange}
               />
             </div>
             <div className="mb3">
-              <label htmlFor="exampleFormControlInput1" className="form-label">
-                Email adresa:
+              <label htmlFor="emailInput" className="form-label">
+                <span style={{ color: "red" }}>*</span> Email adresa:
               </label>
               <input
                 className="form-control"
                 type="email"
                 name="email"
-                id="exampleFormControlInput1"
+                id="emailInput"
                 placeholder="Zadajte email"
                 value={formData.email}
                 onChange={handleInputChange}
               />
             </div>
             <div className="mb3">
-              <label htmlFor="exampleFormControlInput1" className="form-label">
-                Heslo:
+              <label htmlFor="passwordInput" className="form-label">
+                <span style={{ color: "red" }}>*</span> Heslo:
                 <span
                   className="info-icon"
                   data-tooltip="Heslo musí obsahovať aspoň jedno veľké písmeno, jedno malé písmeno, jedno číslo a musí mať minimálne 6 znakov."
@@ -168,35 +171,35 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
                 className="form-control"
                 type="password"
                 name="password"
-                id="exampleFormControlInput1"
+                id="passwordInput"
                 placeholder="napríklad: Jablko123"
                 value={formData.password}
                 onChange={handleInputChange}
               />
             </div>
             <div className="mb3">
-              <label htmlFor="exampleFormControlInput1" className="form-label">
-                Potvrdiť heslo:
+              <label htmlFor="repeatPasswordInput" className="form-label">
+                <span style={{ color: "red" }}>*</span> Potvrdiť heslo:
               </label>
               <input
                 className="form-control"
                 type="password"
                 name="ConfirmPassword"
-                id="exampleFormControlInput1"
+                id="repeatPasswordInput"
                 placeholder="Potvrďte heslo"
                 value={formData.ConfirmPassword}
                 onChange={handleInputChange}
               />
             </div>
             <div className="mb3">
-              <label htmlFor="exampleFormControlInput1" className="form-label">
-                Športový klub:
+              <label htmlFor="sportClubInput" className="form-label">
+                <span style={{ color: "red" }}>*</span> Športový klub:
               </label>
               <input
                 className="form-control"
                 type="text"
                 name="sport_club"
-                id="exampleFormControlInput1"
+                id="sportClubInput"
                 placeholder="Váš športový klub"
                 value={formData.sport_club}
                 onChange={handleInputChange}
@@ -204,8 +207,8 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
             </div>
 
             <div className="mb3">
-              <label htmlFor="exampleFormControlInput1" className="form-label">
-                Telefónne číslo:
+              <label htmlFor="telNumberInput" className="form-label">
+                <span style={{ color: "red" }}>*</span> Telefónne číslo:
                 <span
                   className="info-icon"
                   data-tooltip="Číslo s predvoľbou bez medzier."
@@ -217,9 +220,30 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
                 className="form-control"
                 type="text"
                 name="tel_number"
-                id="exampleFormControlInput1"
+                id="telNumberInput"
                 placeholder="napríklad: +421905010001"
                 value={formData.tel_number}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <div className="mb3">
+              <label htmlFor="ZSLcodeInput" className="form-label">
+                Registračné číslo ZSL:
+                <span
+                  className="info-icon"
+                  data-tooltip="6 miestné ZSL číslo pre Vaše overenie a prístup kú výhodam členstva vo ZSL"
+                >
+                  <i className="fas fa-info-circle"></i>
+                </span>
+              </label>
+              <input
+                className="form-control"
+                type="text"
+                name="ZSL_code"
+                id="ZSLcodeInput"
+                placeholder="ZSL číslo (NEPOVINNÝ ÚDAJ)"
+                value={formData.ZSL_code}
                 onChange={handleInputChange}
               />
             </div>
