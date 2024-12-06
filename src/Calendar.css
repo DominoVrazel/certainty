@@ -31,7 +31,7 @@
   justify-content: space-between;
   align-items: center;
   align-content: center;
-  background-color: #f8f8f8;
+  background-color: #f3f3f3;
   margin-left: 29vw;
   margin-right: 29vw;
   padding-bottom: 0.5vw;
@@ -115,7 +115,7 @@
   padding-bottom: 0.8vw;
   margin-left: 0.5vw;
   margin-right: 0.5vw;
-  background-color: #f8f8f8;
+  background-color: #f3f3f3;
   box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.356);
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
@@ -173,7 +173,7 @@
     rgb(250, 253, 255) 49%,
     rgba(255, 255, 255, 1) 85%
   ); */
-  background: #f8f8f8;
+  background: #f3f3f3;
   margin-left: 0.5vw;
   margin-right: 0.5vw;
   padding-left: 2vw;
