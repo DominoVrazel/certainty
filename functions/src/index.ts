@@ -8,6 +8,7 @@ import AdminEmailRES from "./emails/AdminEmailRES";
 import UserEmailRESAccepted from "./emails/UserEmailRESAccepted";
 import UserEmailRESDeleted from "./emails/UserEmailRESDeleted";
 import UserEmailForgottenPass from "./emails/UserEmailForgottenPass";
+import EmailAddedToTraining from "./emails/EmailAddedToTraining";
 import { ResetPasswordController } from "./controllers/reset-password.controller";
 import { getAuth } from "firebase-admin/auth";
 import admin from "firebase-admin";
@@ -81,6 +82,7 @@ enum EmailType {
   EmailUserResDeleted = "USER_DELETE_RES",
   EmailForgottenPassword = "USER_FORGOTTEN_PASSWORD",
   EmailVerifyUser = "USER_VERIFY_EMAIL",
+  EmailAddedToTraining = "USER_ADDED_TO_TRAINING",
 }
 
 // const data: EmnailData2 = {};
@@ -167,6 +169,9 @@ emailApp.post("*", async (request, response) => {
     }
     if (data.emailData.emailIdentifier === EmailType.EmailUserResDeleted) {
       html = await render(UserEmailRESDeleted({ ...data.emailData }));
+    }
+    if (data.emailData.emailIdentifier === EmailType.EmailAddedToTraining) {
+      html = await render(EmailAddedToTraining({ ...data.emailData }));
     }
     if (data.emailData.emailIdentifier === EmailType.EmailForgottenPassword) {
       const resetLink = `${resetPassBaseUrl.value()}?uuid=${

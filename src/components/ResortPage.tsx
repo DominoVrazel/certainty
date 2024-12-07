@@ -135,6 +135,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     session: { startTime: string; endTime: string };
     course: string;
     lineNumber: number;
+    sportClub: string;
   } | null>(null);
 
   const [dropdownVisible, setDropdownVisible] = useState<
@@ -709,7 +710,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                                                     day.date,
                                                     session,
                                                     course,
-                                                    index + 1
+                                                    index + 1,
+                                                    isReserved.user.sportClub ||
+                                                      ""
                                                   );
                                                 }
                                               }}
@@ -1132,9 +1135,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     date: string,
     session: { startTime: string; endTime: string },
     course: string,
-    lineNumber: number
+    lineNumber: number,
+    sportClub: string
   ) => {
-    setAddToTrainingSession({ date, session, course, lineNumber });
+    setAddToTrainingSession({ date, session, course, lineNumber, sportClub });
     setIsAddToTrainingModalOpen(true);
   };
 
@@ -1187,6 +1191,43 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         );
         const userDocRef = doc(addedUsersRef, userEmail);
         const userDocSnapshot = await getDoc(userDocRef);
+
+        const ZSL_code = localStorage.getItem("userZSL_code") || "";
+
+        const promoCodes = await fetchPromoCodes(resortId, ZSL_code);
+        const promoCodesString = promoCodes
+          .map((promo) => promo.code)
+          .join(",");
+
+        await deletePromoCodes(resortId, promoCodes);
+
+        const useremailSubject = `Úspešná rezervácie tréningu na ${addToTrainingSession.date}`;
+        const useremailIdentifier = "USER_ADDED_TO_TRAINING";
+
+        // send email to user
+        if (userEmail && userFirstName && userSecondName) {
+          sendEmail(
+            reservationsRef.id,
+            useremailSubject,
+            userEmail,
+            undefined,
+            addToTrainingSession.course,
+            addToTrainingSession.date,
+            addToTrainingSession.session.startTime,
+            addToTrainingSession.session.endTime,
+            addToTrainingSession.lineNumber,
+            formData.racers,
+            addToTrainingSession.sportClub,
+            undefined,
+            undefined,
+            promoCodesString,
+            userFirstName,
+            userSecondName,
+            useremailIdentifier
+          );
+        } else {
+          console.error("User email is null. Cannot send email.");
+        }
 
         if (!userDocSnapshot.exists()) {
           // Add the new user to the addedUsers subcollection
