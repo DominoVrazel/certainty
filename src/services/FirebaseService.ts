@@ -172,7 +172,8 @@ export const loginUser = async (
       return;
     }
 
-    const userData = querySnapshot.docs[0].data();
+    const userDoc = querySnapshot.docs[0];
+    const userData = userDoc.data();
 
     // Check if the user is verified
     if (!userData.isVerified) {
@@ -190,9 +191,7 @@ export const loginUser = async (
     );
     const user = userCredential.user;
 
-    // Successful login
-    console.log(`Prihlásený užívateľ: ${user.email}`);
-
+    localStorage.setItem("userId", userDoc.id);
     localStorage.setItem("userEmail", email);
     localStorage.setItem("userFirstName", userData.firstName);
     localStorage.setItem("userSecondName", userData.secondName);

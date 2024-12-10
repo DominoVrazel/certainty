@@ -13,9 +13,13 @@ button:hover {
 
 /* Override the default dropdown background */
 .dropdown-menu {
-  background-color: #f8f9fa; /* Match with your app background */
 }
 
+.dropdown-menu.show {
+}
+
+.dropdown-item {
+}
 /* Override the list group item hover color */
 .dropdown-item:hover {
   background-color: #ebebeb !important; /* Match with button hover */

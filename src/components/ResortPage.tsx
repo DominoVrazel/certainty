@@ -930,7 +930,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           email: localStorage.getItem("userEmail"),
           firstName: localStorage.getItem("userFirstName"),
           secondName: localStorage.getItem("userSecondName"),
-          sportClub: localStorage.getItem("sportClub"),
+          sportClub: localStorage.getItem("userSportClub"),
           ownRacers: formData.racers,
         },
         reservationDetails: {
@@ -1014,7 +1014,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
             email: localStorage.getItem("userEmail"),
             firstName: localStorage.getItem("userFirstName"),
             secondName: localStorage.getItem("userSecondName"),
-            sportClub: localStorage.getItem("sportClub"),
+            sportClub: localStorage.getItem("userSportClub"),
             ownRacers: formData.racers,
           },
         } as ReservationDetails, // Cast to ReservationDetails
@@ -1152,7 +1152,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       const userEmail = localStorage.getItem("userEmail");
       const userFirstName = localStorage.getItem("userFirstName");
       const userSecondName = localStorage.getItem("userSecondName");
-      const sportClub = localStorage.getItem("sportClub");
+      const sportClub = localStorage.getItem("userSportClub");
       const ZSL_code = localStorage.getItem("userZSL_code") || "";
 
       if (!userEmail || !userFirstName || !userSecondName) {

@@ -38,7 +38,7 @@ function LoginModal() {
       const userData = await loginUser(email, password); // Assuming this returns user data including sportclub
 
       if (userData && userData.sportClub && userData.isVerified) {
-        localStorage.setItem("sportClub", userData.sportClub); // Store sport club in session storage
+        localStorage.setItem("userSportClub", userData.sportClub); // Store sport club in session storage
         localStorage.setItem("isVerified", userData.isVerified); // Store verification status in session storage
       }
 

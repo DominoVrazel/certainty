@@ -26,14 +26,22 @@ import "./App.css";
 import "./Modal.css";
 import { getFirestore, collection, getDocs, doc } from "firebase/firestore";
 import VerifyUser from "./components/VerifyUser";
+import AccountSettings from "./components/AccountSettings";
+
+export interface User {
+  firstName: string;
+  secondName: string;
+  tel_number: string;
+  sportClub: string;
+  ZSL_code: string;
+  isAdmin: boolean;
+}
 
 function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // State to track if user is logged in
-  const [userFirstName, setUserFirstName] = useState<string | null>(null);
-  const [userSecondName, setUserSecondName] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
   const [resorts, setResorts] = useState<{ id: string; name: string }[]>([]);
 
   const db = getFirestore();
@@ -44,9 +52,14 @@ function App() {
     const storedIsAdmin = localStorage.getItem("userAdmin");
 
     if (storedFirstName && storedSecondName) {
-      setUserFirstName(storedFirstName);
-      setUserSecondName(storedSecondName);
-      setIsAdmin(storedIsAdmin === "true");
+      setUser({
+        firstName: storedFirstName,
+        secondName: storedSecondName,
+        tel_number: localStorage.getItem("userTelNumber") || "",
+        sportClub: localStorage.getItem("userSportClub") || "",
+        ZSL_code: localStorage.getItem("userZSL_code") || "",
+        isAdmin: storedIsAdmin === "true",
+      });
       setIsLoggedIn(true); // Is logged in
     } else {
       setIsLoggedIn(false);
@@ -91,7 +104,7 @@ function App() {
             style={{ width: "120px", height: "auto" }}
           />
           <ul>
-            {isAdmin && (
+            {user?.isAdmin && (
               <li className="nav-item">
                 <Link to="/AdminPage" className="nav-admin" aria-current="true">
                   Admin
@@ -109,7 +122,7 @@ function App() {
         </div>
         <div className="navright">
           <div className="user-greeting">
-            {isLoggedIn ? `Ahoj ${userFirstName}.` : ""}
+            {isLoggedIn ? `Ahoj ${user?.firstName}.` : ""}
           </div>
           <div>
             <Dropdown>
@@ -119,15 +132,21 @@ function App() {
                 className="dropdown"
               >
                 <i className="fa fa-user-circle user-icon"></i>
-                {isLoggedIn && userFirstName && userSecondName
+                {isLoggedIn && user?.firstName && user?.secondName
                   ? "Môj účet"
                   : "Prihlásenie"}
               </Dropdown.Toggle>
 
               <Dropdown.Menu>
                 {isLoggedIn ? (
-                  // Is logged in
-                  <Dropdown.Item onClick={handleLogout}>Odhlásiť</Dropdown.Item>
+                  <>
+                    <Dropdown.Item as={Link} to="/account-settings">
+                      Nastavenia
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={handleLogout}>
+                      Odhlásiť
+                    </Dropdown.Item>
+                  </>
                 ) : (
                   // Is logged out
                   <>
@@ -199,7 +218,9 @@ function App() {
         <Route
           path="/reservations/:reservationId"
           element={
-            <ReservationConfirm isAdminLoggedIn={isLoggedIn && isAdmin} />
+            <ReservationConfirm
+              isAdminLoggedIn={!!(isLoggedIn && user?.isAdmin)}
+            />
           }
         />
 
@@ -208,6 +229,10 @@ function App() {
           element={<ForgottenPassword resorts={resorts} />}
         />
         <Route path="/verify-user" element={<VerifyUser />} />
+        <Route
+          path="/account-settings"
+          element={<AccountSettings user={user} setUser={setUser} />}
+        />
       </Routes>
     </Router>
   );
