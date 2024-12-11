@@ -29,6 +29,7 @@ interface EditReservationModalProps {
   onUpdate: () => void;
   isLoggedIn: boolean;
   isAdmin: boolean;
+  setVerifyLoadingState: (state: LoaderState) => void; // Add loading state handler prop
 }
 
 const EditReservationModal: React.FC<EditReservationModalProps> = ({
@@ -37,6 +38,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
   onUpdate,
   isLoggedIn,
   isAdmin,
+  setVerifyLoadingState,
 }) => {
   const db = getFirestore(); // Initialize Firestore
   const loggedInUserEmail = localStorage.getItem("userEmail");
@@ -73,6 +75,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent default form submission
+    setVerifyLoadingState(LoaderState.Loading);
     try {
       const reservationRef = doc(db, "reservations", reservationDetails.id);
 
@@ -92,6 +95,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
             reservationDetails.availableRacers - ownRacersDifference;
           if (newAvailableRacers < 0) {
             alert("Nedostatok voľných miest pre zvolený počet pretekárov.");
+            setVerifyLoadingState(LoaderState.Finished);
             return;
           }
           updates.availableRacers = newAvailableRacers;
@@ -108,6 +112,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
 
         if (newAvailableRacers < 0) {
           alert("Nedostatok voľných miest pre zvolený počet pretekárov.");
+          setVerifyLoadingState(LoaderState.Finished);
           return;
         }
         // Fetch the current document
@@ -147,10 +152,13 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
     } catch (error) {
       console.error("Error updating reservation: ", error);
       alert("There was an error updating the reservation.");
+    } finally {
+      setVerifyLoadingState(LoaderState.Finished);
     }
   };
 
   const handleDelete = async () => {
+    setVerifyLoadingState(LoaderState.Loading);
     try {
       const reservationRef = doc(db, "reservations", reservationDetails.id);
       if (isOwner || isAdmin) {
@@ -178,6 +186,8 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
     } catch (error) {
       console.error("Error deleting reservation: ", error);
       alert("There was an error deleting the reservation.");
+    } finally {
+      setVerifyLoadingState(LoaderState.Finished); // Ensure loading state is set to Finished
     }
   };
 

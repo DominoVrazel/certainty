@@ -220,11 +220,7 @@
 }
 
 .whole-day-info.weekend .day {
-  background: linear-gradient(
-    0deg,
-    rgba(179, 61, 15, 0.856) 0%,
-    rgb(168, 62, 20) 100%
-  );
+  background: linear-gradient(0deg, rgb(51, 76, 126) 0%, rgb(47, 77, 136) 100%);
   /* background: rgb(168, 62, 20) 100%; */
   color: #fff;
   padding-bottom: 0.8vw;

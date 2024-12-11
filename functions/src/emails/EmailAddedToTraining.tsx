@@ -85,7 +85,7 @@ export function ReservationNotification({
             <p>
               {" "}
               Pridali ste sa ku <b>{discipline}</b> v deň <b>{date}</b> na
-              tréning od <b>{startTime}</b> do <b>{endTime}</b> v líni{" "}
+              tréning od <b>{startTime}</b> do <b>{endTime}</b> v trati{" "}
               <b>{lineNumber}</b> .
             </p>
 

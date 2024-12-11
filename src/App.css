@@ -219,3 +219,15 @@ button:hover {
   background-color: rgb(240, 240, 240);
   height: 50vw;
 }
+
+.error-message {
+  color: #ec0000;
+  background-color: #ffe6e6;
+
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  width: 100%;
+  text-align: center;
+  font-weight: 400;
+}

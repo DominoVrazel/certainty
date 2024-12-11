@@ -11,7 +11,7 @@ function LoginModal() {
   // State to store form data
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const functions = getFunctions();
@@ -33,24 +33,29 @@ function LoginModal() {
   // Function to handle login logic
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); // Prevent the default form submission
+    setErrorMessage(null);
     try {
       // Call the loginUser function with email and password
-      const userData = await loginUser(email, password); // Assuming this returns user data including sportclub
+      const { success, message, userData } = await loginUser(email, password); // Assuming this returns user data including sportclub
 
-      if (userData && userData.sportClub && userData.isVerified) {
-        localStorage.setItem("userSportClub", userData.sportClub); // Store sport club in session storage
-        localStorage.setItem("isVerified", userData.isVerified); // Store verification status in session storage
-      }
+      if (success) {
+        if (userData && userData.sportClub && userData.isVerified) {
+          localStorage.setItem("userSportClub", userData.sportClub); // Store sport club in session storage
+          localStorage.setItem("isVerified", userData.isVerified); // Store verification status in session storage
+        }
 
-      // After successful login, retrieve user details from session storage
-      const userFirstName = localStorage.getItem("userFirstName");
+        // After successful login, retrieve user details from session storage
+        const userFirstName = localStorage.getItem("userFirstName");
 
-      // Set the welcome message
-      if (userFirstName) {
-        window.location.reload();
+        // Set the welcome message
+        if (userFirstName) {
+          window.location.reload();
+        }
+      } else {
+        setErrorMessage(message); // Set error message if login fails
       }
     } catch (error) {
-      setMessage("Chyba pri prihlasovaní. Skúste znova."); // Set error message if login fails
+      setErrorMessage("Chyba pri prihlasovaní. Skúste znova."); // Set error message if login fails
     }
   };
 
@@ -87,11 +92,12 @@ function LoginModal() {
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
+    setErrorMessage(null);
     try {
       const emailExists = await checkIfEmailExists(resetEmail);
       if (!emailExists) {
-        setMessage(
-          "Používateľ neexistuje. Skontrolujte správnosť svojho emailu."
+        setErrorMessage(
+          "Zadajte email alebo skontrolujte správnosť svojho emailu."
         );
         return;
       }
@@ -107,12 +113,12 @@ function LoginModal() {
       });
 
       await sendEmail("Obnovenie hesla", resetEmail, useremailIdentifier, uuid);
-      setMessage(
+      setErrorMessage(
         "Email na obnovenie hesla bol odoslaný. <br /><br /> (Ak email neprichádza: počkajte 10 minút alebo skontrolujte SPAM.)"
       );
       setShowResetPassword(false);
     } catch (error) {
-      setMessage(
+      setErrorMessage(
         "Chyba pri odosielaní emailu na obnovenie hesla. Skúste znova."
       );
     }
@@ -123,9 +129,8 @@ function LoginModal() {
       <div className="RegisterPage-body">
         <div className="regcontainer">
           <h2>Prihlásenie</h2>
-          <form onSubmit={handleLogin}>
-            {" "}
-            {/* Use form onSubmit */}
+          {errorMessage && <div className="error-message">{errorMessage}</div>}
+          <form onSubmit={handleLogin} noValidate>
             <div className="mb3">
               <label htmlFor="login_email" className="form-label">
                 Zadajte Váš email:
@@ -167,12 +172,6 @@ function LoginModal() {
             <button className="RegButton" type="submit">
               Prihlásiť
             </button>{" "}
-            {/* React's onClick handler */}
-            {/* Display message to user */}
-            <div
-              className="user_message"
-              dangerouslySetInnerHTML={{ __html: message }}
-            ></div>
           </form>
         </div>
       </div>
@@ -181,7 +180,7 @@ function LoginModal() {
         <div className="ForgottenPassDropdown">
           <div className="regcontainer">
             <h2>Obnovenie hesla</h2>
-            <form onSubmit={handleForgottenPassSubmit}>
+            <form onSubmit={handleForgottenPassSubmit} noValidate>
               <div className="mb3">
                 <label htmlFor="reset_email" className="form-label">
                   Zadajte Váš email pre obnovenie hesla:

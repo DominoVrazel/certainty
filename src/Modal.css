@@ -25,7 +25,7 @@
 .modal-container {
   background-color: rgb(247, 247, 247);
   border-radius: 8px;
-  padding: 1vw;
+  padding: 0.5vw;
   z-index: 1001; /* Ensure the modal is on top of the backdrop */
   position: fixed; /* Make sure modal stays in place */
   top: 50%;
@@ -52,7 +52,7 @@
 
 .modal-close {
   position: absolute;
-  top: 10px;
+  top: 5px;
   right: 20px;
   font-size: 24px;
   font-weight: bold;
@@ -68,11 +68,20 @@
 }
 
 .modal-content {
-  margin-top: 20px;
+  margin-top: 1vw;
 }
 
 .mb3 {
-  margin-bottom: 15px; /* Space between input fields */
+  margin-bottom: 5px; /* Space between input fields */
+}
+
+.mb3 input[type="checkbox"] {
+  margin-right: 10px; /* Adjust the space between the checkbox and label */
+  transform: scale(1.1); /* Make the checkbox larger */
+}
+
+.mb3 label {
+  font-size: 0.8vw;
 }
 
 h2 {
@@ -169,7 +178,22 @@ input {
   opacity: 1;
 }
 
+.register-devider {
+  display: flex;
+  margin-top: -0.5vw !important;
+  width: 100% !important;
+  height: 1px !important;
+  background-color: #d3d3d3 !important;
+}
+
+.register-info-req-fields {
+  font-size: 0.8vw;
+}
+
 @media (max-width: 1024px) {
+  .modal-content {
+    margin-top: 1vw;
+  }
   .regcontainer {
     padding: 0; /* Reduce padding inside the container */
     padding-left: 3vw;
@@ -200,10 +224,21 @@ input {
   input::placeholder {
     font-size: 1.5vw !important; /* Adjust the placeholder text size as needed */
   }
+
+  .mb3 label {
+    font-size: 1.5vw;
+  }
+
+  .register-info-req-fields {
+    font-size: 1.5vw;
+  }
 }
 
 /* Responsive styles */
 @media (max-width: 768px) {
+  .modal-content {
+    margin-top: 1vw;
+  }
   .regcontainer {
     padding: 0; /* Reduce padding inside the container */
     padding-left: 3vw;

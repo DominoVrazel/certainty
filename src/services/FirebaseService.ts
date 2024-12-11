@@ -60,33 +60,8 @@ export const registerUser = async (
   sport_club: string,
   tel_number: string,
   ZSL_code: string
-): Promise<boolean> => {
+): Promise<{ success: boolean; message: string }> => {
   try {
-    if (
-      !first_name ||
-      !second_name ||
-      !email ||
-      !password ||
-      !sport_club ||
-      !tel_number
-    ) {
-      alert("Vyplňte všetky polia");
-      return false;
-    } else if (password != ConfirmPassword) {
-      alert("Neplatné overenie hesla");
-      return false;
-    } else if (!isStrongPassword(password)) {
-      alert(
-        "Heslo musí obsahovať aspoň jedno veľké písmeno, jedno malé písmeno, jedno číslo a musí mať minimálne 6 znakov."
-      );
-      return false;
-    } else if (!isValidPhoneNumber(tel_number)) {
-      alert("Neplatné telefónne číslo.");
-      return false;
-    } else if (ZSL_code && !isValidZSL_code(ZSL_code)) {
-      alert("Nesprávne registračné číslo ZSL.");
-      return false;
-    }
     //creating a new user with the email and password
     const userCredential = await createUserWithEmailAndPassword(
       auth,
@@ -111,53 +86,41 @@ export const registerUser = async (
 
     console.log("Používateľ pridaný do databázy!");
     alert(
-      "Registrácia prebehla úspešne . Na váš email sme odoslali potvrdenie."
+      "Registrácia prebehla úspešne. Na váš email sme odoslali potvrdenie registrácie."
     );
-    return true;
+    return {
+      success: true,
+      message:
+        "Registrácia prebehla úspešne. Na váš email sme odoslali potvrdenie.",
+    };
   } catch (error: any) {
+    let errorMessage = "Registrácia používateľa zlyhala.";
     if (error.code === "auth/email-already-in-use") {
-      alert("Zadaný email sa už používa. Zadajte iný email.");
+      errorMessage = "Zadaný email sa už používa. Zadajte iný email.";
     } else if (error.code === "auth/invalid-email") {
-      alert("Neplatný email");
+      errorMessage = "Neplatný email";
     } else if (error.code === "auth/weak-password") {
-      alert("Slabé heslo");
+      errorMessage = "Slabé heslo";
     } else {
       console.error("Registrácia používateľa zlyhala: ", error);
-      alert(error.message);
+      errorMessage = error.message;
     }
-    return false;
+    return { success: false, message: errorMessage };
   }
-};
-
-const isStrongPassword = (password: string): boolean => {
-  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/;
-  return strongPasswordRegex.test(password);
-};
-
-const isValidPhoneNumber = (tel_number: string): boolean => {
-  const phoneNumberRegex = /^\+\d{3}\d{9}$/;
-  return phoneNumberRegex.test(tel_number);
-};
-
-const isValidZSL_code = (ZSL_code: string): boolean => {
-  const zslCodeRegex = /^(\d{3}|\d{6})$/;
-  return zslCodeRegex.test(ZSL_code);
 };
 
 export const loginUser = async (
   email: string,
   password: string
-): Promise<any> => {
+): Promise<{ success: boolean; message: string; userData?: any }> => {
   const auth = getAuth();
   try {
     // Validate email and password input
     if (!email || !password) {
-      alert("Vyplňte správne všetky polia.");
-      return;
+      return { success: false, message: "Vyplňte správne všetky polia." };
     }
     if (validate_email(email) === false) {
-      alert("Neplatný email."); // "Invalid email."
-      return;
+      return { success: false, message: "Neplatný email." };
     }
 
     const userQuery = query(
@@ -168,8 +131,10 @@ export const loginUser = async (
 
     if (querySnapshot.empty) {
       // User does not exist
-      alert("Používateľ neexistuje. Skontrolujte správnosť svojho emailu."); // "User does not exist."
-      return;
+      return {
+        success: false,
+        message: "Používateľ neexistuje. Skontrolujte správnosť svojho emailu.",
+      };
     }
 
     const userDoc = querySnapshot.docs[0];
@@ -177,10 +142,11 @@ export const loginUser = async (
 
     // Check if the user is verified
     if (!userData.isVerified) {
-      alert(
-        "Váš účet nie je overený. Skontrolujte svoj email a overte svoj účet."
-      ); // "Your account is not verified."
-      return;
+      return {
+        success: false,
+        message:
+          "Váš účet nie je overený. Skontrolujte svoj email a overte svoj účet.",
+      };
     }
 
     // Firebase sign-in with email and password
@@ -200,30 +166,30 @@ export const loginUser = async (
     localStorage.setItem("userVerified", userData.isVerified);
     localStorage.setItem("userZSL_code", userData.ZSL_code);
 
-    if (userData.isAdmin === true) {
-      alert(`Vitaj admin`);
-    } else {
-      alert(`Dobrý deň ${userData.firstName} prihlásenie prebehlo úspešne`);
-    }
-
     return {
-      email: user.email,
-      firstName: userData.firstName,
-      secondName: userData.secondName,
-      sportClub: userData.sportClub,
-      isAdmin: userData.isAdmin,
-      isVerified: userData.isVerified,
-      ZSL_code: userData.ZSL_code,
+      success: true,
+      message: userData.isAdmin
+        ? "Vitaj admin"
+        : `Dobrý deň ${userData.firstName} prihlásenie prebehlo úspešne`,
+      userData: {
+        email: user.email,
+        firstName: userData.firstName,
+        secondName: userData.secondName,
+        sportClub: userData.sportClub,
+        isAdmin: userData.isAdmin,
+        isVerified: userData.isVerified,
+        ZSL_code: userData.ZSL_code,
+      },
     };
   } catch (error: any) {
-    // Handle login errors
-
+    let errorMessage = "Chyba pri prihlasovaní.";
     if (error.code === "auth/invalid-credential") {
-      alert("Nesprávne heslo."); // "Invalid credentials."
+      errorMessage = "Nesprávne heslo.";
     } else {
       console.error("Chyba pri prihlasovaní: ", error); // "Error during login: "
-      alert(`Chyba pri prihlasovaní: ${error.message}`); // "Error during login: [error message]"
+      errorMessage = `Chyba pri prihlasovaní: ${error.message}`;
     }
+    return { success: false, message: errorMessage };
   }
 };
 
@@ -254,7 +220,6 @@ export const logoutUser = async (): Promise<void> => {
     localStorage.removeItem("userAdmin");
     localStorage.removeItem("userVerified");
     localStorage.removeItem("userZSL_code");
-    alert("Odhlásenie prebehlo úspešne."); // "Logout successful."
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error("Chyba pri odhlasovaní: ", error.message); // Access message safely

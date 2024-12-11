@@ -11,7 +11,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { format, addDays } from "date-fns";
+import { format, addDays, set } from "date-fns";
 import { getApp } from "firebase/app";
 import {
   httpsCallable,
@@ -1022,8 +1022,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       setSelectedSession(null);
       await handleUpdate();
 
-      setVerifyLoadingState(LoaderState.Finished);
       alert("Ďakujeme za rezerváciu, tešíme sa na vás.");
+      setVerifyLoadingState(LoaderState.Finished);
     } catch (error) {
       console.error("Error saving reservation: ", error);
       alert("There was an error saving the reservation.");
@@ -1040,13 +1040,13 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     userFirstName: string,
     userSecondName: string
   ) => {
+    setVerifyLoadingState(LoaderState.Loading);
     if (!reservationId) {
       console.error("Error: reservationId is undefined or null.");
       return;
     }
 
     try {
-      setVerifyLoadingState(LoaderState.Loading);
       // Create a reference to the specific reservation document using reservationId
       const reservationRef = doc(db, "reservations", reservationId);
       await deleteDoc(reservationRef);
@@ -1060,7 +1060,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     } finally {
       // Reset loading state
       handleUpdate();
-
       const useremailSubject = "Vaša rezervácia bola zrušená";
       const useremailIdentifier = "USER_DELETE_RES";
       if (userEmail && userFirstName && userSecondName && isAdmin) {
@@ -1087,6 +1086,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         console.error("User email is null. Cannot send email.");
       }
     }
+    setVerifyLoadingState(LoaderState.Finished);
   };
 
   const handleEdit = (existingDetails: ReservationDetails) => {
@@ -1095,7 +1095,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   };
 
   const handleUpdate = async () => {
-    setVerifyLoadingState(LoaderState.Loading);
+    // setVerifyLoadingState(LoaderState.Loading);
     const reservationsSnapshot = await getDocs(collection(db, "reservations"));
     const reservations: Record<string, ReservationDetails> = {};
 
@@ -1128,7 +1128,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     }
 
     setReservationExists(reservations);
-    setVerifyLoadingState(LoaderState.Finished);
+    // setVerifyLoadingState(LoaderState.Finished);
   };
 
   const handleAddToTrainingClick = (
@@ -1382,6 +1382,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
               isLoggedIn={isLoggedIn} // Pass login status if needed
               isAdmin={isAdmin} // Pass admin status if needed
               onUpdate={handleUpdate}
+              setVerifyLoadingState={setVerifyLoadingState}
             />
           )}
 

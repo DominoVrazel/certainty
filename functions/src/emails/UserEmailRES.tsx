@@ -87,7 +87,7 @@ export function ReservationNotification({
             <p>
               {" "}
               Rezervácia pre trať <b>{course}</b> na deň <b>{date}</b> od{" "}
-              <b>{startTime}</b> do <b>{endTime}</b> v líni <b>{lineNumber}</b>{" "}
+              <b>{startTime}</b> do <b>{endTime}</b> v trati <b>{lineNumber}</b>{" "}
               bola vytvorená.
             </p>
 

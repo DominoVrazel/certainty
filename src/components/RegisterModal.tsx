@@ -56,6 +56,8 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAccepted, setIsAccepted] = useState(false); // State for checkbox
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -65,11 +67,36 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
     });
   };
 
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsAccepted(e.target.checked);
+  };
+
+  const isStrongPassword = (password: string): boolean => {
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/;
+    return strongPasswordRegex.test(password);
+  };
+
+  const isValidPhoneNumber = (tel_number: string): boolean => {
+    const phoneNumberRegex = /^\+\d{3}\d{9}$/;
+    return phoneNumberRegex.test(tel_number);
+  };
+
+  const isValidZSL_code = (ZSL_code: string): boolean => {
+    const zslCodeRegex = /^(\d{3}|\d{6})$/;
+    return zslCodeRegex.test(ZSL_code);
+  };
+
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
+    setErrorMessage(null);
+
     if (isSubmitting) return; // Prevent multiple submissions
-    setIsSubmitting(true); // Set the submitting flag
+    if (!isAccepted) {
+      setErrorMessage("Musíte súhlasiť so spracovaním osobných údajov.");
+      return;
+    }
 
     const {
       first_name,
@@ -81,8 +108,37 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
       tel_number,
       ZSL_code,
     } = formData; // This line already captures ConfirmPassword
+
+    if (
+      !first_name ||
+      !second_name ||
+      !email ||
+      !password ||
+      !sport_club ||
+      !tel_number
+    ) {
+      setErrorMessage("Vyplňte všetky polia");
+      return;
+    } else if (password !== ConfirmPassword) {
+      setErrorMessage("Neplatné overenie hesla");
+      return;
+    } else if (!isStrongPassword(password)) {
+      setErrorMessage(
+        "Heslo musí obsahovať aspoň jedno veľké písmeno, jedno malé písmeno, jedno číslo a musí mať minimálne 6 znakov."
+      );
+      return;
+    } else if (!isValidPhoneNumber(tel_number)) {
+      setErrorMessage("Neplatné telefónne číslo.");
+      return;
+    } else if (ZSL_code && !isValidZSL_code(ZSL_code)) {
+      setErrorMessage("Nesprávne registračné číslo ZSL.");
+      return;
+    }
+
+    setIsSubmitting(true); // Set the submitting flag
+
     try {
-      const isSuccess = await registerUser(
+      const { success, message } = await registerUser(
         first_name,
         second_name,
         email,
@@ -93,18 +149,19 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
         ZSL_code
       );
 
-      if (isSuccess) {
+      if (success) {
         // Only navigate if registration was successful
         setShowRegisterModal(false);
         setShowLoginModal(true);
         await sendRegistrationEmail(email, first_name);
         //window.location.reload();
       } else {
-        // Reset submitting flag if registration failed
+        setErrorMessage(message);
         setIsSubmitting(false);
       }
     } catch (error) {
       console.error("Error during registration: ", error);
+      setErrorMessage("Registrácia zlyhala. Skúste to znova.");
       setIsSubmitting(false); // Reset submitting flag if an error occurs
     }
   };
@@ -114,6 +171,12 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
       <div className="RegisterPage-body">
         <div className="regcontainer">
           <h2>Registrácia</h2>
+
+          <p className="register-info-req-fields">
+            <span style={{ color: "red" }}>*</span> Pre povinné polia
+          </p>
+          <hr className="register-devider"></hr>
+          {errorMessage && <div className="error-message">{errorMessage}</div>}
           <form onSubmit={handleSubmit}>
             <div className="mb3">
               <label htmlFor="nameInput" className="form-label">
@@ -246,6 +309,18 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
                 value={formData.ZSL_code}
                 onChange={handleInputChange}
               />
+            </div>
+
+            <div className="mb3">
+              <input
+                type="checkbox"
+                id="acceptCheckbox"
+                checked={isAccepted}
+                onChange={handleCheckboxChange}
+              />
+              <label htmlFor="acceptCheckbox">
+                Súhlasím so spracovaním osobných údajov.
+              </label>
             </div>
 
             <button className="RegButton" type="submit">
