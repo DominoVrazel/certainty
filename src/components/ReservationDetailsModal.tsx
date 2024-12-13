@@ -30,7 +30,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
   return (
     <Modal show={true} onClose={onClose}>
       <div className="reservation-details-modal">
-        <h4>Detail rezervácie</h4>
+        <h2 className="heading">Detail rezervácie</h2>
         <br></br>
         <p>
           <b>Zarezervoval/a: </b>

@@ -514,11 +514,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                                       {isReserved &&
                                       typeof isReserved === "object" ? (
                                         <>
-                                          {console.log(
-                                            "isReserved object:",
-                                            isReserved
-                                          )}
-
                                           {(isLoggedIn &&
                                             (isReserved.user.email ===
                                               localStorage.getItem(
@@ -781,6 +776,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     promoCodesString: string | undefined,
     userFirstName: string,
     userSecondName: string,
+    userTelNumber: string | undefined,
+    userEmail: string | undefined,
     emailIdentifier: string
   ) => {
     const sendEmailFunction = httpsCallable<{
@@ -801,6 +798,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         promoCodesString: string | undefined;
         userFirstName: string;
         userSecondName: string;
+        userTelNumber: string | undefined;
+        userEmail: string | undefined;
         emailIdentifier: string;
       };
     }>(functions, "sendEmail");
@@ -823,6 +822,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           promoCodesString,
           userFirstName,
           userSecondName,
+          userTelNumber,
+          userEmail,
           emailIdentifier,
         },
       });
@@ -963,6 +964,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           promoCodesString,
           userFirstName,
           userSecondName,
+          undefined,
+          undefined,
           useremailIdentifier
         );
       } else {
@@ -972,7 +975,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       const adminEmailSubject = `Potvrdenie rezervácie tréningu na ${selectedSession.date}`;
       const adminEmailRecipient = resortEmail || "";
       const adminemailIdentifier = "ADMIN_SUCCESS_RES";
-      //send email to admin
+      const userTelNumber = localStorage.getItem("userTel_number") || "";
 
       if (userEmail && userFirstName && userSecondName) {
         sendEmail(
@@ -992,6 +995,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           undefined,
           userFirstName,
           userSecondName,
+          userTelNumber,
+          userEmail,
           adminemailIdentifier
         );
       } else {
@@ -1080,6 +1085,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           undefined,
           userFirstName,
           userSecondName,
+          undefined,
+          undefined,
           useremailIdentifier
         );
       } else {
@@ -1223,6 +1230,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
             promoCodesString,
             userFirstName,
             userSecondName,
+            undefined,
+            undefined,
             useremailIdentifier
           );
         } else {

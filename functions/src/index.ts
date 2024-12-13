@@ -49,6 +49,8 @@ interface EmailData {
     subject: string;
     userFirstName: string;
     userSecondName: string;
+    userTelNumber: string;
+    userEmail: string;
     course: string;
     courseName: string;
     date: string;

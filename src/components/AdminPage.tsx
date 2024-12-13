@@ -18,6 +18,7 @@ import {
 import AddSeasonData from "./AddSeasonData";
 import AddResortData from "./AddResortData";
 import AddCourseData from "./AddCourseData";
+import AddCodesToExistingPromocodes from "./AddCodesToExistingPromocodes";
 import { getAuth } from "firebase/auth";
 
 interface Resort {
@@ -39,6 +40,18 @@ interface Season {
 interface PromoCode {
   id: string;
   code: string;
+  Promo_name: string;
+}
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  secondName: string;
+  tel_number: string;
+  sportClub: string;
+  ZSL_code: string;
+  isAdmin: boolean;
 }
 
 const app = getApp();
@@ -63,12 +76,10 @@ function AdminPage() {
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string | null>(null); // State to hold the selected season
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0); // State for current week index
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+  const [users, setUsers] = useState<User[]>([]); // State to hold users
   const db = getFirestore();
   const lang = "sk";
-
-  console.log("dfdfdfdffd", getAuth().currentUser);
 
   // Retrieve the user's details from session storage when the component mounts
   useEffect(() => {
@@ -188,7 +199,8 @@ function AdminPage() {
             const promoCodesData = data.promocodes.map(
               (promo: any, index: number) => ({
                 id: index.toString(),
-                code: promo.promocode,
+                code: promo.Code,
+                Promo_name: promo.Promo_name,
               })
             );
             console.log("Fetched promo codes:", promoCodesData); // Debugging log
@@ -203,6 +215,33 @@ function AdminPage() {
       fetchPromoCodes();
     }
   }, [selectedResort, db]);
+
+  const fetchUsers = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "users"));
+      const usersData: User[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        usersData.push({
+          id: doc.id,
+          email: data.email,
+          firstName: data.firstName,
+          secondName: data.secondName,
+          tel_number: data.tel_number,
+          sportClub: data.sportClub,
+          ZSL_code: data.ZSL_code,
+          isAdmin: data.isAdmin,
+        });
+      });
+      setUsers(usersData);
+    } catch (error) {
+      console.error("Error fetching users: ", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [db]);
 
   const handleDeletePromoCode = async (promoCodeId: string) => {
     if (!selectedResort) return;
@@ -286,35 +325,6 @@ function AdminPage() {
     }
   };
 
-  const sendEmail = async (
-    name: string,
-    subject: string,
-    message: string,
-    recipient: string
-  ) => {
-    const sendEmailFunction = httpsCallable(functions, "sendEmail");
-    try {
-      const result = await sendEmailFunction({
-        name,
-        subject,
-        message,
-        recipient,
-      });
-      console.log("Email sent:", result);
-    } catch (error) {
-      console.error("Error sending email:", error);
-    }
-  };
-
-  const handleSendEmail = (e: React.FormEvent) => {
-    e.preventDefault();
-    const name = (e.target as any).name.value;
-    const subject = (e.target as any).subject.value;
-    const message = (e.target as any).message.value;
-    const recipient = (e.target as any).recipient.value;
-    sendEmail(name, subject, message, recipient);
-  };
-
   return (
     <>
       <div className="AppBody">
@@ -328,67 +338,72 @@ function AdminPage() {
           <AddResortData onUpdate={handleUpdate} />
           <AddCourseData onUpdate={handleUpdate} />
           <AddSeasonData />
-
-          <form onSubmit={handleSendEmail}>
-            <div>
-              <label>Name:</label>
-              <input type="text" name="name" required />
-            </div>
-            <div>
-              <label>Subject:</label>
-              <input type="text" name="subject" required />
-            </div>
-            <div>
-              <label>Message:</label>
-              <textarea name="message" required></textarea>
-            </div>
-            <div>
-              <label>Recipient:</label>
-              <input type="email" name="recipient" required />
-            </div>
-            <button type="submit">Send Email</button>
-          </form>
         </div>
 
-        <div className="promocodes">
-          <h4>Zobrazit promo kody</h4>
-          <label>Vyberte si stredisko:</label>
-          <div>
-            <select
-              value={selectedResort || ""}
-              onChange={(e) => {
-                setSelectedResort(e.target.value);
-                setPromoCodes([]); // Reset promo codes when resort changes
-              }}
-            >
-              <option value="">Vyberte stredisko</option>
-              {resorts.map((resort) => (
-                <option key={resort.id} value={resort.id}>
-                  {resort.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <h3>Promo Codes</h3>
-          {promoCodes.length > 0 ? (
-            <div className="promo-codes">
-              <ul>
-                {promoCodes.map((promoCode) => (
-                  <li key={promoCode.id}>
-                    {promoCode.code}
-                    <button
-                      onClick={() => handleDeletePromoCode(promoCode.id)}
-                      style={{ marginLeft: "10px" }}
-                    >
-                      Delete
-                    </button>
-                  </li>
+        <div className="container2">
+          <div className="promocodes">
+            <h4>Zobrazit promo kody</h4>
+            <label>Vyberte si stredisko:</label>
+            <div>
+              <select
+                value={selectedResort || ""}
+                onChange={(e) => {
+                  setSelectedResort(e.target.value);
+                  setPromoCodes([]); // Reset promo codes when resort changes
+                }}
+              >
+                <option value="">Vyberte stredisko</option>
+                {resorts.map((resort) => (
+                  <option key={resort.id} value={resort.id}>
+                    {resort.name}
+                  </option>
                 ))}
-              </ul>
+              </select>
             </div>
-          ) : (
-            <p>Žiadne promo kódy</p>
-          )}
+            <AddCodesToExistingPromocodes
+              selectedResort={selectedResort}
+              onUpdate={handleUpdate}
+            />
+            <h3>Promo Codes</h3>
+            {promoCodes.length > 0 ? (
+              <div className="promo-codes">
+                <ul>
+                  {promoCodes.map((promoCode) => (
+                    <li key={promoCode.id}>
+                      {promoCode.code}
+                      <button
+                        onClick={() => handleDeletePromoCode(promoCode.id)}
+                        style={{ marginLeft: "10px" }}
+                      >
+                        Delete
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p>Žiadne promo kódy</p>
+            )}
+          </div>
+
+          <div className="siteUsers">
+            <h4>Užívatelia</h4>
+            {users.length > 0 ? (
+              <div className="users-list">
+                <ul>
+                  {users.map((user) => (
+                    <li key={user.id}>
+                      {user.firstName} {user.secondName} ({user.email}) (
+                      {user.tel_number}) ({user.sportClub}) (
+                      {user.ZSL_code ? user.ZSL_code : "nezadaný ZSL kód"})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p>Žiadni užívatelia</p>
+            )}
+          </div>
         </div>
 
         {/* Resort Dropdown */}

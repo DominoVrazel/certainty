@@ -97,6 +97,16 @@ export function ReservationNotification({
               <b>DETAILE</b> Vašej rezervácie.
             </p>
 
+            <p>
+              <b>
+                Neustále sa snažíme pracovať na zlepšovaní rezervačného systému.
+                Boli by sme Vám veľmi vďační za Vašu spätnú väzbu.
+              </b>
+              <a href="https://forms.gle/TqmnM8KrWeteQyqQ6">
+                Link na formulár.
+              </a>
+            </p>
+
             {promoCodesString && (
               <p>
                 <b>Promo kódy:</b>

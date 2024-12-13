@@ -170,7 +170,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
     <>
       <div className="RegisterPage-body">
         <div className="regcontainer">
-          <h2>Registrácia</h2>
+          <h2 className="heading">Registrácia</h2>
 
           <p className="register-info-req-fields">
             <span style={{ color: "red" }}>*</span> Pre povinné polia

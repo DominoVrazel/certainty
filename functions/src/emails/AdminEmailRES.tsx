@@ -15,6 +15,8 @@ import {
 interface ReservationConfirmationProps {
   userFirstName: string;
   userSecondName: string;
+  userTelNumber: string;
+  userEmail: string;
   course: string;
   date: string;
   startTime: string;
@@ -28,6 +30,8 @@ interface ReservationConfirmationProps {
 export function ReservationConfirmation({
   userFirstName,
   userSecondName,
+  userTelNumber,
+  userEmail,
   course,
   date,
   startTime,
@@ -144,6 +148,9 @@ export function ReservationConfirmation({
                   {userFirstName} {userSecondName}
                 </b>{" "}
                 vytvoril novú rezerváciu.
+              </p>
+              <p>
+                Kontakt: <b>{userTelNumber}</b>, Email: <b>{userEmail}</b>.
               </p>
               <p>
                 Disciplína: <b>{discipline}</b>, Kategória: <b>{category}</b>.

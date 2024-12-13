@@ -128,7 +128,7 @@ function LoginModal() {
     <>
       <div className="RegisterPage-body">
         <div className="regcontainer">
-          <h2>Prihlásenie</h2>
+          <h2 className="heading">Prihlásenie</h2>
           {errorMessage && <div className="error-message">{errorMessage}</div>}
           <form onSubmit={handleLogin} noValidate>
             <div className="mb3">

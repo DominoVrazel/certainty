@@ -195,7 +195,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
     <Modal show={true} onClose={onClose}>
       <div className="reservation-modal">
         <form onSubmit={handleSave}>
-          <h4>Upraviť rezerváciu</h4>
+          <h2 className="heading">Upraviť rezerváciu</h2>
           <br></br>
           {!isAdmin && (
             <div className="form-group">

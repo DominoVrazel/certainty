@@ -66,7 +66,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <h3>Rezervácia tréningu</h3>
+            <h2 className="heading">Rezervácia tréningu</h2>
             <br></br>
             <p>Dátum: {date}</p>
             <p>

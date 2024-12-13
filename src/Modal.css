@@ -133,7 +133,7 @@ input {
   box-shadow: none !important;
 }
 
-.regcontainer h2 {
+.heading {
   margin-bottom: 1vw;
   font-size: 1.5vw;
 }
@@ -206,7 +206,7 @@ input {
     font-size: 1.3vw;
   }
 
-  .regcontainer h2 {
+  .heading {
     font-size: 1.8vw;
   }
 
@@ -252,7 +252,7 @@ input {
     font-size: 1.5vw;
   }
 
-  .regcontainer h2 {
+  .heading {
     font-size: 2vw;
   }
 

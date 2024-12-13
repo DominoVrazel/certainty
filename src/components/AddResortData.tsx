@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { collection, doc, setDoc } from "firebase/firestore";
-import { db } from "../services/FirebaseService"; // Ensure this path is correct
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../services/FirebaseService"; // Ensure this path is correct
 
 interface AddResortDataProps {
   onUpdate: () => void;
@@ -32,6 +33,7 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
   const [resortEmail, setResorEmail] = useState("");
   const [csvData, setCsvData] = useState<any[]>([]);
   const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +55,13 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
         console.log("Parsed CSV Data:", jsonData);
       };
       reader.readAsText(file);
+    }
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
     }
   };
 
@@ -82,9 +91,34 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
       setLoading(false);
       return;
     }
+    const notAllowedNameCharacters = [
+      "\\",
+      "/",
+      ":",
+      "*",
+      "?",
+      `"`,
+      "<",
+      ">",
+      "|",
+    ];
+
+    const isNotAllowedName = resortName
+      .split("")
+      .some((char) => notAllowedNameCharacters.includes(char));
 
     try {
-      // Reference for the resort in the 'resorts' collection
+      // resorts/${resortName.replace(/[^a-zA-Z0-9]/g, "_")}/image
+      if (imageFile) {
+        console.log("file blob: ", imageFile);
+        const storageRef = ref(
+          storage,
+          `resorts/${resortName}/${imageFile.name}`
+        );
+        const x = await uploadBytes(storageRef, imageFile);
+        console.log("ahopj", x);
+      }
+
       const resortDocRef = doc(
         collection(db, "resorts"),
         resortName.replace(/[^a-zA-Z0-9]/g, "_")
@@ -101,6 +135,8 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
     } catch (err) {
       console.error("Chyba pri pridávaní strediska do databázy: ", err);
       setError("Chyba pri pridávaní strediska do databázy.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -131,6 +167,12 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
         <label>
           Nahrať CSV súbor:
           <input type="file" accept=".csv" onChange={handleFileUpload} />
+        </label>
+      </div>
+      <div>
+        <label>
+          Nahrať obrázok:
+          <input type="file" accept="image/*" onChange={handleImageUpload} />
         </label>
       </div>
       <button onClick={addResortToDatabase} disabled={loading}>

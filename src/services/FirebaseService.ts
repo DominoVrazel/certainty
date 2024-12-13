@@ -17,28 +17,16 @@ import {
   where,
 } from "firebase/firestore";
 
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
 const firebaseConfig = {
   apiKey: "AIzaSyDuV2weROSjrpxjtDvGI0o1vkVAWjeMKas",
   authDomain: "certaintyapp.firebaseapp.com",
   projectId: "certaintyapp",
-  storageBucket: "certaintyapp.appspot.com",
+  storageBucket: "certaintyapp.firebasestorage.app",
   messagingSenderId: "221725605974",
   appId: "1:221725605974:web:27bd45736e68497eaa3bf7",
   measurementId: "G-K5NVX8S4WV",
-};
-
-export {
-  db,
-  auth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  setDoc,
-  getDocs,
-  collection,
-  doc,
-  query,
-  where,
 };
 
 let app: FirebaseApp;
@@ -50,6 +38,22 @@ if (!getApps().length) {
 
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
+const storage = getStorage(app);
+
+export {
+  db,
+  auth,
+  storage,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  setDoc,
+  getDocs,
+  collection,
+  doc,
+  query,
+  where,
+};
 
 export const registerUser = async (
   first_name: string,
@@ -165,6 +169,7 @@ export const loginUser = async (
     localStorage.setItem("userAdmin", userData.isAdmin);
     localStorage.setItem("userVerified", userData.isVerified);
     localStorage.setItem("userZSL_code", userData.ZSL_code);
+    localStorage.setItem("userTel_number", userData.tel_number);
 
     return {
       success: true,
@@ -179,6 +184,7 @@ export const loginUser = async (
         isAdmin: userData.isAdmin,
         isVerified: userData.isVerified,
         ZSL_code: userData.ZSL_code,
+        // tel_number: userData.tel_number,
       },
     };
   } catch (error: any) {
@@ -220,6 +226,7 @@ export const logoutUser = async (): Promise<void> => {
     localStorage.removeItem("userAdmin");
     localStorage.removeItem("userVerified");
     localStorage.removeItem("userZSL_code");
+    localStorage.removeItem("userTel_number");
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error("Chyba pri odhlasovaní: ", error.message); // Access message safely

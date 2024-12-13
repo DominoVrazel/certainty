@@ -45,7 +45,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       <div className="reservation-modal">
         {isExistingReservation ? (
           <div>
-            <h4>Existujúca rezervácia:</h4>
+            <h2 className="heading">Existujúca rezervácia:</h2>
             <br></br>
             <p>
               Rezervoval:

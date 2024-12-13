@@ -2,6 +2,9 @@
   "projects": {
     "default": "certaintyapp",
     "dev": "certaintyapp",
-    "prod": "certaintyapp"
-  }
+    "prod": "certaintyapp",
+    "alias": "certaintyapp"
+  },
+  "targets": {},
+  "etags": {}
 }

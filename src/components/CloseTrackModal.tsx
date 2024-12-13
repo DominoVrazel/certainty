@@ -24,7 +24,7 @@ const CloseTrackModal: React.FC<CloseTrackModalProps> = ({
   return (
     <Modal show={isOpen} onClose={onClose}>
       <div className="reservation-modal">
-        <h4>Zavrieť trať</h4>
+        <h2 className="heading">Zavrieť trať</h2>
         <br></br>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
