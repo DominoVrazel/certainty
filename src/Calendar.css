@@ -559,6 +559,29 @@ button:hover {
   gap: 0.35vw;
 }
 
+.accept-training-button {
+  display: flex;
+  background-color: rgb(255, 255, 255);
+  color: var(--secondary-color);
+  padding: 0.3vw;
+  font-size: 0.7vw;
+  font-weight: 700 !important;
+  width: 100%;
+  margin-bottom: 0.5vw;
+  justify-content: center;
+  gap: 0.35vw;
+  margin-top: -0.5vw;
+}
+
+.accept-training-button i {
+  font-size: 0.8vw; /* Adjust icon size if needed */
+  line-height: 1vw;
+}
+
+.accept-training-button:hover {
+  background-color: #eeeeee !important;
+}
+
 .detail-button i {
   font-size: 1vw; /* Adjust icon size if needed */
   line-height: 0.9vw; /* Reset line height to avoid vertical misalignment */

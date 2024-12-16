@@ -162,6 +162,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     LoaderState.Loading
   );
 
+  const [isReservationConfirmed, setIsReservationConfirmed] = useState(false); // NEW: State for reservation confirmation
+
   useEffect(() => {
     const fetchCoursesAndSeasons = async () => {
       try {
@@ -715,6 +717,22 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                                               PRIDAŤ SA NA TRÉNING
                                             </button>
                                           )}
+
+                                          {isAdmin &&
+                                            isReserved.status !==
+                                              "potvrdená" && (
+                                              <button
+                                                className="accept-training-button"
+                                                onClick={() =>
+                                                  handleConfirmReservation(
+                                                    isReserved.id
+                                                  )
+                                                }
+                                              >
+                                                <i className="fa fa-check"></i>
+                                                POTVRDIŤ TRÉNING
+                                              </button>
+                                            )}
                                         </>
                                       ) : (
                                         <>
@@ -1099,6 +1117,61 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   const handleEdit = (existingDetails: ReservationDetails) => {
     setEditReservationDetails(existingDetails); // Set the reservation details to be edited
     setIsEditModalOpen(true); // Open the edit modal
+  };
+
+  const handleConfirmReservation = async (reservationId: string) => {
+    try {
+      setVerifyLoadingState(LoaderState.Loading);
+      const reservationRef = doc(db, "reservations", reservationId);
+      await updateDoc(reservationRef, { status: "potvrdená" });
+
+      const reservationDoc = await getDoc(reservationRef);
+      if (reservationDoc.exists()) {
+        const reservationData = reservationDoc.data();
+        const userEmail = reservationData.user.email;
+        const userFirstName = reservationData.user.firstName;
+        const userSecondName = reservationData.user.secondName;
+
+        const userConfirmEmailSubject = `Vaša rezervácia na ${reservationData.date} bola potvrdená `;
+        const useremailIdentifier = "USER_ACCEPTED_RES";
+
+        if (userEmail && userFirstName && userSecondName) {
+          sendEmail(
+            undefined,
+            userConfirmEmailSubject,
+            userEmail,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            userFirstName,
+            userSecondName,
+            undefined,
+            undefined,
+            useremailIdentifier
+          );
+        } else {
+          console.error("User email is null. Cannot send email.");
+        }
+
+        await handleUpdate();
+        setIsReservationConfirmed(true);
+        console.log("Reservation status updated to 'potvrdená'");
+      } else {
+        console.error("No such reservation!");
+      }
+    } catch (error) {
+      console.error("Error updating reservation status: ", error);
+    } finally {
+      setVerifyLoadingState(LoaderState.Finished);
+    }
   };
 
   const handleUpdate = async () => {

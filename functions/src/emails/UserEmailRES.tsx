@@ -64,6 +64,10 @@ export function ReservationNotification({
             margin-top: 4vw;
             margin-bottom: 1vw;
           }
+
+          .feedback-link{
+            margin-left: 10px;
+          }
         
         `}
         </style>
@@ -102,7 +106,10 @@ export function ReservationNotification({
                 Neustále sa snažíme pracovať na zlepšovaní rezervačného systému.
                 Boli by sme Vám veľmi vďační za Vašu spätnú väzbu.
               </b>
-              <a href="https://forms.gle/TqmnM8KrWeteQyqQ6">
+              <a
+                href="https://forms.gle/TqmnM8KrWeteQyqQ6"
+                className="feedback-link"
+              >
                 Link na formulár.
               </a>
             </p>
@@ -117,7 +124,10 @@ export function ReservationNotification({
 
             <p>
               <b>Kódy môžete uplatniť na:</b>
-              <a href="https://bachledka.skiperformance.com/sk/All-Year/store#/sk/All-Year/buy?is_promo=1&is_promo_offer=0&promo_connector_id=200">
+              <a
+                href="https://bachledka.skiperformance.com/sk/All-Year/store#/sk/All-Year/buy?is_promo=1&is_promo_offer=0&promo_connector_id=200"
+                className="feedback-link"
+              >
                 Link na stránku.
               </a>
             </p>

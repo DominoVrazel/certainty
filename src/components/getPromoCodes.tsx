@@ -34,8 +34,8 @@ export const fetchPromoCodes = async (
 
       const filteredPromoCodes = promoCodesData.filter((promo: PromoCode) =>
         ZSL_code
-          ? promo.Promo_name === "test_SK"
-          : promo.Promo_name === "test_WW"
+          ? promo.Promo_name === "trening_ZSL"
+          : promo.Promo_name === "trening_WW"
       );
 
       console.log("Filtered promo codes:", filteredPromoCodes); // Debugging log
