@@ -14,9 +14,11 @@ const Modal: React.FC<ModalProps> = ({ show, onClose, children }) => {
   return (
     <div className="modal-backdrop">
       <div className="modal-container">
-        <button className="modal-close" onClick={onClose}>
-          &times;
-        </button>
+        <div className="modal-close container">
+          <button className="modal-close" onClick={onClose}>
+            &times;
+          </button>
+        </div>
         <div className="modal-content">{children}</div>
       </div>
     </div>
