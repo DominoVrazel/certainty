@@ -16,6 +16,7 @@ import EmptyResortsPage from "./components/EmptyResortsPage";
 import ReservationConfirm from "./components/ReservationConfirm";
 import ForgottenPassword from "./components/ForgottenPassword";
 import { logoutUser } from "./services/FirebaseService";
+import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
 
 import Dropdown from "react-bootstrap/Dropdown";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -37,14 +38,21 @@ export interface User {
   isAdmin: boolean;
 }
 
+export interface Resort {
+  id: string;
+  name: string;
+  image: string; // URL of the image
+}
+
 function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // State to track if user is logged in
   const [user, setUser] = useState<User | null>(null);
-  const [resorts, setResorts] = useState<{ id: string; name: string }[]>([]);
+  const [resorts, setResorts] = useState<Resort[]>([]);
 
   const db = getFirestore();
+  const storage = getStorage();
 
   useEffect(() => {
     const storedFirstName = localStorage.getItem("userFirstName");
@@ -70,20 +78,47 @@ function App() {
     const fetchResorts = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "resorts"));
-        const resortsData: { id: string; name: string }[] = [];
-        querySnapshot.forEach((doc) => {
-          // Assuming each document has a 'name' field in Firestore
-          const data = doc.data();
-          resortsData.push({ id: doc.id, name: data.name });
-        });
+        const resortsData: Resort[] = [];
+
+        for (const docSnapshot of querySnapshot.docs) {
+          const data = docSnapshot.data();
+          const resortId = docSnapshot.id;
+
+          let imageURL = "";
+
+          try {
+            // Firebase Storage folder path
+            const folderPath = `resorts/${resortId}/logo/`;
+            const folderRef = ref(storage, folderPath);
+
+            // List all files in the folder
+            const files = await listAll(folderRef);
+            if (files.items.length > 0) {
+              // Fetch the URL of the first file in the folder
+              imageURL = await getDownloadURL(files.items[0]);
+            }
+          } catch (error) {
+            console.error(
+              `Error fetching image for resort ${resortId}:`,
+              error
+            );
+          }
+
+          resortsData.push({
+            id: resortId,
+            name: data.name,
+            image: imageURL,
+          });
+        }
 
         setResorts(resortsData);
       } catch (error) {
         console.error("Error fetching resorts:", error);
       }
     };
+
     fetchResorts();
-  }, [db]);
+  }, [db, storage]);
 
   const handleLogout = async () => {
     await logoutUser();
@@ -101,8 +136,9 @@ function App() {
           <img
             src={ZSLLogo}
             alt="logo"
-            style={{ width: "120px", height: "auto" }}
+            style={{ width: "7vw", height: "auto" }}
           />
+          <p className="navleft-p">NAŠE PARTNERSKÉ STREDISKÁ</p>
           <ul>
             {user?.isAdmin && (
               <li className="nav-item">
@@ -114,7 +150,19 @@ function App() {
             {resorts.map((resort) => (
               <li key={resort.id} className="nav-item">
                 <Link to={`/resort/${resort.id}`} className="nav-resort">
-                  {resort.name}
+                  {resort.image ? (
+                    <img
+                      src={resort.image}
+                      alt={`${resort.name} logo`}
+                      className="resort-logo"
+                      style={{
+                        maxWidth: "15vw",
+                        maxHeight: "2.5vw",
+                      }}
+                    />
+                  ) : (
+                    resort.name
+                  )}
                 </Link>
               </li>
             ))}

@@ -1,3 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;1,500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Hedvig+Letters+Sans&family=Hedvig+Letters+Serif:opsz@12..24&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Sacramento&family=Schoolbell&family=Slabo+27px&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap");
+
 button:hover {
   background-color: #ebebeb00 !important;
 }
@@ -45,8 +48,41 @@ button:hover {
   display: flex;
   align-items: center !important;
   align-content: center !important;
-  margin-left: 3vw !important; /* Match with your text color */
+  margin-left: 2.5vw !important; /* Match with your text color */
   width: 70% !important;
+}
+
+.navleft-p {
+  display: flex;
+  text-align: right;
+  margin-top: auto;
+  margin-bottom: auto;
+  margin-left: 6vw;
+  font-size: 0.9vw;
+  /* font-family: "Lora", serif; */
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500; /* Medium 500 variant */
+
+  position: relative;
+}
+
+.navleft-p::after {
+  content: "";
+  display: block;
+  width: 0.1vw;
+  height: 100%;
+  background-color: black; /* Adjust the color as needed */
+  position: absolute;
+  right: -0.6vw; /* Adjust the position as needed */
+  top: 0;
+}
+
+.resort-logo {
+  transition: transform 0.3s ease;
+}
+
+.resort-logo:hover {
+  transform: scale(1.1);
 }
 
 .navleft ul {
@@ -54,7 +90,6 @@ button:hover {
   flex-wrap: wrap; /* Allow items to wrap to the next line */
   align-items: center !important;
   align-content: center !important;
-  margin-left: 3vw !important; /* Match with your text color */
   gap: 0.2rem 4rem !important;
   width: 100% !important;
   height: 100% !important;

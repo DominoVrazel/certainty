@@ -28,7 +28,7 @@ function csvToJson(csvString: string): any[] {
   }
 }
 
-const AddCodesToExistingPromocodes: React.FC<AddPromoCodesProps> = ({
+const AddPromocodes: React.FC<AddPromoCodesProps> = ({
   selectedResort,
   onUpdate,
 }) => {
@@ -72,7 +72,8 @@ const AddCodesToExistingPromocodes: React.FC<AddPromoCodesProps> = ({
       const resortDoc = await getDoc(resortDocRef);
       if (resortDoc.exists()) {
         const data = resortDoc.data();
-        const updatedPromoCodes = [...data.promocodes, ...csvData];
+        const existingPromoCodes = data.promocodes || [];
+        const updatedPromoCodes = [...existingPromoCodes, ...csvData];
         await updateDoc(resortDocRef, { promocodes: updatedPromoCodes });
         alert("Promo kódy úspešne pridané!");
         onUpdate();
@@ -88,7 +89,7 @@ const AddCodesToExistingPromocodes: React.FC<AddPromoCodesProps> = ({
   };
 
   return (
-    <div>
+    <div className="add-promocodes-container">
       <h3>Pridať Promo Kódy</h3>
       <div>
         <label>
@@ -104,4 +105,4 @@ const AddCodesToExistingPromocodes: React.FC<AddPromoCodesProps> = ({
   );
 };
 
-export default AddCodesToExistingPromocodes;
+export default AddPromocodes;

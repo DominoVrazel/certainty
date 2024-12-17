@@ -9,17 +9,13 @@ import {
   getDoc,
   updateDoc,
 } from "firebase/firestore";
-import { initializeApp, getApp, getApps } from "firebase/app";
-import {
-  httpsCallable,
-  getFunctions,
-  connectFunctionsEmulator,
-} from "firebase/functions";
+import { getApp } from "firebase/app";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 import AddSeasonData from "./AddSeasonData";
 import AddResortData from "./AddResortData";
 import AddCourseData from "./AddCourseData";
-import AddCodesToExistingPromocodes from "./AddCodesToExistingPromocodes";
-import { getAuth } from "firebase/auth";
+import AddPromocodes from "./AddPromocodes";
+import ImageUpload from "./ImageUpload";
 
 interface Resort {
   id: string;
@@ -342,7 +338,6 @@ function AdminPage() {
 
         <div className="container2">
           <div className="promocodes">
-            <h4>Zobrazit promo kody</h4>
             <label>Vyberte si stredisko:</label>
             <div>
               <select
@@ -360,10 +355,37 @@ function AdminPage() {
                 ))}
               </select>
             </div>
-            <AddCodesToExistingPromocodes
+            <AddPromocodes
               selectedResort={selectedResort}
               onUpdate={handleUpdate}
             />
+
+            <ImageUpload
+              selectedResort={selectedResort}
+              onImageUpload={handleUpdate}
+            />
+          </div>
+        </div>
+        <div className="container3">
+          <div className="siteUsers">
+            <h4>Všetci požívatelia</h4>
+            {users.length > 0 ? (
+              <div className="users-list">
+                <ul>
+                  {users.map((user) => (
+                    <li key={user.id}>
+                      {user.firstName} {user.secondName} ({user.email}) (
+                      {user.tel_number}) ({user.sportClub}) (
+                      {user.ZSL_code ? user.ZSL_code : "nezadaný ZSL kód"})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p>Žiadni užívatelia</p>
+            )}
+          </div>
+          <div className="promoCodes">
             <h3>Promo Codes</h3>
             {promoCodes.length > 0 ? (
               <div className="promo-codes">
@@ -383,25 +405,6 @@ function AdminPage() {
               </div>
             ) : (
               <p>Žiadne promo kódy</p>
-            )}
-          </div>
-
-          <div className="siteUsers">
-            <h4>Užívatelia</h4>
-            {users.length > 0 ? (
-              <div className="users-list">
-                <ul>
-                  {users.map((user) => (
-                    <li key={user.id}>
-                      {user.firstName} {user.secondName} ({user.email}) (
-                      {user.tel_number}) ({user.sportClub}) (
-                      {user.ZSL_code ? user.ZSL_code : "nezadaný ZSL kód"})
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <p>Žiadni užívatelia</p>
             )}
           </div>
         </div>
