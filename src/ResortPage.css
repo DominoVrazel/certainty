@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Hedvig+Letters+Sans&family=Hedvig+Letters+Serif:opsz@12..24&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Sacramento&family=Schoolbell&family=Slabo+27px&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap");
+
 :root {
   --font-family-sans: "Noto Sans", sans-serif;
   --font-family-serif: "Roboto", sans-serif;
@@ -27,19 +29,47 @@
 .training-courses {
   padding-top: 1vw;
   padding-bottom: 1vw;
-  font-family: "Roboto", sans-serif;
+  font-family: "DM Sans", sans-serif;
   font-size: 1.3vw;
   font-weight: 450;
-  font-family: var(--font-family-sans);
-  /* background-color: white; */
+  /* border-bottom: 2px solid #ebeaea !important; */
+  background-color: #727272;
+  color: #ffffff;
 }
 
 .custom-dropdown {
   border: none;
-  outline: none; /* Optional: Remove the outline as well */
-  background-color: transparent; /* Optional: Make the background transparent */
-  padding: 5px; /* Optional: Add some padding */
-  background-color: none !important;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 1vw;
+  padding-left: 2vw;
+  padding-right: 1vw;
+  margin-left: 1vw;
+  font-family: var(--font-family-sans);
+  font-weight: 500;
+  background-color: #ececec;
+  color: #193061;
+  appearance: none; /* Remove default arrow */
+  -webkit-appearance: none; /* Remove default arrow in Safari */
+  -moz-appearance: none; /* Remove default arrow in Firefox */
+  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 6"><path fill="%23193061" d="M0 0l5 6 5-6z"/></svg>'); /* Arrow pointing down with #193061 color */
+  background-repeat: no-repeat;
+  background-position: left 1vw center;
+  background-size: 0.6vw;
+}
+
+.custom-dropdown option {
+  padding: 10px;
+  font-size: 1vw;
+  font-family: var(--font-family-sans);
+  color: #333;
+}
+
+.custom-dropdown:focus {
+  border-color: #7c7c7c;
+  box-shadow: 0 0 5px rgba(20, 20, 20, 0.5);
+  outline: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 6"><path fill="%23333" d="M0 6l5-6 5 6z"/></svg>'); /* Arrow pointing up */
 }
 
 .loading-animation-container {

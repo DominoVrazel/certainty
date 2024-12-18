@@ -1399,7 +1399,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   return (
     <div className="resort-page">
       <div className="training-courses">
-        TRÉNINGOVÉ ZJAZDOVKY:
+        TRÉNINGOVÉ ZJAZDOVKY STREDISKA:
         {dropdownVisible && (
           <select
             onChange={(e) => setSelectedCourse(e.target.value)}
