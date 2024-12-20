@@ -181,7 +181,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
           availableRacers: newAvailableRacers,
         });
       }
-      onUpdate();
+      await onUpdate();
       onClose(); // Close the modal
     } catch (error) {
       console.error("Error deleting reservation: ", error);

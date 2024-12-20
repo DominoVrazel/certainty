@@ -133,11 +133,17 @@ function App() {
 
       <div className="card-header">
         <div className="navleft">
-          <img
-            src={ZSLLogo}
-            alt="logo"
-            style={{ width: "7vw", height: "auto" }}
-          />
+          <a
+            href="https://www.zvazslovenskeholyzovania.sk/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src={ZSLLogo}
+              alt="logo"
+              style={{ width: "7vw", height: "auto" }}
+            />
+          </a>
           <p className="navleft-p">NAŠE PARTNERSKÉ STREDISKÁ</p>
           <ul>
             {user?.isAdmin && (

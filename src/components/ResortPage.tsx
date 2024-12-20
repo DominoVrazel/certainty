@@ -1082,7 +1082,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       alert("Pri zrušení rezervácie došlo k chybe.");
     } finally {
       // Reset loading state
-      handleUpdate();
+      await handleUpdate();
       const useremailSubject = "Vaša rezervácia bola zrušená";
       const useremailIdentifier = "USER_DELETE_RES";
       if (userEmail && userFirstName && userSecondName && isAdmin) {
@@ -1110,8 +1110,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       } else {
         console.error("User email is null. Cannot send email.");
       }
+      setVerifyLoadingState(LoaderState.Finished);
     }
-    setVerifyLoadingState(LoaderState.Finished);
   };
 
   const handleEdit = (existingDetails: ReservationDetails) => {
@@ -1271,8 +1271,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         );
         const userDocRef = doc(addedUsersRef, userEmail);
         const userDocSnapshot = await getDoc(userDocRef);
-
-        const ZSL_code = localStorage.getItem("userZSL_code") || "";
 
         const promoCodes = await fetchPromoCodes(resortId, ZSL_code);
         const promoCodesString = promoCodes

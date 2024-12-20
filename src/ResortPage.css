@@ -47,7 +47,7 @@
   margin-left: 1vw;
   font-family: var(--font-family-sans);
   font-weight: 500;
-  background-color: #ececec;
+  background-color: #f3f3f3;
   color: #193061;
   appearance: none; /* Remove default arrow */
   -webkit-appearance: none; /* Remove default arrow in Safari */
@@ -69,7 +69,7 @@
   border-color: #7c7c7c;
   box-shadow: 0 0 5px rgba(20, 20, 20, 0.5);
   outline: none;
-  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 6"><path fill="%23333" d="M0 6l5-6 5 6z"/></svg>'); /* Arrow pointing up */
+  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 6"><path fill="%23193061" d="M0 6l5-6 5 6z"/></svg>'); /* Arrow pointing up */
 }
 
 .loading-animation-container {
