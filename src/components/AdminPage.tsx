@@ -48,6 +48,27 @@ interface User {
   sportClub: string;
   ZSL_code: string;
   isAdmin: boolean;
+  ownRacers: number; // Required field
+}
+
+interface Reservation {
+  id: string;
+  date: string;
+  discipline: string;
+  reservationDetails: {
+    resort: string;
+    course: string;
+    courseName?: string;
+  };
+  availableRacers: number;
+  user: {
+    email: string;
+    firstName: string;
+    secondName: string;
+    ownRacers: number;
+    sportClub: string;
+  };
+  addedUsers?: User[];
 }
 
 const app = getApp();
@@ -74,6 +95,7 @@ function AdminPage() {
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0); // State for current week index
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [users, setUsers] = useState<User[]>([]); // State to hold users
+  const [reservations, setReservations] = useState<Reservation[]>([]);
   const db = getFirestore();
   const lang = "sk";
 
@@ -227,6 +249,7 @@ function AdminPage() {
           sportClub: data.sportClub,
           ZSL_code: data.ZSL_code,
           isAdmin: data.isAdmin,
+          ownRacers: data.ownRacers,
         });
       });
       setUsers(usersData);
@@ -237,6 +260,52 @@ function AdminPage() {
 
   useEffect(() => {
     fetchUsers();
+  }, [db]);
+
+  const fetchReservations = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "reservations"));
+      const reservationsData: Reservation[] = [];
+      for (const doc of querySnapshot.docs) {
+        const data = doc.data();
+
+        // Fetch addedUsers subcollection
+        const addedUsersSnapshot = await getDocs(
+          collection(doc.ref, "addedUsers")
+        );
+        const addedUsers = addedUsersSnapshot.docs.map(
+          (userDoc) => userDoc.data() as User
+        );
+
+        reservationsData.push({
+          id: doc.id,
+          date: data.date,
+          discipline: data.discipline,
+          reservationDetails: {
+            resort: data.reservationDetails.resort,
+            course: data.reservationDetails.course,
+            courseName: data.reservationDetails.courseName,
+          },
+          availableRacers: data.availableRacers,
+          user: {
+            email: data.user.email,
+            firstName: data.user.firstName,
+            secondName: data.user.secondName,
+            ownRacers: data.user.ownRacers,
+            sportClub: data.user.sportClub,
+          },
+          addedUsers: addedUsers,
+        });
+      }
+      console.log("Fetched reservations:", reservationsData); // Debugging log
+      setReservations(reservationsData);
+    } catch (error) {
+      console.error("Error fetching reservations: ", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchReservations();
   }, [db]);
 
   const handleDeletePromoCode = async (promoCodeId: string) => {
@@ -532,6 +601,37 @@ function AdminPage() {
                       {season.weeks[currentWeekIndex].days.map((day: any) => (
                         <div key={day.date} className="calendar-day">
                           {`${day.dayOfWeek[lang]}, ${day.date}`}
+                          {/* Render reservations for the day */}
+                          {reservations
+                            .filter(
+                              (reservation) =>
+                                reservation.date === day.date &&
+                                reservation.reservationDetails.resort ===
+                                  selectedResort &&
+                                reservation.reservationDetails.course ===
+                                  selectedCourse
+                            )
+                            .map((reservation) => (
+                              <div key={reservation.id} className="reservation">
+                                <br></br>
+                                <p>
+                                  <b>{reservation.discipline}</b>
+                                </p>
+                                <p>
+                                  {reservation.user.sportClub}{" "}
+                                  <b>{reservation.user.ownRacers}</b>
+                                </p>
+                                {reservation.addedUsers &&
+                                  reservation.addedUsers.map((user) => (
+                                    <div key={user.email}>
+                                      <p>
+                                        {user.sportClub} <b>{user.ownRacers}</b>
+                                      </p>
+                                    </div>
+                                  ))}
+                                <hr />
+                              </div>
+                            ))}
                         </div>
                       ))}
                     </div>
