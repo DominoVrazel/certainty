@@ -17,6 +17,8 @@ import AddCourseData from "./AddCourseData";
 import AddPromocodes from "./AddPromocodes";
 import ImageUpload from "./ImageUpload";
 
+import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
+
 interface Resort {
   id: string;
   name: string; // Resort name from Firestore
@@ -98,6 +100,9 @@ function AdminPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const db = getFirestore();
   const lang = "sk";
+  const [verifyLoadingState, setVerifyLoadingState] = useState(
+    LoaderState.Loading
+  );
 
   // Retrieve the user's details from session storage when the component mounts
   useEffect(() => {
@@ -264,6 +269,7 @@ function AdminPage() {
 
   const fetchReservations = async () => {
     try {
+      setVerifyLoadingState(LoaderState.Loading);
       const querySnapshot = await getDocs(collection(db, "reservations"));
       const reservationsData: Reservation[] = [];
       for (const doc of querySnapshot.docs) {
@@ -299,6 +305,7 @@ function AdminPage() {
       }
       console.log("Fetched reservations:", reservationsData); // Debugging log
       setReservations(reservationsData);
+      setVerifyLoadingState(LoaderState.Finished);
     } catch (error) {
       console.error("Error fetching reservations: ", error);
     }
@@ -407,6 +414,7 @@ function AdminPage() {
 
         <div className="container2">
           <div className="promocodes">
+            <hr></hr>
             <label>Vyberte si stredisko:</label>
             <div>
               <select
@@ -437,6 +445,7 @@ function AdminPage() {
         </div>
         <div className="container3">
           <div className="siteUsers">
+            <hr></hr>
             <h4>Všetci požívatelia</h4>
             {users.length > 0 ? (
               <div className="users-list">
@@ -454,7 +463,7 @@ function AdminPage() {
               <p>Žiadni užívatelia</p>
             )}
           </div>
-          <div className="promoCodes">
+          {/* <div className="promoCodes">
             <h3>Promo Codes</h3>
             {promoCodes.length > 0 ? (
               <div className="promo-codes">
@@ -475,12 +484,13 @@ function AdminPage() {
             ) : (
               <p>Žiadne promo kódy</p>
             )}
-          </div>
+          </div> */}
         </div>
 
         {/* Resort Dropdown */}
         <div>
           <br></br>
+          <hr></hr>
           <h4>Sprava dokumentov</h4>
           <label>Vyberte si stredisko:</label>
           <div style={{ display: "flex", alignItems: "center" }}>
@@ -595,46 +605,55 @@ function AdminPage() {
                       &#8594; {/* Right Arrow */}
                     </button>
                   </div>
-                  {/* Render current week */}
-                  {season.weeks.length > 0 && (
-                    <div className="calendar-week">
-                      {season.weeks[currentWeekIndex].days.map((day: any) => (
-                        <div key={day.date} className="calendar-day">
-                          {`${day.dayOfWeek[lang]}, ${day.date}`}
-                          {/* Render reservations for the day */}
-                          {reservations
-                            .filter(
-                              (reservation) =>
-                                reservation.date === day.date &&
-                                reservation.reservationDetails.resort ===
-                                  selectedResort &&
-                                reservation.reservationDetails.course ===
-                                  selectedCourse
-                            )
-                            .map((reservation) => (
-                              <div key={reservation.id} className="reservation">
-                                <br></br>
-                                <p>
-                                  <b>{reservation.discipline}</b>
-                                </p>
-                                <p>
-                                  {reservation.user.sportClub}{" "}
-                                  <b>{reservation.user.ownRacers}</b>
-                                </p>
-                                {reservation.addedUsers &&
-                                  reservation.addedUsers.map((user) => (
-                                    <div key={user.email}>
-                                      <p>
-                                        {user.sportClub} <b>{user.ownRacers}</b>
-                                      </p>
-                                    </div>
-                                  ))}
-                                <hr />
-                              </div>
-                            ))}
-                        </div>
-                      ))}
+                  {verifyLoadingState === LoaderState.Loading ? (
+                    <div className="loading-animation-container">
+                      <LoadingAnimation state={verifyLoadingState} />
                     </div>
+                  ) : (
+                    season.weeks.length > 0 && (
+                      <div className="calendar-week">
+                        {season.weeks[currentWeekIndex].days.map((day: any) => (
+                          <div key={day.date} className="calendar-day">
+                            {`${day.dayOfWeek[lang]}, ${day.date}`}
+                            {/* Render reservations for the day */}
+                            {reservations
+                              .filter(
+                                (reservation) =>
+                                  reservation.date === day.date &&
+                                  reservation.reservationDetails.resort ===
+                                    selectedResort &&
+                                  reservation.reservationDetails.course ===
+                                    selectedCourse
+                              )
+                              .map((reservation) => (
+                                <div
+                                  key={reservation.id}
+                                  className="reservation"
+                                >
+                                  <br></br>
+                                  <p>
+                                    <b>{reservation.discipline}</b>
+                                  </p>
+                                  <p>
+                                    {reservation.user.sportClub}{" "}
+                                    <b>{reservation.user.ownRacers}</b>
+                                  </p>
+                                  {reservation.addedUsers &&
+                                    reservation.addedUsers.map((user) => (
+                                      <div key={user.email}>
+                                        <p>
+                                          {user.sportClub}{" "}
+                                          <b>{user.ownRacers}</b>
+                                        </p>
+                                      </div>
+                                    ))}
+                                  <hr />
+                                </div>
+                              ))}
+                          </div>
+                        ))}
+                      </div>
+                    )
                   )}
                 </div>
               ))}
