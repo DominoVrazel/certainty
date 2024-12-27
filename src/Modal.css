@@ -189,6 +189,56 @@ input {
   font-size: 0.8vw;
 }
 
+.info-modal-content {
+  max-height: 80vh; /* Adjust the max-height as needed */
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.tabs-menu {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 1vw;
+}
+
+.tabs-menu-button {
+  padding: 0.5vw 1vw;
+  border: none;
+  /* background-color: rgba(255, 255, 255, 0);
+  border-left: 2px solid rgb(255, 255, 255);
+  border-right: 2px solid rgb(255, 255, 255); */
+  cursor: pointer;
+  font-size: 0.8vw;
+  color: black;
+  background-color: rgb(255, 255, 255);
+}
+
+.tabs-menu-button:hover {
+  background-color: rgb(78, 99, 141) !important;
+  color: white;
+}
+
+.number-steps {
+  text-align: left;
+  padding-left: 1vw;
+  padding-top: 1vw;
+}
+
+.tab-content {
+  margin-top: 20px;
+}
+
+.article-heading {
+  font-size: 1.1vw;
+  margin-top: 1.5vw;
+}
+
+.info-modal-heading {
+  font-size: 1.5vw;
+  margin-top: -1vw;
+  margin-bottom: 1vw;
+}
+
 @media (max-width: 1024px) {
   .modal-content {
     margin-top: 1vw;

@@ -410,7 +410,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         <div className="week-hints">
           <div className="hints-left">
             <button onClick={handleInfoClick} className="info-button">
-              <i className="fas fa-glasses"></i> Informácie
+              <i className="fas fa-glasses"></i> Návod ako postupovať
             </button>
           </div>
           <div className="hints-right">
@@ -914,11 +914,17 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         : selectedSession.course;
 
       const ZSL_code = localStorage.getItem("userZSL_code") || "";
+      let promoCodesString = "";
 
-      const promoCodes = await fetchPromoCodes(resortId, ZSL_code);
-      const promoCodesString = promoCodes.map((promo) => promo.code).join(",");
+      if (formData.tickets > 0) {
+        const promoCodes = await fetchPromoCodes(resortId, ZSL_code);
+        promoCodesString = promoCodes.map((promo) => promo.code).join(",");
+        await deletePromoCodes(resortId, promoCodes);
+      }
+      // const promoCodes = await fetchPromoCodes(resortId, ZSL_code);
+      // const promoCodesString = promoCodes.map((promo) => promo.code).join(",");
 
-      await deletePromoCodes(resortId, promoCodes);
+      // await deletePromoCodes(resortId, promoCodes);
 
       // Create a new document in the 'reservations' collection
       const reservationRef = doc(collection(db, "reservations"));

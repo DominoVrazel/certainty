@@ -28,7 +28,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   isLoggedIn,
 }) => {
   const [racers, setRacers] = useState<number>(1);
-  const [tickets, setTickets] = useState<number>(1);
+  const [tickets, setTickets] = useState<number>(0);
   const [discipline, setDiscipline] = useState<string>("Slalom"); // Default discipline
   const [category, setCategory] = useState<string>("Žiaci");
   const db = getFirestore();
@@ -38,7 +38,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       setRacers(existingDetails.racers || 1); // Set to existing racers count
       setDiscipline(existingDetails.discipline || "Slalom"); // Set to existing discipline
       setCategory(existingDetails.category || "Žiaci"); // Set to existing category
-      setTickets(existingDetails.tickets || 1); // Set to existing tickets count
+      setTickets(existingDetails.tickets || 0); // Set to existing tickets count
     }
   }, [isExistingReservation, existingDetails]);
 
@@ -90,12 +90,18 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
             <div className="form-group">
               <label htmlFor="tickets">Množstvo tréningových lístkov:</label>
+              <span
+                className="info-icon"
+                data-tooltip="Ak máte sezónne lístky zadajte množstvo 0."
+              >
+                <i className="fas fa-info-circle"></i>
+              </span>
               <input
                 className="form-control"
                 id="tickets"
                 type="number"
                 value={tickets}
-                min={1}
+                min={0}
                 onChange={(e) => setTickets(parseInt(e.target.value))}
                 required
               />
