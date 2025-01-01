@@ -246,9 +246,17 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     };
 
     function getCurrentSeason() {
-      const currentYear = new Date().getFullYear();
-      const nextYear = currentYear + 1;
-      return `${currentYear}/${nextYear}`;
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth();
+
+      if (currentMonth < 4) {
+        const previousYear = currentYear - 1;
+        return `sezóna ${previousYear}/${currentYear}`;
+      } else {
+        const nextYear = currentYear + 1;
+        return `sezóna ${currentYear}/${nextYear}`;
+      }
     }
 
     const fetchReservations = async () => {
@@ -283,7 +291,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
             addedUsers: addedUsers as User[],
           };
         }
-
+        console.log("Fetched reservations:", reservations); // Debugging log
         setReservationExists(reservations);
         setVerifyLoadingState(LoaderState.Finished);
       } catch (error) {
