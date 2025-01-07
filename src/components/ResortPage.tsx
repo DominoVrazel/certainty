@@ -10,6 +10,7 @@ import {
   query,
   setDoc,
   updateDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { format, addDays, set } from "date-fns";
 import { getApp } from "firebase/app";
@@ -261,9 +262,20 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
     const fetchReservations = async () => {
       try {
-        const reservationsSnapshot = await getDocs(
-          collection(db, "reservations")
+        const today = new Date();
+        const twoWeeksFromNow = new Date();
+        twoWeeksFromNow.setDate(today.getDate() + 21);
+
+        const startDate = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+        const endDate = twoWeeksFromNow.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+
+        const reservationsQuery = query(
+          collection(db, "reservations"),
+          where("date", ">=", startDate),
+          where("date", "<=", endDate)
         );
+
+        const reservationsSnapshot = await getDocs(reservationsQuery);
 
         const reservations: Record<string, ReservationDetails> = {};
         for (const reservationDoc of reservationsSnapshot.docs) {
@@ -291,7 +303,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
             addedUsers: addedUsers as User[],
           };
         }
-        console.log("Fetched reservations:", reservations); // Debugging log
         setReservationExists(reservations);
         setVerifyLoadingState(LoaderState.Finished);
       } catch (error) {
@@ -1189,40 +1200,55 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   };
 
   const handleUpdate = async () => {
-    // setVerifyLoadingState(LoaderState.Loading);
-    const reservationsSnapshot = await getDocs(collection(db, "reservations"));
-    const reservations: Record<string, ReservationDetails> = {};
+    try {
+      const today = new Date();
+      const twoWeeksFromNow = new Date();
+      twoWeeksFromNow.setDate(today.getDate() + 21);
 
-    for (const reservationDoc of reservationsSnapshot.docs) {
-      const reservationData = reservationDoc.data();
+      const startDate = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      const endDate = twoWeeksFromNow.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
-      const reservationKey = `${reservationData.date}_${reservationData.session.startTime}_${reservationData.session.endTime}_${reservationData.reservationDetails.course}_${reservationData.lineNumber}`;
-
-      const addedUsersSnapshot = await getDocs(
-        collection(reservationDoc.ref, "addedUsers")
-      );
-      const addedUsers = addedUsersSnapshot.docs.map(
-        (doc) => doc.data() as User
+      const reservationsQuery = query(
+        collection(db, "reservations"),
+        where("date", ">=", startDate),
+        where("date", "<=", endDate)
       );
 
-      reservations[reservationKey] = {
-        createdAt: reservationData.createdAt,
-        date: reservationData.date,
-        availableRacers: reservationData.availableRacers,
-        discipline: reservationData.discipline,
-        category: reservationData.category,
-        tickets: reservationData.tickets,
-        lineNumber: reservationData.lineNumber,
-        session: reservationData.session,
-        status: reservationData.status,
-        user: reservationData.user,
-        id: reservationDoc.id,
-        addedUsers: addedUsers,
-      };
+      const reservationsSnapshot = await getDocs(reservationsQuery);
+      const reservations: Record<string, ReservationDetails> = {};
+
+      for (const reservationDoc of reservationsSnapshot.docs) {
+        const reservationData = reservationDoc.data();
+
+        const reservationKey = `${reservationData.date}_${reservationData.session.startTime}_${reservationData.session.endTime}_${reservationData.reservationDetails.course}_${reservationData.lineNumber}`;
+
+        const addedUsersSnapshot = await getDocs(
+          collection(reservationDoc.ref, "addedUsers")
+        );
+        const addedUsers = addedUsersSnapshot.docs.map(
+          (doc) => doc.data() as User
+        );
+
+        reservations[reservationKey] = {
+          createdAt: reservationData.createdAt,
+          date: reservationData.date,
+          availableRacers: reservationData.availableRacers,
+          discipline: reservationData.discipline,
+          category: reservationData.category,
+          tickets: reservationData.tickets,
+          lineNumber: reservationData.lineNumber,
+          session: reservationData.session,
+          status: reservationData.status,
+          user: reservationData.user,
+          id: reservationDoc.id,
+          addedUsers: addedUsers,
+        };
+      }
+
+      setReservationExists(reservations);
+    } catch (error) {
+      console.error("Error updating reservations: ", error);
     }
-
-    setReservationExists(reservations);
-    // setVerifyLoadingState(LoaderState.Finished);
   };
 
   const handleAddToTrainingClick = (
