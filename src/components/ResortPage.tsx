@@ -262,27 +262,20 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
     const fetchReservations = async (isAdmin: boolean) => {
       try {
-        let reservationsSnapshot;
-        if (isAdmin) {
-          // Fetch all reservations for admin
-          reservationsSnapshot = await getDocs(collection(db, "reservations"));
-        } else {
-          // Fetch reservations from today to two weeks into the future for normal users
-          const today = new Date();
-          const twoWeeksFromNow = new Date();
-          twoWeeksFromNow.setDate(today.getDate() + 21);
+        const today = new Date();
+        const endDate = new Date();
+        endDate.setDate(today.getDate() + (isAdmin ? 365 : 21));
 
-          const startDate = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-          const endDate = twoWeeksFromNow.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+        const startDateStr = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+        const endDateStr = endDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
-          const reservationsQuery = query(
-            collection(db, "reservations"),
-            where("date", ">=", startDate),
-            where("date", "<=", endDate)
-          );
+        const reservationsQuery = query(
+          collection(db, "reservations"),
+          where("date", ">=", startDateStr),
+          where("date", "<=", endDateStr)
+        );
 
-          reservationsSnapshot = await getDocs(reservationsQuery);
-        }
+        const reservationsSnapshot = await getDocs(reservationsQuery);
 
         const reservations: Record<string, ReservationDetails> = {};
         for (const reservationDoc of reservationsSnapshot.docs) {
@@ -1211,27 +1204,19 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
   const handleUpdate = async (isAdmin: boolean) => {
     try {
-      let reservationsSnapshot;
-      if (isAdmin) {
-        // Fetch all reservations for admin
-        reservationsSnapshot = await getDocs(collection(db, "reservations"));
-      } else {
-        // Fetch reservations from today to two weeks into the future for normal users
-        const today = new Date();
-        const twoWeeksFromNow = new Date();
-        twoWeeksFromNow.setDate(today.getDate() + 21);
+      const today = new Date();
+      const endDate = new Date();
+      endDate.setDate(today.getDate() + (isAdmin ? 365 : 21));
 
-        const startDate = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-        const endDate = twoWeeksFromNow.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      const startDateStr = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      const endDateStr = endDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
-        const reservationsQuery = query(
-          collection(db, "reservations"),
-          where("date", ">=", startDate),
-          where("date", "<=", endDate)
-        );
-
-        reservationsSnapshot = await getDocs(reservationsQuery);
-      }
+      const reservationsQuery = query(
+        collection(db, "reservations"),
+        where("date", ">=", startDateStr),
+        where("date", "<=", endDateStr)
+      );
+      const reservationsSnapshot = await getDocs(reservationsQuery);
 
       const reservations: Record<string, ReservationDetails> = {};
       for (const reservationDoc of reservationsSnapshot.docs) {
