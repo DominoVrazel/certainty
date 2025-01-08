@@ -260,22 +260,29 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       }
     }
 
-    const fetchReservations = async () => {
+    const fetchReservations = async (isAdmin: boolean) => {
       try {
-        const today = new Date();
-        const twoWeeksFromNow = new Date();
-        twoWeeksFromNow.setDate(today.getDate() + 21);
+        let reservationsSnapshot;
+        if (isAdmin) {
+          // Fetch all reservations for admin
+          reservationsSnapshot = await getDocs(collection(db, "reservations"));
+        } else {
+          // Fetch reservations from today to two weeks into the future for normal users
+          const today = new Date();
+          const twoWeeksFromNow = new Date();
+          twoWeeksFromNow.setDate(today.getDate() + 21);
 
-        const startDate = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-        const endDate = twoWeeksFromNow.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+          const startDate = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+          const endDate = twoWeeksFromNow.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
-        const reservationsQuery = query(
-          collection(db, "reservations"),
-          where("date", ">=", startDate),
-          where("date", "<=", endDate)
-        );
+          const reservationsQuery = query(
+            collection(db, "reservations"),
+            where("date", ">=", startDate),
+            where("date", "<=", endDate)
+          );
 
-        const reservationsSnapshot = await getDocs(reservationsQuery);
+          reservationsSnapshot = await getDocs(reservationsQuery);
+        }
 
         const reservations: Record<string, ReservationDetails> = {};
         for (const reservationDoc of reservationsSnapshot.docs) {
@@ -332,7 +339,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
     fetchCoursesAndSeasons();
     fetchResortEmail();
-    fetchReservations();
+    fetchReservations(isAdmin);
     fetchClosedTracks();
   }, [db, resortId]);
 
@@ -340,8 +347,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     return format(new Date(date), "dd.MM");
   }
 
-  const handleNextWeek = (course: string) => {
-    const futureLimit = addDays(new Date(), 14);
+  const handleNextWeek = (course: string, isAdmin: boolean) => {
+    const futureLimit = isAdmin
+      ? addDays(new Date(), 365)
+      : addDays(new Date(), 14); // Admin can go up to 1 year forward
     const nextOffset = (weekOffset[course] || 0) + 1;
     const nextDate = addDays(new Date(), nextOffset * 7);
 
@@ -415,9 +424,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           </div>
           <div className="navigate-forwards">
             <button
-              onClick={() => handleNextWeek(course)}
+              onClick={() => handleNextWeek(course, isAdmin)}
               disabled={
-                addDays(currentDateForCourse, 7) > addDays(new Date(), 14)
+                addDays(currentDateForCourse, 7) >
+                (isAdmin ? addDays(new Date(), 365) : addDays(new Date(), 14))
               }
             >
               <span className="tooltip-text">dopredu</span>
@@ -1068,7 +1078,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         } as ReservationDetails, // Cast to ReservationDetails
       }));
       setSelectedSession(null);
-      await handleUpdate();
+      await handleUpdate(isAdmin);
 
       alert("Ďakujeme za rezerváciu, tešíme sa na vás.");
       setVerifyLoadingState(LoaderState.Finished);
@@ -1107,7 +1117,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       alert("Pri zrušení rezervácie došlo k chybe.");
     } finally {
       // Reset loading state
-      await handleUpdate();
+      await handleUpdate(isAdmin);
       const useremailSubject = "Vaša rezervácia bola zrušená";
       const useremailIdentifier = "USER_DELETE_RES";
       if (userEmail && userFirstName && userSecondName && isAdmin) {
@@ -1186,7 +1196,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           console.error("User email is null. Cannot send email.");
         }
 
-        await handleUpdate();
+        await handleUpdate(isAdmin);
         setIsReservationConfirmed(true);
         console.log("Reservation status updated to 'potvrdená'");
       } else {
@@ -1199,24 +1209,31 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     }
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (isAdmin: boolean) => {
     try {
-      const today = new Date();
-      const twoWeeksFromNow = new Date();
-      twoWeeksFromNow.setDate(today.getDate() + 21);
+      let reservationsSnapshot;
+      if (isAdmin) {
+        // Fetch all reservations for admin
+        reservationsSnapshot = await getDocs(collection(db, "reservations"));
+      } else {
+        // Fetch reservations from today to two weeks into the future for normal users
+        const today = new Date();
+        const twoWeeksFromNow = new Date();
+        twoWeeksFromNow.setDate(today.getDate() + 21);
 
-      const startDate = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-      const endDate = twoWeeksFromNow.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+        const startDate = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+        const endDate = twoWeeksFromNow.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
-      const reservationsQuery = query(
-        collection(db, "reservations"),
-        where("date", ">=", startDate),
-        where("date", "<=", endDate)
-      );
+        const reservationsQuery = query(
+          collection(db, "reservations"),
+          where("date", ">=", startDate),
+          where("date", "<=", endDate)
+        );
 
-      const reservationsSnapshot = await getDocs(reservationsQuery);
+        reservationsSnapshot = await getDocs(reservationsQuery);
+      }
+
       const reservations: Record<string, ReservationDetails> = {};
-
       for (const reservationDoc of reservationsSnapshot.docs) {
         const reservationData = reservationDoc.data();
 
@@ -1365,7 +1382,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           });
 
           console.log("Successfully added to training!");
-          await handleUpdate();
+          await handleUpdate(isAdmin);
           setVerifyLoadingState(LoaderState.Finished);
           alert("Boli ste úspešne pridaní na tréning.");
         } else {
@@ -1475,7 +1492,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
               }
               onClose={handleCloseModal}
               onSubmit={handleReservationSubmit}
-              onUpdate={handleUpdate}
+              onUpdate={() => handleUpdate(isAdmin)}
               course={selectedSession.course}
               isExistingReservation={Boolean(selectedSession.existingDetails)} // Indicate if it's an existing reservation
               existingDetails={selectedSession.existingDetails} // Pass existing reservation details // Pass delete function
@@ -1501,7 +1518,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
               onClose={() => setIsEditModalOpen(false)} // Close function
               isLoggedIn={isLoggedIn} // Pass login status if needed
               isAdmin={isAdmin} // Pass admin status if needed
-              onUpdate={handleUpdate}
+              onUpdate={() => handleUpdate(isAdmin)}
               setVerifyLoadingState={setVerifyLoadingState}
             />
           )}
