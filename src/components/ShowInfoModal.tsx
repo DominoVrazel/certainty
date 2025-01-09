@@ -19,10 +19,14 @@ const ShowInfoModal: React.FC<ShowInfoModalProps> = ({ isOpen, onClose }) => {
       case "tab1":
         return (
           <div className="tab-content">
-            <h3 className="article-heading">
-              Pre najaktúalnejšie informácie pridajte sa do našej whatsapp
-              skupiny.
-            </h3>
+            <p className="article-heading">
+              V prípade otázok píšte na emailovú adresu:{" "}
+              <b>skola@bachledka.sk</b>{" "}
+            </p>
+            <p className="article-heading">
+              Pre <b>najaktúalnejšie informácie</b> pridajte sa do našej{" "}
+              <b>Whatsapp skupiny</b>.
+            </p>
             <img
               src={whatsapp_skupina_QR}
               alt="Informative"

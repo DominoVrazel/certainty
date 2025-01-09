@@ -231,6 +231,7 @@ input {
 .article-heading {
   font-size: 1.1vw;
   margin-top: 1.5vw;
+  font-weight: 400;
 }
 
 .info-modal-heading {

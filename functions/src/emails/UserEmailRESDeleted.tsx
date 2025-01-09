@@ -73,8 +73,8 @@ export function ReservationDeletedNotification({
 
             <p>
               Pre viac informácii napíšte na e-mail strediska. Nájdete ho na
-              stránke kliknutím na tlačidlo informácie v kalendári daného
-              strediska.
+              stránke kliknutím na tlačidlo "Návod ako postupovať" v kalendári
+              daného strediska.
             </p>
           </Text>
 
