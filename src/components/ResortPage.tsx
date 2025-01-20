@@ -219,6 +219,11 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           }
         }
 
+        if (fetchedCourses.length > 1) {
+          const secondCourse = fetchedCourses.splice(1, 1)[0];
+          fetchedCourses.unshift(secondCourse);
+        }
+
         setCourses(fetchedCourses);
         setSeasons(fetchedSeasons);
         setCourseCapacities(courseCapacities);
