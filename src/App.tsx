@@ -12,6 +12,7 @@ import AdminPage from "./components/AdminPage";
 import ResortPage from "./components/ResortPage";
 import Modal from "./components/Modal";
 import EmptyResortsPage from "./components/EmptyResortsPage";
+import GDPRPage from "./components/GDPRPage";
 
 import ReservationConfirm from "./components/ReservationConfirm";
 import ForgottenPassword from "./components/ForgottenPassword";
@@ -287,6 +288,7 @@ function App() {
           path="/account-settings"
           element={<AccountSettings user={user} setUser={setUser} />}
         />
+        <Route path="/GDPRPage" element={<GDPRPage />} />
       </Routes>
     </Router>
   );

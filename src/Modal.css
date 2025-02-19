@@ -240,6 +240,10 @@ input {
   margin-bottom: 1vw;
 }
 
+.GDPR-checkbox {
+  display: flex;
+}
+
 @media (max-width: 1024px) {
   .modal-content {
     margin-top: 1vw;

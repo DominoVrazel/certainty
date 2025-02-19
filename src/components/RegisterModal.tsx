@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { registerUser } from "../services/FirebaseService";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { addDoc, collection, getFirestore } from "firebase/firestore";
+import { Link } from "react-router-dom";
 
 interface RegisterModalProps {
   setShowRegisterModal: (show: boolean) => void;
@@ -312,15 +313,32 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
             </div>
 
             <div className="mb3">
-              <input
-                type="checkbox"
-                id="acceptCheckbox"
-                checked={isAccepted}
-                onChange={handleCheckboxChange}
-              />
-              <label htmlFor="acceptCheckbox">
-                Súhlasím so spracovaním osobných údajov.
-              </label>
+              <div className="GDPR-checkbox">
+                <input
+                  type="checkbox"
+                  id="acceptCheckbox"
+                  checked={isAccepted}
+                  onChange={handleCheckboxChange}
+                />
+                <label htmlFor="acceptCheckbox">
+                  Zaškrtnutím tohto políčka súhlasím so spracovaním mojich
+                  osobných údajov na účely rezervácie lyžiarskeho tréningu v
+                  súlade s{" "}
+                  <Link
+                    to="/GDPRPage"
+                    target="_blank"
+                    style={{
+                      color: "blue",
+                      textDecoration: "underline",
+                      marginLeft: "5px",
+                    }}
+                  >
+                    podmienkami ochrany osobných údajov.
+                  </Link>{" "}
+                  Moje údaje budú použité iba na tento účel a nebudú poskytnuté
+                  tretím stranám.
+                </label>
+              </div>
             </div>
 
             <button className="RegButton" type="submit">
