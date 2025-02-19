@@ -44,6 +44,12 @@ const ShowInfoModal: React.FC<ShowInfoModalProps> = ({ isOpen, onClose }) => {
         return (
           <div className="tab-content">
             <h3 className="article-heading">
+              <b>
+                Ak je rezerácia potvrdená strediskom, nie je možné ju zmazať. Ak
+                chcete rezerváciu zmazať kontaktujte nás na skola@bachledka.sk
+              </b>
+            </h3>
+            <h3 className="article-heading">
               Ak ste danú rezerváciu vytvorili.
             </h3>
             <p className="number-steps">

@@ -117,7 +117,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ user, setUser }) => {
         localStorage.setItem("userSportClub", formData.sportClub);
         localStorage.setItem("userZSL_code", formData.ZSL_code);
         setErrorMessage(null);
-        alert("Account settings updated successfully!");
+        alert("Nastavenia účtu boli úspešne aktualizované!");
       } catch (error) {
         console.error("Error updating account settings: ", error);
         setErrorMessage("Failed to update account settings.");
