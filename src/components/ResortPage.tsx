@@ -64,7 +64,8 @@ interface User {
   firstName: string;
   secondName: string;
   sportClub?: string; // Optional field
-  ownRacers: number; // Required field
+  ownRacers: number;
+  tel_number: string; // Required field
 }
 
 interface ReservationDetails {
@@ -675,6 +676,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                                                     <br></br>
                                                     <b>POČET JAZDCOV:</b>{" "}
                                                     {`${isReserved.user.ownRacers}`}
+                                                    <br></br>
+                                                    <b>KONTAKT:</b>{" "}
+                                                    {`${isReserved.user.tel_number}`}
                                                     {isReserved.addedUsers?.map(
                                                       (user, idx) => (
                                                         <div key={idx}>
@@ -686,6 +690,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                                                             POČET JAZDCOV:
                                                           </b>{" "}
                                                           {user.ownRacers}
+                                                          <br></br>
+                                                          <b>KONTAKT:</b>{" "}
+                                                          {user.tel_number}
                                                         </div>
                                                       )
                                                     )}
@@ -984,6 +991,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           secondName: localStorage.getItem("userSecondName"),
           sportClub: localStorage.getItem("userSportClub"),
           ownRacers: formData.racers,
+          tel_number: localStorage.getItem("userTel_number"),
         },
         reservationDetails: {
           resort: resortId,
@@ -1072,6 +1080,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
             secondName: localStorage.getItem("userSecondName"),
             sportClub: localStorage.getItem("userSportClub"),
             ownRacers: formData.racers,
+            tel_number: localStorage.getItem("userTel_number"),
           },
         } as ReservationDetails, // Cast to ReservationDetails
       }));
@@ -1281,6 +1290,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       const userSecondName = localStorage.getItem("userSecondName");
       const sportClub = localStorage.getItem("userSportClub");
       const ZSL_code = localStorage.getItem("userZSL_code") || "";
+      const tel_number = localStorage.getItem("userTel_number");
 
       if (!userEmail || !userFirstName || !userSecondName) {
         console.error("User information is missing. Cannot add to training.");
@@ -1364,6 +1374,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
             secondName: userSecondName,
             sportClub: sportClub,
             ownRacers: formData.racers,
+            tel_number: tel_number,
           });
 
           // Update the existing reservation to decrement the number of available racers
