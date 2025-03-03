@@ -1,19 +1,102 @@
 .AppBody {
   background-color: rgb(255, 255, 255);
   height: 60vw;
+  font-family: "Noto Sans", sans-serif;
+  font-weight: 400;
+  font-size: 0.85vw;
+  height: 100%;
 }
 
-h1 {
+.AppBody h2 {
+  font-size: 1.4vw;
+  margin-bottom: 20px;
+}
+
+.AppBody p {
   text-align: center;
-  padding-bottom: 30px;
-  padding-top: 15px;
 }
 
-.container {
+.creationTab {
+  background-color: #60be5d;
+  padding-top: 2vw;
+  color: #2e2e2e;
+}
+
+.statisticsTab {
+  background-color: #4f84e7;
+  padding-top: 2vw;
+  color: #2e2e2e;
+}
+
+.admin-tabs-menu {
   display: flex;
-  justify-content: flex-start; /* To ensure they are aligned at the start */
-  align-items: flex-start; /* Align the items at the top */
+  justify-content: space-around;
+}
+
+.creation-tabs-button {
+  padding: 0.5vw 1vw;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9vw;
+  color: rgb(255, 255, 255);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  background-color: #60be5d;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.stats-tabs-button {
+  padding: 0.5vw 1vw;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9vw;
+  color: rgb(255, 255, 255);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  background-color: #4f84e7;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.resortSetupContainer {
+  display: flex;
   gap: 40px; /* You can use gap for spacing between items */
+  justify-content: center;
+}
+
+.addResortData {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  width: 28%;
+  padding-left: 1vw;
+  padding-right: 1vw;
+}
+
+.AddCourseData {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  width: 28%;
+  padding-left: 1vw;
+  padding-right: 1vw;
+}
+
+.AddSeasonData {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  width: 28%;
+  padding-left: 1vw;
+  padding-right: 1vw;
+}
+
+.addPromosContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Adjust the gap between items */
 }
 
 .list-group-container {
@@ -26,4 +109,146 @@ h1 {
 }
 
 .add-promocodes-container {
+}
+
+.add-resort-form {
+  padding: 2vw;
+  margin: 1vw auto;
+}
+
+.add-course-form {
+  padding: 2vw;
+  margin: 1vw auto;
+}
+
+.add-season-form {
+  padding: 2vw;
+  margin: 1vw auto;
+}
+
+.form-heading {
+  text-align: center;
+  margin-bottom: 1.5vw;
+  font-size: 1.2vw !important;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 1.5vw;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5vw;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-string-input {
+  width: 100%;
+  padding: 0.6vw 0.8vw;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1vw;
+}
+
+.form-string-input::placeholder {
+  font-size: 0.8vw;
+}
+
+.form-number-group {
+  display: flex;
+  align-items: center;
+  gap: 1vw; /* Adjust the gap between label and input container as needed */
+  margin-bottom: 1vw;
+}
+
+.number-input-container {
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.number-btn {
+  padding: 0.2vw 0.5vw;
+  background: #f0f0f0;
+  border: none;
+  cursor: pointer;
+  font-size: 1vw;
+  border-radius: 3px;
+}
+
+.number-btn:hover {
+  background: #e0e0e0;
+}
+
+.number-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.form-number-input {
+  width: 2vw !important;
+  text-align: center;
+  border: none;
+  font-size: 0.9vw !important;
+  font-weight: bold;
+  background: transparent;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.form-number-input:focus {
+  outline: none;
+}
+
+.form-string-input:focus {
+  outline: none;
+  border-color: #0078d7;
+  box-shadow: 0 0 5px rgba(0, 120, 215, 0.3);
+}
+
+.form-number-input::-webkit-outer-spin-button,
+.form-number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn-primary {
+  background: #616161 !important;
+  color: #fff;
+  font-size: 1vw !important;
+  border: none !important;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.089) !important;
+}
+
+.btn-primary:hover {
+  background: #929292 !important;
+}
+
+.training-times-button {
+  margin-top: 0.5vw;
+  padding: 0.3vw 1vw;
+  background: #ececec !important;
+  color: #000000;
+  font-size: 0.8vw !important;
+  border: none !important;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.089);
+}
+
+.btn-primary:hover {
+  background: #005ea6;
+}
+
+.error-text {
+  color: #d9534f;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.fas.fa-info-circle {
+  color: #1c7adf;
+  font-size: 1vw; /* Increase this value as needed */
 }

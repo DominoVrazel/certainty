@@ -174,12 +174,10 @@ const AddSeasonData: React.FC = () => {
   };
 
   return (
-    <div>
-      <h2>Pridať sezónny kalendár</h2>
-
-      {/* Resort Dropdown */}
-      <div>
-        <label>
+    <div className="add-season-form">
+      <h2 className="form-heading">Pridať sezónny kalendár</h2>
+      <div className="form-group">
+        <label className="form-label">
           Vybrať stredisko:
           <select
             value={selectedResort}
@@ -196,10 +194,9 @@ const AddSeasonData: React.FC = () => {
         </label>
       </div>
 
-      {/* Course Dropdown (depends on the selected resort) */}
       {selectedResort && (
-        <div>
-          <label>
+        <div className="form-group">
+          <label className="form-label">
             Vybrať tréningovú trať:
             <select
               value={selectedCourse}
@@ -217,11 +214,11 @@ const AddSeasonData: React.FC = () => {
         </div>
       )}
 
-      <div>
-        <label>
+      <div className="form-group">
+        <label className="form-label">
           Názov nového sezónneho kalendára:
           <span className="info-icon">
-            ⓘ
+            <i className="fas fa-info-circle"></i>
             <span className="tooltip-text">
               Musí obsahovať v názve rok sezóny v tvare 2024/2025, príklad:
               sezóna 2024/2025.
@@ -229,14 +226,16 @@ const AddSeasonData: React.FC = () => {
           </span>
           <input
             type="text"
+            className="form-string-input"
             value={seasonName}
             onChange={(e) => setSeasonName(e.target.value)}
             disabled={loading}
+            placeholder="Zadajte názov"
           />
         </label>
       </div>
-      <div>
-        <label>
+      <div className="form-group">
+        <label className="form-label">
           Začiatok sezóny:
           <input
             type="date"
@@ -245,8 +244,8 @@ const AddSeasonData: React.FC = () => {
           />
         </label>
       </div>
-      <div>
-        <label>
+      <div className="form-group">
+        <label className="form-label">
           Koniec sezóny:
           <input
             type="date"
@@ -255,7 +254,11 @@ const AddSeasonData: React.FC = () => {
           />
         </label>
       </div>
-      <button onClick={addSeasonToDatabase} disabled={loading}>
+      <button
+        className="btn btn-primary"
+        onClick={addSeasonToDatabase}
+        disabled={loading}
+      >
         {loading ? "Pridávam..." : "Pridať kalendár"}
       </button>
       {error && <p style={{ color: "red" }}>{error}</p>}

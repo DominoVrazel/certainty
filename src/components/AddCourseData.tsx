@@ -131,12 +131,10 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
   };
 
   return (
-    <div>
-      <h2>Pridajte traťové informácie</h2>
-
-      {/* Resort Selection Dropdown */}
-      <div>
-        <label>
+    <div className="add-course-form">
+      <h2 className="form-heading">Pridajte traťové informácie</h2>
+      <div className="form-group">
+        <label className="form-label">
           Vyberte si stredisko:
           <select
             value={selectedResort?.id || ""}
@@ -158,60 +156,99 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
       </div>
 
       {/* Course Name Input */}
-      <div>
-        <label>
+      <div className="form-group">
+        <label className="form-label">
           Názov tréningovej trate:
           <input
             type="text"
+            className="form-string-input"
             value={courseName}
             onChange={(e) => setCourseName(e.target.value)}
             disabled={loading}
+            placeholder="Zadajte názov"
           />
         </label>
       </div>
 
       {/* Course Capacity Input */}
-      <div>
-        <label>
+      <div className="form-number-group">
+        <label className="form-label">
           Traťová kapacita:
           <span className="info-icon">
-            ⓘ
+            <i className="fas fa-info-circle"></i>
             <span className="tooltip-text">
               Maximum postavených slalomov v jeden čas.
             </span>
           </span>
+        </label>
+        <div className="number-input-container">
+          <button
+            className="number-btn"
+            onClick={() => setCourseCapacity((prev) => Math.max(1, prev - 1))}
+            disabled={loading}
+          >
+            -
+          </button>
           <input
             type="number"
+            className="form-number-input"
             value={courseCapacity}
             onChange={(e) => setCourseCapacity(Number(e.target.value))}
             min="1"
             disabled={loading}
           />
-        </label>
+          <button
+            className="number-btn"
+            onClick={() => setCourseCapacity((prev) => prev + 1)}
+            disabled={loading}
+          >
+            +
+          </button>
+        </div>
       </div>
 
-      <div>
-        <label>
+      <div className="form-number-group">
+        <label className="form-label">
           Kapacita tréningu:
           <span className="info-icon">
-            ⓘ
+            <i className="fas fa-info-circle"></i>
             <span className="tooltip-text">
               Maximum pretekárov na jednej trati.
             </span>
           </span>
+        </label>
+
+        <div className="number-input-container">
+          <button
+            className="number-btn"
+            onClick={() =>
+              setIndividualLineCapacity((prev) => Math.max(1, prev - 1))
+            }
+            disabled={loading}
+          >
+            -
+          </button>
           <input
             type="number"
+            className="form-number-input"
             value={individualLineCapacity}
             onChange={(e) => setIndividualLineCapacity(Number(e.target.value))}
             min="1"
             disabled={loading}
           />
-        </label>
+          <button
+            className="number-btn"
+            onClick={() => setIndividualLineCapacity((prev) => prev + 1)}
+            disabled={loading}
+          >
+            +
+          </button>
+        </div>
       </div>
 
       {/* Time Sessions Input */}
-      <div>
-        <label>Dostupné tréningové časy:</label>
+      <div className="form-group">
+        <label className="form-label">Dostupné tréningové časy:</label>
         {timeSessions.map((session, index) => (
           <div key={index} style={{ display: "flex", alignItems: "center" }}>
             <span>od:</span>
@@ -241,13 +278,22 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
             </button>
           </div>
         ))}
-        <button type="button" onClick={addNewSessionField} disabled={loading}>
+        <button
+          className="training-times-button"
+          type="button"
+          onClick={addNewSessionField}
+          disabled={loading}
+        >
           Pridať tréningový čas
         </button>
       </div>
 
       {/* Add Course Button */}
-      <button onClick={addCourseToDatabase} disabled={loading}>
+      <button
+        className="btn btn-primary"
+        onClick={addCourseToDatabase}
+        disabled={loading}
+      >
         {loading ? "Pridávam..." : "Pridať trať"}
       </button>
 

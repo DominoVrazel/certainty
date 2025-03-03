@@ -78,32 +78,40 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
   };
 
   return (
-    <div>
-      <h2>Pridať informácie o stredisku</h2>
-      <div>
-        <label>
+    <div className="add-resort-form">
+      <h2 className="form-heading">Pridať informácie o stredisku</h2>
+      <div className="form-group">
+        <label className="form-label">
           Názov strediska:
           <input
             type="text"
+            className="form-string-input"
             value={resortName}
             onChange={(e) => setResortName(e.target.value)}
+            placeholder="Zadajte názov"
           />
         </label>
       </div>
-      <div>
-        <label>
+      <div className="form-group">
+        <label className="form-label">
           Administrátorský email:
           <input
             type="text"
+            className="form-string-input"
             value={resortEmail}
             onChange={(e) => setResorEmail(e.target.value)}
+            placeholder="Zadajte email"
           />
         </label>
       </div>
-      <button onClick={addResortToDatabase} disabled={loading}>
+      <button
+        className="btn btn-primary"
+        onClick={addResortToDatabase}
+        disabled={loading}
+      >
         {loading ? "Pridávam..." : "Pridať stredisko"}
       </button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="error-text">{error}</p>}
     </div>
   );
 };
