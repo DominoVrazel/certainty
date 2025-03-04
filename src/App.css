@@ -59,7 +59,6 @@ button:hover {
   font-size: 0.9vw;
   font-family: "DM Sans", sans-serif;
   font-weight: 500; /* Medium 500 variant */
-
   position: relative;
 }
 
@@ -76,6 +75,8 @@ button:hover {
 
 .resort-logo {
   transition: transform 0.3s ease;
+  max-width: 15vw;
+  max-height: 2.5vw;
 }
 
 .resort-logo:hover {
@@ -150,7 +151,7 @@ button:hover {
 }
 
 .user-icon {
-  margin-right: 0.5rem; /* Adjust the margin as needed */
+  margin-right: 0.5vw; /* Adjust the margin as needed */
   font-size: 1.2vw;
 }
 
@@ -262,4 +263,57 @@ button:hover {
   width: 100%;
   text-align: center;
   font-weight: 400;
+}
+
+.ZSL-logo {
+  width: 7vw;
+  height: auto;
+}
+
+@media screen and (max-width: 768px) {
+  .user-greeting {
+    display: none;
+  }
+
+  .account-text {
+    display: none;
+  }
+
+  .user-icon {
+    font-size: 4.5vw;
+  }
+
+  .btn-success {
+    background-color: rgba(255, 255, 255, 0) !important;
+    color: #727272 !important; /* Match with your nav tab color */
+    border: none !important; /* Match with your nav tab color */
+    padding-top: 0vw !important;
+    padding-bottom: 0vw !important;
+    border-radius: 0vw !important;
+    font-size: 2vw !important;
+  }
+
+  .btn-success:hover {
+    background-color: rgba(255, 255, 255, 0) !important;
+    color: #8f8f8f !important; /* Darker shade for hover effect */
+    box-shadow: none !important;
+  }
+
+  .ZSL-logo {
+    display: none;
+  }
+
+  .navleft-p {
+    margin-left: 1vw;
+    font-size: 1.8vw;
+  }
+
+  .resort-logo {
+    transition: transform 0.3s ease;
+    max-width: 15vw;
+    max-height: 4vw;
+  }
+
+  .nav-item {
+  }
 }

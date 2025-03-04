@@ -139,11 +139,7 @@ function App() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <img
-              src={ZSLLogo}
-              alt="logo"
-              style={{ width: "7vw", height: "auto" }}
-            />
+            <img className="ZSL-logo" src={ZSLLogo} alt="logo" />
           </a>
           <p className="navleft-p">NAŠE PARTNERSKÉ STREDISKÁ</p>
           <ul>
@@ -162,10 +158,6 @@ function App() {
                       src={resort.image}
                       alt={`${resort.name} logo`}
                       className="resort-logo"
-                      style={{
-                        maxWidth: "15vw",
-                        maxHeight: "2.5vw",
-                      }}
                     />
                   ) : (
                     resort.name
@@ -187,9 +179,11 @@ function App() {
                 className="dropdown"
               >
                 <i className="fa fa-user-circle user-icon"></i>
-                {isLoggedIn && user?.firstName && user?.secondName
-                  ? "Môj účet"
-                  : "Prihlásenie"}
+                <span className="account-text">
+                  {isLoggedIn && user?.firstName && user?.secondName
+                    ? "Môj účet"
+                    : "Prihlásenie"}
+                </span>
               </Dropdown.Toggle>
 
               <Dropdown.Menu>
