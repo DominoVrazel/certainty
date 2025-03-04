@@ -1,24 +1,33 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  overflow-x: hidden;
+}
+
 .AppBody {
   background-color: rgb(255, 255, 255);
-  height: 60vw;
   font-family: "Noto Sans", sans-serif;
   font-weight: 400;
   font-size: 0.85vw;
   height: 100%;
 }
 
-.AppBody h2 {
-  font-size: 1.4vw;
-  margin-bottom: 20px;
-}
-
-.AppBody p {
+.AppBody-heading {
   text-align: center;
+  margin-top: 2vw;
+  font-size: 1.5vw;
 }
 
 .creationTab {
   background-color: #60be5d;
   padding-top: 2vw;
+  padding-bottom: 2vw;
   color: #2e2e2e;
 }
 
@@ -93,10 +102,16 @@
   padding-right: 1vw;
 }
 
-.addPromosContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 20px; /* Adjust the gap between items */
+.add-content-container {
+  background-color: #f8f8f8;
+  margin-top: 2vw;
+  margin-bottom: 2vw;
+  width: 40%;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  padding: 2vw;
 }
 
 .list-group-container {
@@ -106,9 +121,6 @@
 
 .message {
   width: 45%; /* Adjust as necessary */
-}
-
-.add-promocodes-container {
 }
 
 .add-resort-form {
@@ -142,6 +154,14 @@
   margin-bottom: 0.5vw;
   font-weight: 500;
   color: #555;
+}
+
+.form-label-content {
+  display: block;
+  margin-bottom: 0.5vw;
+  font-weight: 500;
+  color: #555;
+  text-align: center !important;
 }
 
 .form-string-input {
@@ -251,4 +271,43 @@
 .fas.fa-info-circle {
   color: #1c7adf;
   font-size: 1vw; /* Increase this value as needed */
+}
+
+.Image-promos-subcont {
+  display: flex;
+  justify-content: center;
+  margin-top: 1vw;
+  gap: 5vw;
+}
+
+.content-label {
+  display: block;
+  margin-bottom: 0.5vw;
+  font-weight: 500;
+  font-size: 1vw !important;
+  color: #333;
+}
+
+.file-input {
+  width: 100%;
+  padding: 0.6vw 0.8vw;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1vw;
+}
+
+.custom-file-upload {
+  background-color: #1c7adf;
+  color: white;
+  padding: 10px 20px;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  margin-bottom: 1vw;
+}
+
+.custom-file-upload:hover {
+  background-color: #2187f5;
 }

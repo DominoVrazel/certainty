@@ -400,12 +400,7 @@ function AdminPage() {
   return (
     <>
       <div className="AppBody">
-        <h2>Vitaj Administrátor</h2>
-        <p>
-          Táto administrátorská stránka slúži na pridávanie nových stredísk ich
-          tratí a ich kapacít so sezónnymi kalendármi.
-        </p>
-
+        <h2 className="AppBody-heading">Vitaj, administrátor!</h2>
         <div className="admin-tabs-menu">
           <button
             className={`creation-tabs-button ${
@@ -439,10 +434,13 @@ function AdminPage() {
                 </div>
               </div>
 
-              <div className="addPromosContainer">
-                <div className="promocodes">
-                  <label>Vyberte si stredisko:</label>
-                  <div>
+              <div className="add-content-container">
+                <h2 className="form-heading">
+                  Pridajte logo strediska, prípadne promokódy
+                </h2>
+                <div className="form-group">
+                  <label className="form-label-content">
+                    Vyberte si stredisko:
                     <select
                       value={selectedResort || ""}
                       onChange={(e) => {
@@ -457,7 +455,10 @@ function AdminPage() {
                         </option>
                       ))}
                     </select>
-                  </div>
+                  </label>
+                </div>
+
+                <div className="Image-promos-subcont">
                   <AddPromocodes
                     selectedResort={selectedResort}
                     onUpdate={handleUpdate}

@@ -14,6 +14,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [fileName, setFileName] = useState<string>("Nahrať obrázok...");
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -25,6 +26,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         return;
       }
       setSelectedFile(file);
+      setFileName(file.name);
     }
   };
 
@@ -32,6 +34,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     if (selectedFile && selectedResort) {
       setLoading(true);
       setError(null);
+
       try {
         const storage = getStorage();
         const sanitizedResortName = selectedResort.replace(
@@ -45,7 +48,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         await uploadBytes(storageRef, selectedFile);
         alert("Obrázok úspešne uložený!");
         onImageUpload(selectedFile);
-        setSelectedFile(null); // Reset the selected file after upload
+        setSelectedFile(null);
+        setFileName("Nahrať obrázok...");
       } catch (error) {
         console.error("Chyba pri ukladaní obrázka: ", error);
         setError("Chyba pri ukladaní obrázka:");
@@ -58,21 +62,29 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   };
 
   return (
-    <div>
-      <h3>Pridať logo strediska</h3>
+    <div className="add-image-container">
+      <h3 className="content-label">Pridať logo strediska</h3>
       <div>
-        <label>
-          Nahrať obrázok:
+        <label className="custom-file-upload">
           <input
             type="file"
             accept="image/*"
             onChange={handleFileUpload}
             ref={fileInputRef}
+            hidden
           />
+          <span className="upload-icon">
+            <i className="fa fa-upload" aria-hidden="true"></i>
+          </span>{" "}
+          {fileName}
         </label>
       </div>
 
-      <button onClick={handleAddImages} disabled={loading}>
+      <button
+        className="btn btn-primary"
+        onClick={handleAddImages}
+        disabled={loading}
+      >
         {loading ? "Pridávam..." : "Pridať Obrázok"}
       </button>
       {error && <p style={{ color: "red" }}>{error}</p>}

@@ -34,6 +34,7 @@ const AddPromocodes: React.FC<AddPromoCodesProps> = ({
 }) => {
   const [csvData, setCsvData] = useState<any[]>([]);
   const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState<string>("Vybrať súbor...");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +48,8 @@ const AddPromocodes: React.FC<AddPromoCodesProps> = ({
         return;
       }
       setCsvFile(file);
+      setFileName(file.name);
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const csvString = e.target?.result as string;
@@ -90,14 +93,21 @@ const AddPromocodes: React.FC<AddPromoCodesProps> = ({
 
   return (
     <div className="add-promocodes-container">
-      <h3>Pridať Promo Kódy</h3>
+      <h3 className="content-label">Pridať Promo Kódy</h3>
       <div>
-        <label>
-          Nahrať CSV súbor:
-          <input type="file" accept=".csv" onChange={handleFileUpload} />
+        <label className="custom-file-upload">
+          <input type="file" accept=".csv" onChange={handleFileUpload} hidden />
+          <span className="upload-icon">
+            <i className="fa fa-upload" aria-hidden="true"></i>
+          </span>{" "}
+          {fileName}
         </label>
       </div>
-      <button onClick={handleAddPromoCodes} disabled={loading}>
+      <button
+        className="btn btn-primary"
+        onClick={handleAddPromoCodes}
+        disabled={loading}
+      >
         {loading ? "Pridávam..." : "Pridať Promo Kódy"}
       </button>
       {error && <p style={{ color: "red" }}>{error}</p>}
