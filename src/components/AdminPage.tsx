@@ -400,7 +400,15 @@ function AdminPage() {
   return (
     <>
       <div className="AppBody">
-        <h2 className="AppBody-heading">Vitaj, administrátor!</h2>
+        <div className="AppBody-header">
+          <p>VITAJ, ADMINISTRÁTOR</p>{" "}
+          <p className="info-text">
+            Personalizuj si kalendár svojho strediska, nahraj logo svojho
+            strediska či vytvor promokódy. Taktiež môžeš pozrieť kalendár so
+            štatistikou všetkých svojích rezervácii.{" "}
+          </p>
+        </div>
+
         <div className="admin-tabs-menu">
           <button
             className={`creation-tabs-button ${
@@ -494,204 +502,197 @@ function AdminPage() {
                   <p>Žiadni užívatelia</p>
                 )}
               </div>
-              {/* <div className="promoCodes">
-              <h3>Promo Codes</h3>
-              {promoCodes.length > 0 ? (
-                <div className="promo-codes">
-                  <ul>
-                    {promoCodes.map((promoCode) => (
-                      <li key={promoCode.id}>
-                        {promoCode.code}
+
+              <div className="all-reservations">
+                <h4 className="all-reservations-heading">Moje rezervácie</h4>
+                <div className="block">
+                  <div className="dokument-managment">
+                    <h4>Výber kalendára</h4>
+                    <label className="form-label">Vyberte si stredisko:</label>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <select
+                        className="reservations-form-select"
+                        value={selectedResort || ""}
+                        onChange={(e) => {
+                          setSelectedResort(e.target.value);
+                          setSelectedCourse(null);
+                          setSelectedSeason(null);
+                        }}
+                      >
+                        <option value="">Vyberte stredisko</option>
+                        {resorts.map((resort) => (
+                          <option key={resort.id} value={resort.id}>
+                            {resort.name}
+                          </option>
+                        ))}
+                      </select>
+                      {selectedResort && (
                         <button
-                          onClick={() => handleDeletePromoCode(promoCode.id)}
+                          className="cancel-button"
+                          onClick={() => handleDeleteResort(selectedResort)}
                           style={{ marginLeft: "10px" }}
                         >
-                          Delete
+                          Zrušiť
                         </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p>Žiadne promo kódy</p>
-              )}
-            </div> */}
-            </div>
+                      )}
+                    </div>
 
-            {/* Resort Dropdown */}
-            <div>
-              <br></br>
-              <hr></hr>
-              <h4>Sprava dokumentov</h4>
-              <label>Vyberte si stredisko:</label>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <select
-                  value={selectedResort || ""}
-                  onChange={(e) => {
-                    setSelectedResort(e.target.value);
-                    setSelectedCourse(null);
-                    setSelectedSeason(null);
-                  }}
-                >
-                  <option value="">Vyberte stredisko</option>
-                  {resorts.map((resort) => (
-                    <option key={resort.id} value={resort.id}>
-                      {resort.name}
-                    </option>
-                  ))}
-                </select>
-                {selectedResort && (
-                  <button
-                    onClick={() => handleDeleteResort(selectedResort)}
-                    style={{ marginLeft: "10px" }}
-                  >
-                    Zmazať
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Course Dropdown */}
-            {selectedResort && (
-              <div>
-                <label>Vyberte si trať:</label>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <select
-                    value={selectedCourse || ""}
-                    onChange={(e) => {
-                      setSelectedCourse(e.target.value);
-                      setSelectedSeason(null); // Reset selected season when course changes
-                    }}
-                  >
-                    <option value="">Vyberte trať</option>
-                    {courses.map((course) => (
-                      <option key={course.id} value={course.id}>
-                        {course.name}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedCourse && (
-                    <button
-                      onClick={() => handleDeleteCourse(selectedCourse)}
-                      style={{ marginLeft: "10px" }}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Dropdown to select season */}
-            {selectedCourse && (
-              <div>
-                <label>Vyberte si sezónu:</label>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <select
-                    value={selectedSeason || ""}
-                    onChange={(e) => setSelectedSeason(e.target.value)}
-                  >
-                    <option value="">Select Season</option>
-                    {seasons.map((season) => (
-                      <option key={season.id} value={season.id}>
-                        {season.season}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedSeason && (
-                    <button
-                      onClick={() => handleDeleteSeason(selectedSeason)}
-                      style={{ marginLeft: "10px" }}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Render selected season's data as calendar */}
-            {selectedSeason && (
-              <div className="seasons-container">
-                {seasons
-                  .filter((season) => season.id === selectedSeason)
-                  .map((season) => (
-                    <div key={season.id} className="season">
-                      <h3>{season.season}</h3>
-                      <div className="week-navigation">
-                        <button
-                          onClick={handlePreviousWeek}
-                          disabled={currentWeekIndex === 0}
-                        >
-                          &#8592; {/* Left Arrow */}
-                        </button>
-                        <h4>
-                          Týždeň sezóny {currentWeekIndex + 1}. z{" "}
-                          {season.weeks.length}
-                        </h4>
-                        <button
-                          onClick={handleNextWeek}
-                          disabled={currentWeekIndex >= season.weeks.length - 1}
-                        >
-                          &#8594; {/* Right Arrow */}
-                        </button>
-                      </div>
-                      {verifyLoadingState === LoaderState.Loading ? (
-                        <div className="loading-animation-container">
-                          <LoadingAnimation state={verifyLoadingState} />
+                    {selectedResort && (
+                      <div>
+                        <label className="form-label">Vyberte si trať:</label>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <select
+                            className="reservations-form-select"
+                            value={selectedCourse || ""}
+                            onChange={(e) => {
+                              setSelectedCourse(e.target.value);
+                              setSelectedSeason(null); // Reset selected season when course changes
+                            }}
+                          >
+                            <option value="">Vyberte trať</option>
+                            {courses.map((course) => (
+                              <option key={course.id} value={course.id}>
+                                {course.name}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedCourse && (
+                            <button
+                              className="cancel-button"
+                              onClick={() => handleDeleteCourse(selectedCourse)}
+                              style={{ marginLeft: "10px" }}
+                            >
+                              Zrušiť
+                            </button>
+                          )}
                         </div>
-                      ) : (
-                        season.weeks.length > 0 && (
-                          <div className="calendar-week">
-                            {season.weeks[currentWeekIndex].days.map(
-                              (day: any) => (
-                                <div key={day.date} className="calendar-day">
-                                  {`${day.dayOfWeek[lang]}, ${day.date}`}
-                                  {/* Render reservations for the day */}
-                                  {reservations
-                                    .filter(
-                                      (reservation) =>
-                                        reservation.date === day.date &&
-                                        reservation.reservationDetails
-                                          .resort === selectedResort &&
-                                        reservation.reservationDetails
-                                          .course === selectedCourse
-                                    )
-                                    .map((reservation) => (
+                      </div>
+                    )}
+
+                    {selectedCourse && (
+                      <div>
+                        <label className="form-label">Vyberte si sezónu:</label>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <select
+                            className="reservations-form-select"
+                            value={selectedSeason || ""}
+                            onChange={(e) => setSelectedSeason(e.target.value)}
+                          >
+                            <option value="">Select Season</option>
+                            {seasons.map((season) => (
+                              <option key={season.id} value={season.id}>
+                                {season.season}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedSeason && (
+                            <button
+                              className="cancel-button"
+                              onClick={() => handleDeleteSeason(selectedSeason)}
+                              style={{ marginLeft: "10px" }}
+                            >
+                              Zrušiť
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedSeason && (
+                    <div className="seasons-container">
+                      {seasons
+                        .filter((season) => season.id === selectedSeason)
+                        .map((season) => (
+                          <div key={season.id} className="season">
+                            {/* <h3>{season.season}</h3> */}
+                            <div className="week-navigation2">
+                              <button
+                                onClick={handlePreviousWeek}
+                                disabled={currentWeekIndex === 0}
+                              >
+                                &#8592; {/* Left Arrow */}
+                              </button>
+                              <h4>
+                                Týždeň sezóny {currentWeekIndex + 1}. z{" "}
+                                {season.weeks.length}
+                              </h4>
+                              <button
+                                onClick={handleNextWeek}
+                                disabled={
+                                  currentWeekIndex >= season.weeks.length - 1
+                                }
+                              >
+                                &#8594; {/* Right Arrow */}
+                              </button>
+                            </div>
+                            {verifyLoadingState === LoaderState.Loading ? (
+                              <div className="loading-animation-container">
+                                <LoadingAnimation state={verifyLoadingState} />
+                              </div>
+                            ) : (
+                              season.weeks.length > 0 && (
+                                <div className="calendar-week2">
+                                  {season.weeks[currentWeekIndex].days.map(
+                                    (day: any) => (
                                       <div
-                                        key={reservation.id}
-                                        className="reservation"
+                                        key={day.date}
+                                        className="calendar-day2"
                                       >
-                                        <br></br>
-                                        <p>
-                                          <b>{reservation.discipline}</b>
-                                        </p>
-                                        <p>
-                                          {reservation.user.sportClub}{" "}
-                                          <b>{reservation.user.ownRacers}</b>
-                                        </p>
-                                        {reservation.addedUsers &&
-                                          reservation.addedUsers.map((user) => (
-                                            <div key={user.email}>
+                                        <div className="day2">{`${day.dayOfWeek[lang]}, ${day.date}`}</div>
+
+                                        {reservations
+                                          .filter(
+                                            (reservation) =>
+                                              reservation.date === day.date &&
+                                              reservation.reservationDetails
+                                                .resort === selectedResort &&
+                                              reservation.reservationDetails
+                                                .course === selectedCourse
+                                          )
+                                          .map((reservation) => (
+                                            <div
+                                              key={reservation.id}
+                                              className="reservation2"
+                                            >
+                                              <br></br>
                                               <p>
-                                                {user.sportClub}{" "}
-                                                <b>{user.ownRacers}</b>
+                                                <b>{reservation.discipline}</b>
                                               </p>
+                                              <p>
+                                                {reservation.user.sportClub}{" "}
+                                                <b>
+                                                  {reservation.user.ownRacers}
+                                                </b>
+                                              </p>
+                                              <hr></hr>
+                                              {reservation.addedUsers &&
+                                                reservation.addedUsers.map(
+                                                  (user) => (
+                                                    <div key={user.email}>
+                                                      <p>
+                                                        {user.sportClub}{" "}
+                                                        <b>{user.ownRacers}</b>
+                                                        <hr></hr>
+                                                      </p>
+                                                    </div>
+                                                  )
+                                                )}
                                             </div>
                                           ))}
-                                        <hr />
                                       </div>
-                                    ))}
+                                    )
+                                  )}
                                 </div>
                               )
                             )}
                           </div>
-                        )
-                      )}
+                        ))}
                     </div>
-                  ))}
+                  )}
+                </div>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
