@@ -660,4 +660,13 @@ button:hover {
   .curr-date-heading p {
     font-size: 1.5vw;
   }
+
+  .line-container {
+    border-radius: 5px !important;
+    border: 1.5px solid rgb(77, 86, 104);
+  }
+
+  .res-container {
+    border-radius: 5px !important;
+  }
 }

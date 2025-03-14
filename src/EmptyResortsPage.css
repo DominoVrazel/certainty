@@ -1,7 +1,120 @@
 .EmptyResortsPage_body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  text-align: center;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 450;
+  font-size: 0.85vw;
+  color: #242424;
+  background-color: #ffffff;
+  padding: 20px;
+}
+
+.EmptyResortsPage_body h1 {
+  font-size: 2vw;
+  margin-bottom: 0.5vw;
+}
+
+.EmptyResortsPage_body p {
+  font-size: 1vw;
+  max-width: 600px;
+  line-height: 1.5;
+  margin: 5px 0;
+}
+
+.skier-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: -10vw;
+  margin-top: -10vw;
+}
+
+.skier {
+  width: 7vw;
+  height: auto;
+  position: absolute;
+  animation: skiingLoop 8s linear infinite;
+}
+
+@keyframes skiingLoop {
+  from {
+    transform: translate(-5vw, -5vh) rotate(-8deg);
+    opacity: 1;
+  }
+  15% {
+    transform: translate(5vw, 0vh) rotate(8deg);
+  }
+  30% {
+    transform: translate(15vw, 5vh) rotate(-360deg);
+  }
+  45% {
+    transform: translate(25vw, 10vh) rotate(-360deg);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+    transform: translate(25vw, 10vh) rotate(-360deg);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(25vw, 10vh) rotate(-368deg);
+  }
+  70% {
+    transform: translate(15vw, 5vh) rotate(-360deg);
+  }
+  85% {
+    transform: translate(5vw, 0vh) rotate(-368deg);
+  }
+  to {
+    transform: translate(-5vw, -5vh) rotate(-360deg);
+    opacity: 1;
+  }
+}
+
+.loading-text {
+  animation: pulse 4s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .skier {
+    width: 12vw;
+    height: auto;
+  }
+
+  .EmptyResortsPage_body h1 {
+    font-size: 4vw;
+    margin-bottom: 0.5vw;
+    margin-top: -10vw;
+  }
+
+  .EmptyResortsPage_body p {
+    font-size: 2vw;
+    margin: 1vw 0;
+  }
+
+  .skier-container {
+    margin-top: -20vw !important;
+  }
 }
