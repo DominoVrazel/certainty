@@ -669,4 +669,9 @@ button:hover {
   .res-container {
     border-radius: 5px !important;
   }
+
+  .session-course-lines {
+    border-top-left-radius: 2px !important;
+    border-top-right-radius: 2px !important;
+  }
 }
