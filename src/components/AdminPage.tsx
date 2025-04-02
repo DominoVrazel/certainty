@@ -120,7 +120,7 @@ function AdminPage() {
         const data = doc.data();
         resortsData.push({
           id: doc.id,
-          name: data.name, // Assuming you have a "name" field in the resort document
+          name: data.name, // Assuming you have a "name"
         });
       });
 
