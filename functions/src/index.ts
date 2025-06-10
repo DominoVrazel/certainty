@@ -124,9 +124,6 @@ emailApp.post("*", async (request, response) => {
       },
     });
 
-    // Since CORS consists of two requests (a preflight OPTIONS request, and a main request that follows the OPTIONS request),
-    // to handle a preflight request, you must set the appropriate Access-Control-Allow-* headers to match the requests you want to accept.
-    // Learn more about CORS and preflight requests at: https://cloud.google.com/functions/docs/writing/write-http-functions#cors
     response.set("Access-Control-Allow-Origin", "*");
     if (request.method === "OPTIONS") {
       response.set("Access-Control-Allow-Methods", "GET");
@@ -137,12 +134,6 @@ emailApp.post("*", async (request, response) => {
     }
 
     const data = request.body.data as EmailData;
-
-    // The response from a client endpoint is always a JSON object.
-    // At a minimum it contains either `result` or `error`, along with any optional fields.
-    // If the response is not a JSON object, or does not contain data or error,
-    // the client SDK should treat the request as failed with Google error code INTERNAL (13).
-    // Learn more about the response format at: https://firebase.google.com/docs/functions/callable-reference#response_body
 
     const reservationUrl = `${reservationBaseUrl.value()}/${
       data.reservationId

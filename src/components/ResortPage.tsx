@@ -255,14 +255,17 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     function getCurrentSeason() {
       const currentDate = new Date();
       const currentYear = currentDate.getFullYear();
-      const currentMonth = currentDate.getMonth();
+      const currentMonth = currentDate.getMonth() + 1;
 
-      if (currentMonth < 4) {
+      // const currentMonth = 6;
+
+      if (currentMonth < 6) {
+        //very important to have the month in the right order. Displaying seasons by that.
         const previousYear = currentYear - 1;
-        return `sezóna ${previousYear}/${currentYear}`;
+        return `${previousYear}/${currentYear}`;
       } else {
         const nextYear = currentYear + 1;
-        return `sezóna ${currentYear}/${nextYear}`;
+        return `${currentYear}/${nextYear}`;
       }
     }
 
@@ -1316,7 +1319,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         const newAvailableRacers =
           existingReservationData.availableRacers - formData.racers;
         if (newAvailableRacers < 0) {
-          console.error("Not enough available racers.");
           alert("Nedostatok voľných miest.");
           return;
         }
@@ -1387,15 +1389,12 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           setVerifyLoadingState(LoaderState.Finished);
           alert("Boli ste úspešne pridaní na tréning.");
         } else {
-          console.error("User already added to this training.");
           alert("Už ste pridaní na tento tréning.");
         }
       } else {
-        console.error("No existing reservation found.");
         alert("Nebola nájdená žiadna existujúca rezervácia.");
       }
     } catch (error) {
-      console.error("Error adding to training: ", error);
       alert("Pri pridávaní na tréning došlo k chybe.");
     }
   };
