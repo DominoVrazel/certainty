@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../ForgottenPass.css";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../services/FirebaseService";
 
 interface ResetPasswordResponse {
   status: string;
@@ -48,7 +49,6 @@ const ForgottenPassword: React.FC<ForgottenPasswordProps> = ({ resorts }) => {
       );
       return false;
     }
-    const functions = getFunctions();
     const resetPassword = httpsCallable<{
       uuid: string;
       newPassword: string;

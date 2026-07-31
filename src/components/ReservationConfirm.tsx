@@ -7,26 +7,11 @@ import "../App.css";
 
 import { getApp } from "firebase/app";
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
-import { send } from "vite";
-import {
-  httpsCallable,
-  getFunctions,
-  connectFunctionsEmulator,
-} from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../services/FirebaseService";
 
 interface ReservatinConfirmProps {
   isAdminLoggedIn: boolean;
-}
-
-const app = getApp();
-console.log("App: ", app);
-const functions = getFunctions(app);
-
-if (
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-) {
-  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
 }
 
 const ReservationConfirmRouteComponent: React.FC<ReservatinConfirmProps> = ({

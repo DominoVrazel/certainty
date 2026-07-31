@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { registerUser } from "../services/FirebaseService";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../services/FirebaseService";
 import { addDoc, collection, getFirestore } from "firebase/firestore";
 import { Link } from "react-router-dom";
 
@@ -10,8 +11,6 @@ interface RegisterModalProps {
 }
 
 async function sendRegistrationEmail(email: string, firstName: string) {
-  const functions = getFunctions();
-
   const sendVerifyEmail = httpsCallable<{
     emailData: {
       recipient: string;

@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Snapshot pulled from production — contains real user data, never commit it.
+.firebase-seed
+# Local emulator state, regenerated from the snapshot.
+.emulator-data
+.firebase
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

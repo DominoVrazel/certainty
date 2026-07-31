@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // NOTE: This mirrors the rules currently deployed in production.
+    // They are fully open — see README-LOCAL.md before deploying anything.
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

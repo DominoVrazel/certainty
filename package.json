@@ -4,10 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/preflight.mjs && node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore,functions,storage --ui --import=./.emulator-data \"node scripts/dev.mjs\"",
+    "dev:cloud": "vite",
+    "emu": "node scripts/preflight.mjs && node scripts/with-jdk.mjs firebase emulators:start --only auth,firestore,functions,storage --import=./.emulator-data",
+    "db:pull": "node scripts/pull-prod-data.mjs",
+    "db:seed": "node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore \"node scripts/seed-emulator.mjs\" && node scripts/finalize-export.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "firebase deploy --only hosting"
+    "deploy:check": "firebase deploy --dry-run",
+    "deploy": "npm run build && firebase deploy --only hosting",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:rules": "firebase deploy --only firestore:rules,storage"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
@@ -32,6 +39,7 @@
     "@types/react-dom": "^18.0.10",
     "@types/react-fontawesome": "^1.6.8",
     "@vitejs/plugin-react": "^3.1.0",
+    "maildev": "^3.0.0-rc.1",
     "typescript": "^4.9.3",
     "vite": "^4.1.0"
   }

@@ -1,6 +1,7 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import {
   getAuth,
+  connectAuthEmulator,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   Auth,
@@ -8,6 +9,7 @@ import {
 } from "firebase/auth";
 import {
   getFirestore,
+  connectFirestoreEmulator,
   Firestore,
   collection,
   doc,
@@ -16,8 +18,19 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import {
+  getFunctions,
+  connectFunctionsEmulator,
+  Functions,
+} from "firebase/functions";
 
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  connectStorageEmulator,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDuV2weROSjrpxjtDvGI0o1vkVAWjeMKas",
@@ -39,11 +52,41 @@ if (!getApps().length) {
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
 const storage = getStorage(app);
+const functions: Functions = getFunctions(app);
+
+// Local development runs against the Firebase emulator suite (`npm run dev`).
+// Every emulator is wired up here and nowhere else, so the whole app agrees on
+// which backend it is talking to. Guarded against Vite HMR re-executing this
+// module, because the connect* helpers throw once a service has been used.
+export const USING_EMULATORS = import.meta.env.VITE_USE_EMULATORS === "true";
+
+const EMULATOR_HOST = "127.0.0.1";
+const emulatorState = globalThis as typeof globalThis & {
+  __certaintyEmulatorsConnected?: boolean;
+};
+
+if (USING_EMULATORS && !emulatorState.__certaintyEmulatorsConnected) {
+  emulatorState.__certaintyEmulatorsConnected = true;
+
+  connectAuthEmulator(auth, `http://${EMULATOR_HOST}:9099`, {
+    disableWarnings: true,
+  });
+  connectFirestoreEmulator(db, EMULATOR_HOST, 8080);
+  connectStorageEmulator(storage, EMULATOR_HOST, 9199);
+  connectFunctionsEmulator(functions, EMULATOR_HOST, 5001);
+
+  console.info(
+    "%c[certainty] Firebase emulators connected — no production data is being touched.",
+    "color:#0a0;font-weight:bold"
+  );
+}
 
 export {
+  app,
   db,
   auth,
   storage,
+  functions,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,

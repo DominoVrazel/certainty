@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // NOTE: This mirrors the rules currently deployed in production.
+    // They are fully open — see README-LOCAL.md before deploying anything.
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

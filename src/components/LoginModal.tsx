@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { loginUser, checkIfEmailExists } from "../services/FirebaseService";
-import {
-  httpsCallable,
-  getFunctions,
-  connectFunctionsEmulator,
-} from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../services/FirebaseService";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 
 function LoginModal() {
@@ -14,13 +11,6 @@ function LoginModal() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
-  const functions = getFunctions();
-  if (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1"
-  ) {
-    connectFunctionsEmulator(functions, "127.0.0.1", 5001);
-  }
 
   //const navigate = useNavigate();
 

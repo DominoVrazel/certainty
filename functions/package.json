@@ -12,7 +12,7 @@
     "dev": "email dev --dir src/emails"
   },
   "engines": {
-    "node": "18"
+    "node": "22"
   },
   "main": "lib/index.js",
   "dependencies": {

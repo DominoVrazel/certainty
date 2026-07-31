@@ -9,8 +9,6 @@ import {
   getDoc,
   updateDoc,
 } from "firebase/firestore";
-import { getApp } from "firebase/app";
-import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 import AddSeasonData from "./AddSeasonData";
 import AddResortData from "./AddResortData";
 import AddCourseData from "./AddCourseData";
@@ -71,17 +69,6 @@ interface Reservation {
     sportClub: string;
   };
   addedUsers?: User[];
-}
-
-const app = getApp();
-const functions = getFunctions(app);
-
-// Connect to the Cloud Functions Emulator if running locally
-if (
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-) {
-  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
 }
 
 function AdminPage() {

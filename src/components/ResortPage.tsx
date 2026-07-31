@@ -13,12 +13,8 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { format, addDays, set } from "date-fns";
-import { getApp } from "firebase/app";
-import {
-  httpsCallable,
-  getFunctions,
-  connectFunctionsEmulator,
-} from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../services/FirebaseService";
 
 import ReservationModal from "./ReservationModal";
 import EditReservationModal from "./EditReservationModal";
@@ -82,17 +78,6 @@ interface ReservationDetails {
   session: { startTime: string; endTime: string };
   addedUsers?: User[]; // Add the addedUsers property
   // Include any other fields you expect in your reservation details
-}
-
-const app = getApp();
-console.log("App: ", app);
-const functions = getFunctions(app);
-
-if (
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-) {
-  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
 }
 
 const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {

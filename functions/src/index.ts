@@ -35,11 +35,56 @@ const resetPasswordApp = express();
 
 const gmailUser = defineSecret("GMAIL_USER");
 const gmailToken = defineSecret("GMAIL_TOKEN");
-const appDomain = defineString("APP_DOMAIN");
+
+/**
+ * The options object passed to onRequest is evaluated at deploy time, before
+ * Params resolve — calling appDomain.value() there warned and risked baking in
+ * an empty origin. `cors` is typed as plain strings and cannot take a Param, so
+ * read the value straight from the environment, which the CLI has already
+ * loaded from .env (or .env.local under the emulator).
+ */
+const corsOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  process.env.APP_DOMAIN,
+].filter((origin): origin is string => Boolean(origin));
 
 const reservationBaseUrl = defineString("RESERVATIONS_BASE_URL");
 const resetPassBaseUrl = defineString("RESET_PASS_BASE_URL");
 const verifyUserBaseUrl = defineString("VERIFY_USER_BASE_URL");
+
+// Set by the Functions emulator, never in deployed functions.
+const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
+
+/**
+ * Locally the database is seeded from production, so it holds real addresses.
+ * Sending through the real Gmail account would mail actual people every time a
+ * test reservation is made — so in the emulator we deliver to a local SMTP
+ * inbox instead. The send path is otherwise identical: same nodemailer call,
+ * same rendered HTML, same recipients, just a different SMTP host.
+ */
+const buildTransport = () => {
+  if (isEmulator) {
+    return createTransport({
+      host: process.env.LOCAL_SMTP_HOST ?? "127.0.0.1",
+      port: Number(process.env.LOCAL_SMTP_PORT ?? 1026),
+      secure: false,
+      ignoreTLS: true,
+    });
+  }
+
+  return createTransport({
+    service: "Gmail",
+    auth: {
+      user: gmailUser.value(),
+      pass: gmailToken.value(),
+    },
+  });
+};
+
+// Reading the secret locally is pointless and fails if .secret.local is absent.
+const senderAddress = () =>
+  isEmulator ? "rezervacia@local.test" : gmailUser.value();
 
 interface EmailData {
   reservationId: string;
@@ -116,13 +161,7 @@ resetPasswordApp.post("*", (req, res) => {
 emailApp.post("*", async (request, response) => {
   try {
     // Create a Nodemailer transporter using SMTP
-    const transporter = createTransport({
-      service: "Gmail",
-      auth: {
-        user: gmailUser.value(),
-        pass: gmailToken.value(),
-      },
-    });
+    const transporter = buildTransport();
 
     response.set("Access-Control-Allow-Origin", "*");
     if (request.method === "OPTIONS") {
@@ -177,7 +216,7 @@ emailApp.post("*", async (request, response) => {
 
     return transporter
       .sendMail({
-        from: gmailUser.value(),
+        from: senderAddress(),
         to: data.emailData.recipient,
         subject: data.emailData.subject,
         html: html,
@@ -200,7 +239,7 @@ export const sendEmail = onRequest(
   {
     secrets: [gmailUser, gmailToken],
 
-    cors: ["http://localhost:5002", "http://127.0.0.1:5002", appDomain.value()],
+    cors: corsOrigins,
   },
   emailApp
 );
@@ -208,7 +247,7 @@ export const sendEmail = onRequest(
 export const resetPassword = onRequest(
   {
     secrets: [gmailUser, gmailToken],
-    cors: ["http://localhost:5002", "http://127.0.0.1:5002", appDomain.value()],
+    cors: corsOrigins,
   },
   resetPasswordApp
 );

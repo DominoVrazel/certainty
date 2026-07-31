@@ -8,3 +8,7 @@ typings/
 # Node.js dependency directory
 node_modules/
 *.local
+
+# Emulator-only config, holds no secrets and is needed for `npm run dev` to work
+# after a fresh clone. .secret.local stays ignored by the rule above.
+!.env.local
