@@ -63,14 +63,27 @@ async function seedFirestore() {
   const writer = db.bulkWriter();
   let count = 0;
 
-  const writeDocs = (docs, parentRef) => {
+  let orphanParents = 0;
+  let orphanChildren = 0;
+
+  const writeDocs = (docs, parentRef, parentMissing = false) => {
     for (const entry of docs) {
       const ref = parentRef.doc(entry.id);
-      writer.set(ref, decode(entry.data, db));
-      count += 1;
+
+      // A missing parent must stay missing: writing a placeholder would hide
+      // the very defect this snapshot exists to reproduce. Its children are
+      // still written, so the emulator ends up with the same orphans as
+      // production and the migration can be tested against them.
+      if (entry.missing) {
+        orphanParents += 1;
+      } else {
+        writer.set(ref, decode(entry.data, db));
+        count += 1;
+        if (parentMissing) orphanChildren += 1;
+      }
 
       for (const [subName, subDocs] of Object.entries(entry.collections ?? {})) {
-        writeDocs(subDocs, ref.collection(subName));
+        writeDocs(subDocs, ref.collection(subName), entry.missing);
       }
     }
   };
@@ -84,6 +97,11 @@ async function seedFirestore() {
 
   await writer.close();
   console.log(`  → ${count} documents written`);
+  if (orphanParents) {
+    console.log(
+      `  → ${orphanChildren} orphaned records kept under ${orphanParents} deleted parents`
+    );
+  }
 }
 
 async function seedAuthUsers() {

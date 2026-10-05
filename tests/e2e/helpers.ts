@@ -83,11 +83,22 @@ export async function latestEmailLink(
   for (let i = 0; i < count; i += 1) {
     await rows.nth(i).click();
 
-    const to = await page
-      .locator("main, body")
-      .first()
-      .innerText()
-      .catch(() => "");
+    // The detail pane renders "Loading email…" first; reading it too early
+    // would look like a message addressed to somebody else.
+    await expect(page.locator("iframe").first()).toBeAttached({
+      timeout: 15_000,
+    });
+
+    let to = "";
+    for (let wait = 0; wait < 15; wait += 1) {
+      to = await page
+        .locator("main")
+        .first()
+        .innerText()
+        .catch(() => "");
+      if (to && !/Loading email/i.test(to)) break;
+      await page.waitForTimeout(300);
+    }
     if (!to.includes(recipient)) continue;
 
     const href = await page
@@ -143,6 +154,52 @@ export async function authAccountExists(email: string): Promise<boolean> {
   );
   const body = (await res.json()) as { userInfo?: { email?: string }[] };
   return (body.userInfo ?? []).some((u) => u.email === email);
+}
+
+/**
+ * Creates a throwaway, already-verified account directly in the emulators.
+ *
+ * Tests that change a password must not touch a shared fixture account: if such
+ * a test fails before restoring it, every later sign-in fails too and the real
+ * failure is buried under a cascade of unrelated ones.
+ */
+export async function createVerifiedAccount(email: string, password: string) {
+  const signUp = await fetch(
+    `${AUTH_EMULATOR}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-key`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, returnSecureToken: true }),
+    }
+  );
+  if (!signUp.ok) {
+    throw new Error(`Could not create ${email}: ${await signUp.text()}`);
+  }
+  const { localId } = (await signUp.json()) as { localId: string };
+
+  const profile = await fetch(
+    `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents/users/${localId}`,
+    {
+      method: "PATCH",
+      headers: { Authorization: "Bearer owner", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fields: {
+          email: { stringValue: email },
+          firstName: { stringValue: "E2E" },
+          secondName: { stringValue: "Fixture" },
+          sportClub: { stringValue: "E2E Fixture Club" },
+          tel_number: { stringValue: "+421900000001" },
+          isAdmin: { booleanValue: false },
+          isVerified: { booleanValue: true },
+        },
+      }),
+    }
+  );
+  if (!profile.ok) {
+    throw new Error(`Could not write profile for ${email}: ${await profile.text()}`);
+  }
+
+  return localId;
 }
 
 /** Signs in through the Auth emulator REST API to verify a password works. */

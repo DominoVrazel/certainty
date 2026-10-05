@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 import {
-  ADMIN_EMAIL,
   DEV_PASSWORD,
   authAccountExists,
   canSignIn,
+  createVerifiedAccount,
   findUserByEmail,
   clearInbox,
   latestEmailLink,
@@ -151,12 +151,17 @@ test.describe("password reset", () => {
   test("a club can reset its password and sign in with the new one", async ({
     page,
   }) => {
+    // A throwaway account, so a failure here cannot leave a shared fixture
+    // with a changed password and break every later sign-in.
+    const email = uniqueEmail("reset");
+    await createVerifiedAccount(email, DEV_PASSWORD);
+
     await page.goto("/resort/Bachledka");
     await openAccountMenu(page);
     await page.getByRole("button", { name: "Prihlásiť" }).first().click();
     await page.getByRole("button", { name: "obnoviť heslo" }).click();
 
-    await page.getByPlaceholder("Váš email").last().fill(ADMIN_EMAIL);
+    await page.getByPlaceholder("Váš email").last().fill(email);
     await page.getByRole("button", { name: "Odoslať" }).click();
 
     await expect(page.getByText(/bol odoslaný/i)).toBeVisible({
@@ -167,7 +172,7 @@ test.describe("password reset", () => {
       page,
       /Obnovenie hesla/i,
       /reset-password/,
-      ADMIN_EMAIL
+      email
     );
     expect(link).toContain("localhost:5174");
 
@@ -178,34 +183,10 @@ test.describe("password reset", () => {
     page.once("dialog", (d) => d.accept());
     await page.getByRole("button", { name: "Obnoviť" }).click();
 
-    await expect.poll(() => canSignIn(ADMIN_EMAIL, NEW_PASSWORD), {
-      timeout: 20_000,
-    }).toBe(true);
-
-    // Put the shared fixture account back, so later specs keep working.
-    await page.goto("/resort/Bachledka");
-    await openAccountMenu(page);
-    await page.getByRole("button", { name: "Prihlásiť" }).first().click();
-    await page.getByRole("button", { name: "obnoviť heslo" }).click();
-    await page.getByPlaceholder("Váš email").last().fill(ADMIN_EMAIL);
-    await page.getByRole("button", { name: "Odoslať" }).click();
-    await expect(page.getByText(/bol odoslaný/i)).toBeVisible();
-
-    const restoreLink = await latestEmailLink(
-      page,
-      /Obnovenie hesla/i,
-      /reset-password/,
-      ADMIN_EMAIL
-    );
-    await page.goto(restoreLink);
-    await page.getByPlaceholder("napríklad: Jablko123").fill(DEV_PASSWORD);
-    await page.getByPlaceholder("Potvrďte heslo").fill(DEV_PASSWORD);
-    page.once("dialog", (d) => d.accept());
-    await page.getByRole("button", { name: "Obnoviť" }).click();
-
-    await expect.poll(() => canSignIn(ADMIN_EMAIL, DEV_PASSWORD), {
-      timeout: 20_000,
-    }).toBe(true);
+    await expect
+      .poll(() => canSignIn(email, NEW_PASSWORD), { timeout: 20_000 })
+      .toBe(true);
+    expect(await canSignIn(email, DEV_PASSWORD)).toBe(false);
   });
 
   test("asking to reset an unknown address reveals nothing and sends nothing", async ({

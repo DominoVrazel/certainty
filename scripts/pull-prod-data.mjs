@@ -59,14 +59,32 @@ async function mapPooled(items, fn) {
   return results;
 }
 
-/** Recursively reads a collection and every subcollection beneath it. */
+/**
+ * Recursively reads a collection and every subcollection beneath it.
+ *
+ * Deleting a document does NOT delete its subcollections — the parent becomes a
+ * "missing" document that still owns children. Production currently holds 101
+ * such orphaned `addedUsers` records under 66 deleted reservations: clubs whose
+ * training vanished when the booking club cancelled.
+ *
+ * `ref.get()` returns only documents that exist, so it cannot see them.
+ * `ref.listDocuments()` does return references to missing parents, which is why
+ * the id list and the document data are gathered separately here.
+ */
 async function dumpCollection(ref, depth = 1) {
-  const snap = await ref.get();
+  const [snap, refs] = await Promise.all([ref.get(), ref.listDocuments()]);
 
-  const docs = await mapPooled(snap.docs, async (doc) => {
-    const entry = { id: doc.id, data: encode(doc.data()) };
+  // One query supplies every existing document's data; listDocuments supplies
+  // the complete id list, including parents that no longer exist.
+  const dataById = new Map(snap.docs.map((d) => [d.id, d.data()]));
 
-    const subs = await doc.ref.listCollections();
+  const docs = await mapPooled(refs, async (docRef) => {
+    const data = dataById.get(docRef.id);
+    const entry = data
+      ? { id: docRef.id, data: encode(data) }
+      : { id: docRef.id, missing: true, data: null };
+
+    const subs = await docRef.listCollections();
     if (subs.length) {
       entry.collections = {};
       for (const sub of subs) {
@@ -76,7 +94,11 @@ async function dumpCollection(ref, depth = 1) {
     return entry;
   });
 
-  console.log(`${"  ".repeat(depth)}${ref.id}: ${docs.length} docs`);
+  const orphaned = docs.filter((d) => d.missing).length;
+  const suffix = orphaned ? ` (+${orphaned} deleted, children kept)` : "";
+  console.log(
+    `${"  ".repeat(depth)}${ref.id}: ${docs.length - orphaned} docs${suffix}`
+  );
   return docs;
 }
 
