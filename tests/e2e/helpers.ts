@@ -66,15 +66,23 @@ export async function latestEmailLink(
   await page.goto(MAILDEV_URL);
 
   // Sending happens in a Cloud Function after the UI has already moved on, so
-  // the message can land a moment after the action that triggered it. MailDev's
-  // list does not live-update reliably, hence the reload.
+  // the message lands some time after the action that triggered it. MailDev's
+  // list does not live-update reliably, so the wait has to keep reloading —
+  // a plain locator timeout would sit on a stale page and never see the mail.
   const rows = page.locator("button", { hasText: subject });
-  for (let attempt = 0; attempt < 12; attempt += 1) {
-    if (await rows.count()) break;
-    await page.waitForTimeout(1000);
-    await page.reload();
-  }
-  await expect(rows.first()).toBeVisible({ timeout: 20_000 });
+  await expect
+    .poll(
+      async () => {
+        const n = await rows.count();
+        if (n === 0) await page.reload();
+        return n;
+      },
+      {
+        timeout: 45_000,
+        message: `no message matching ${subject} arrived in the local inbox`,
+      }
+    )
+    .toBeGreaterThan(0);
 
   // Match on the recipient, never on list position. Picking "the first row"
   // once verified somebody else's account: MailDev's ordering is not a promise,

@@ -47,8 +47,17 @@ test.describe("registration and e-mail verification", () => {
     const consent = page.locator('input[type="checkbox"]').first();
     if (await consent.count()) await consent.check();
 
+    // Registration ends by calling startEmailVerification. Navigating to the
+    // inbox before that request completes aborts it, and the mail is never
+    // sent — so wait for the response rather than for the mail to show up.
+    const verificationSent = page.waitForResponse(
+      (r) => r.url().includes("startEmailVerification"),
+      { timeout: 30_000 }
+    );
+
     page.once("dialog", (d) => d.accept());
     await page.getByRole("button", { name: /Registrovať/i }).last().click();
+    await verificationSent;
 
     // The Auth account and the profile document are both created client-side,
     // immediately after sign-up, while the user is authenticated as itself.

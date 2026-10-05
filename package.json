@@ -18,7 +18,10 @@
     "test:rules": "node scripts/with-jdk.mjs firebase emulators:exec --only firestore \"node --test tests/rules.test.mjs\"",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "db:verify": "node scripts/verify-orphans.mjs"
+    "db:verify": "node scripts/verify-orphans.mjs",
+    "db:migrate:check": "node scripts/migrate-trainings.mjs --target=emulator --dry-run",
+    "db:migrate": "node scripts/migrate-trainings.mjs --target=emulator",
+    "db:verify:migration": "node scripts/verify-migration.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",

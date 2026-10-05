@@ -94,6 +94,28 @@ account. Override the password with the `DEV_PASSWORD` env var before `db:seed`.
 | `npm run emu` | Emulators only, no Vite. |
 | `npm run db:pull` | Refresh the production snapshot. |
 | `npm run db:seed` | Reload the emulators from the snapshot. |
+| `npm run db:verify` | Check the snapshot still contains the orphaned records. |
+| `npm run db:migrate:check` | Dry run of the trainings migration. |
+| `npm run db:migrate` | Run the migration against the emulator. |
+| `npm run db:verify:migration` | Compare migrated data against the legacy shape. |
+| `npm run test:rules` | Security-rules tests. |
+| `npm run test:e2e` | End-to-end tests through the real UI. |
+
+## Trying the migration
+
+```bash
+npm run db:seed && npm run db:migrate && npm run db:verify:migration
+```
+
+The migration only writes `trainings`, `closures` and
+`trainingsOrphanedParticipants`; it never touches the legacy collections, so
+rolling back means deleting those three. It is idempotent — document ids come
+from the data and every write is a full `set`, so reruns converge rather than
+duplicate.
+
+Note the migrated collections live only in the running emulator. `npm run dev`
+imports `./.emulator-data`, which is the *pre-migration* snapshot, so rerun
+`db:migrate` after a reseed.
 | `npm run deploy` | Deploy hosting only. |
 
 Local edits are discarded when you stop `npm run dev`; rerun `npm run db:seed` to get
