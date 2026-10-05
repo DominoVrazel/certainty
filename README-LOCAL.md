@@ -44,7 +44,7 @@ npm run dev
 
 | Port | What |
 | --- | --- |
-| 5173 | The app (Vite) |
+| 5174 | The app (Vite) |
 | 4000 | Emulator UI — browse and edit local Firestore/Auth data |
 | 1080 | Local inbox — every email the app sends while developing |
 | 8080 / 9099 / 9199 / 5001 | Firestore / Auth / Storage / Functions emulators |
@@ -69,7 +69,7 @@ real addresses. Without it, testing a reservation would email an actual person.
 `functions/src/index.ts` picks the transport off `FUNCTIONS_EMULATOR`, so the
 deployed function is untouched and still sends through Gmail.
 
-Links inside those emails point at `http://localhost:5173` rather than the live site,
+Links inside those emails point at `http://localhost:5174` rather than the live site,
 because `functions/.env.local` overrides the URL params. The Firebase CLI loads
 `.env.local` **only** under the emulator — it is never deployed.
 

@@ -1,4 +1,5 @@
 import { onRequest } from "firebase-functions/v2/https";
+import { randomUUID } from "node:crypto";
 import { createTransport } from "nodemailer";
 import express from "express";
 import { defineSecret, defineString } from "firebase-functions/params";
@@ -45,7 +46,9 @@ const gmailToken = defineSecret("GMAIL_TOKEN");
  */
 const corsOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
   process.env.APP_DOMAIN,
 ].filter((origin): origin is string => Boolean(origin));
 
@@ -157,6 +160,62 @@ resetPasswordApp.post("*", (req, res) => {
   return resetPasswordController.resetPassword(req, res);
 });
 
+/** Delivers one message through whichever transport this environment uses. */
+async function deliver(to: string, subject: string, html: string) {
+  await buildTransport().sendMail({
+    from: senderAddress(),
+    to,
+    subject,
+    html,
+  });
+}
+
+/**
+ * Picks and renders the template for an email. Extracted so the account
+ * verification and password reset endpoints below can reuse it instead of
+ * duplicating the template selection.
+ */
+async function renderEmailHtml(data: EmailData): Promise<string> {
+  const reservationUrl = `${reservationBaseUrl.value()}/${data.reservationId}`;
+  let html = "";
+
+  if (data.emailData.emailIdentifier === EmailType.EmailVerifyUser) {
+    const verifyLink = `${verifyUserBaseUrl.value()}?uuid=${
+      data.emailData.uuid
+    }`;
+    html = await render(UserEmailVerify({ ...data.emailData, verifyLink }));
+  }
+  if (data.emailData.emailIdentifier === EmailType.EmailUserRes) {
+    html = await render(
+      UserEmailRES({ ...data.emailData, baseUrl: reservationUrl })
+    );
+  }
+  if (data.emailData.emailIdentifier === EmailType.EmailAdminRes) {
+    html = await render(
+      AdminEmailRES({ ...data.emailData, baseUrl: reservationUrl })
+    );
+  }
+  if (data.emailData.emailIdentifier === EmailType.EmailUserResAccepted) {
+    html = await render(UserEmailRESAccepted({ ...data.emailData }));
+  }
+  if (data.emailData.emailIdentifier === EmailType.EmailUserResDeleted) {
+    html = await render(UserEmailRESDeleted({ ...data.emailData }));
+  }
+  if (data.emailData.emailIdentifier === EmailType.EmailAddedToTraining) {
+    html = await render(EmailAddedToTraining({ ...data.emailData }));
+  }
+  if (data.emailData.emailIdentifier === EmailType.EmailForgottenPassword) {
+    const resetLink = `${resetPassBaseUrl.value()}?uuid=${
+      data.emailData.uuid
+    }`;
+    html = await render(
+      UserEmailForgottenPass({ ...data.emailData, resetLink })
+    );
+  }
+
+  return html;
+}
+
 // The POST endpoint that handles email sending
 emailApp.post("*", async (request, response) => {
   try {
@@ -250,4 +309,142 @@ export const resetPassword = onRequest(
     cors: corsOrigins,
   },
   resetPasswordApp
+);
+
+/**
+ * Account verification and password-reset tokens used to be created and
+ * consumed by the browser, which meant `user_sessions` and
+ * `verify_user_sessions` had to be world-readable — and anyone who read them
+ * could take over any account. These endpoints move both halves behind the
+ * Admin SDK so the rules can deny clients all access to those collections.
+ */
+const startEmailVerificationApp = express();
+const startPasswordResetApp = express();
+const verifyUserAccountApp = express();
+
+for (const app of [
+  startEmailVerificationApp,
+  startPasswordResetApp,
+  verifyUserAccountApp,
+]) {
+  app.use((_req, res, next) => {
+    res.set("Access-Control-Allow-Origin", "*");
+    next();
+  });
+}
+
+/** Starts e-mail verification for a freshly registered club. */
+startEmailVerificationApp.post("*", async (req, res) => {
+  const { email, userFirstName } = (req.body?.data ?? {}) as {
+    email?: string;
+    userFirstName?: string;
+  };
+  if (!email) {
+    return res.status(400).send({ data: { ok: false } });
+  }
+
+  const uuid = randomUUID();
+  await db.collection("verify_user_sessions").add({ uuid, email });
+
+  const html = await renderEmailHtml({
+    reservationId: "",
+    emailData: {
+      recipient: email,
+      subject: "Overenie emailu",
+      userFirstName: userFirstName ?? "",
+      emailIdentifier: EmailType.EmailVerifyUser,
+      uuid,
+    },
+  } as EmailData);
+
+  await deliver(email, "Overenie emailu", html);
+  return res.status(200).send({ data: { ok: true } });
+});
+
+/**
+ * Starts a password reset. Always reports success: telling the caller whether
+ * an address is registered is exactly the account enumeration the old
+ * client-side `checkIfEmailExists` allowed.
+ */
+startPasswordResetApp.post("*", async (req, res) => {
+  const { email } = (req.body?.data ?? {}) as { email?: string };
+  if (!email) {
+    return res.status(400).send({ data: { ok: false } });
+  }
+
+  try {
+    await adminAuth.getUserByEmail(email);
+  } catch {
+    return res.status(200).send({ data: { ok: true } });
+  }
+
+  const uuid = randomUUID();
+  await db.collection("user_sessions").add({ uuid, email });
+
+  const html = await renderEmailHtml({
+    reservationId: "",
+    emailData: {
+      recipient: email,
+      subject: "Obnovenie hesla",
+      emailIdentifier: EmailType.EmailForgottenPassword,
+      uuid,
+    },
+  } as EmailData);
+
+  await deliver(email, "Obnovenie hesla", html);
+  return res.status(200).send({ data: { ok: true } });
+});
+
+/** Consumes a verification token and marks the account verified. */
+verifyUserAccountApp.post("*", async (req, res) => {
+  const { uuid } = (req.body?.data ?? {}) as { uuid?: string };
+  if (!uuid) {
+    return res.status(400).send({ data: { status: "INVALID" } });
+  }
+
+  const sessions = await db
+    .collection("verify_user_sessions")
+    .where("uuid", "==", uuid)
+    .limit(1)
+    .get();
+
+  if (sessions.empty) {
+    return res.status(200).send({ data: { status: "NOT_FOUND" } });
+  }
+
+  const { email } = sessions.docs[0].data() as { email: string };
+  const users = await db
+    .collection("users")
+    .where("email", "==", email)
+    .limit(1)
+    .get();
+
+  if (users.empty) {
+    return res.status(200).send({ data: { status: "NOT_FOUND" } });
+  }
+
+  const userDoc = users.docs[0];
+  if (userDoc.data().isVerified === true) {
+    return res.status(200).send({ data: { status: "ALREADY_VERIFIED" } });
+  }
+
+  await userDoc.ref.update({ isVerified: true });
+  await sessions.docs[0].ref.delete();
+
+  return res.status(200).send({ data: { status: "VERIFIED" } });
+});
+
+export const startEmailVerification = onRequest(
+  { secrets: [gmailUser, gmailToken], cors: corsOrigins },
+  startEmailVerificationApp
+);
+
+export const startPasswordReset = onRequest(
+  { secrets: [gmailUser, gmailToken], cors: corsOrigins },
+  startPasswordResetApp
+);
+
+export const verifyUserAccount = onRequest(
+  { cors: corsOrigins },
+  verifyUserAccountApp
 );

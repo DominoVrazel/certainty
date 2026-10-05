@@ -2,6 +2,7 @@ import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import {
   getAuth,
   connectAuthEmulator,
+  onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   Auth,
@@ -14,6 +15,7 @@ import {
   collection,
   doc,
   setDoc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -80,6 +82,22 @@ if (USING_EMULATORS && !emulatorState.__certaintyEmulatorsConnected) {
     "color:#0a0;font-weight:bold"
   );
 }
+
+/**
+ * Resolves once Firebase Auth has restored (or ruled out) a session.
+ *
+ * Auth rehydrates from IndexedDB asynchronously, so a read fired straight from
+ * a component's mount effect can go out before the token is attached. With the
+ * old open rules that went unnoticed; now such a read is simply denied, and the
+ * screen renders empty. Await this before any read that requires a signed-in
+ * user.
+ */
+export const authReady: Promise<void> = new Promise((resolve) => {
+  const unsubscribe = onAuthStateChanged(auth, () => {
+    unsubscribe();
+    resolve();
+  });
+});
 
 export {
   app,
@@ -170,39 +188,39 @@ export const loginUser = async (
       return { success: false, message: "Neplatný email." };
     }
 
-    const userQuery = query(
-      collection(db, "users"),
-      where("email", "==", email)
-    );
-    const querySnapshot = await getDocs(userQuery);
-
-    if (querySnapshot.empty) {
-      // User does not exist
-      return {
-        success: false,
-        message: "Používateľ neexistuje. Skontrolujte správnosť svojho emailu.",
-      };
-    }
-
-    const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-
-    // Check if the user is verified
-    if (!userData.isVerified) {
-      return {
-        success: false,
-        message:
-          "Váš účet nie je overený. Skontrolujte svoj email a overte svoj účet.",
-      };
-    }
-
-    // Firebase sign-in with email and password
+    // Authenticate FIRST, then read the profile by uid.
+    //
+    // This used to query `users` by e-mail before signing in, which forced the
+    // collection to be world-readable and let anyone check whether an address
+    // was registered. Signing in first means the only profile a caller can
+    // read is their own.
     const userCredential = await signInWithEmailAndPassword(
       auth,
       email,
       password
     );
     const user = userCredential.user;
+
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (!userDoc.exists()) {
+      await signOut(auth);
+      return {
+        success: false,
+        message: "Používateľ neexistuje. Skontrolujte správnosť svojho emailu.",
+      };
+    }
+
+    const userData = userDoc.data();
+
+    // Check if the user is verified
+    if (!userData.isVerified) {
+      await signOut(auth);
+      return {
+        success: false,
+        message:
+          "Váš účet nie je overený. Skontrolujte svoj email a overte svoj účet.",
+      };
+    }
 
     localStorage.setItem("userId", userDoc.id);
     localStorage.setItem("userEmail", email);

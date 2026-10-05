@@ -5,7 +5,7 @@
  * emulators are already up by the time this runs. Vite owns the lifetime: when
  * it exits, MailDev is shut down with it.
  *
- * Ports must match LOCAL_SMTP_PORT in functions/.env.local.
+ * Ports must match LOCAL_SMTP_PORT and the URLs in functions/.env.local.
  */
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -13,6 +13,10 @@ import path from "node:path";
 
 const SMTP_PORT = 1026;
 const WEB_PORT = 1080;
+
+// Certainty keeps its own port so it never collides with another Vite project
+// on the default 5173. Must match the URLs in functions/.env.local.
+const APP_PORT = 5174;
 
 const binary = (name) =>
   path.resolve(
@@ -55,7 +59,13 @@ if (existsSync(maildevBin)) {
   );
 }
 
-const vite = start("vite", binary("vite"), ["--mode", "emulator"]);
+const vite = start("vite", binary("vite"), [
+  "--mode",
+  "emulator",
+  "--port",
+  String(APP_PORT),
+  "--strictPort",
+]);
 
 vite.on("exit", (code, signal) => {
   shutdown();

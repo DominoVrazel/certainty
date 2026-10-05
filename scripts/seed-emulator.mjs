@@ -12,7 +12,18 @@ import path from "node:path";
 import { decode } from "./firestore-codec.mjs";
 
 const PROJECT_ID = "certaintyapp";
+const STORAGE_BUCKET = "certaintyapp.firebasestorage.app";
 const SEED_DIR = path.resolve("./.firebase-seed");
+
+// The Firebase CLI exports FIREBASE_STORAGE_EMULATOR_HOST as "host:port", but
+// the Admin SDK's storage client reads STORAGE_EMULATOR_HOST and wants a full
+// URL. Without this bridge the upload would silently go to production.
+if (
+  process.env.FIREBASE_STORAGE_EMULATOR_HOST &&
+  !process.env.STORAGE_EMULATOR_HOST
+) {
+  process.env.STORAGE_EMULATOR_HOST = `http://${process.env.FIREBASE_STORAGE_EMULATOR_HOST}`;
+}
 
 // Local accounts get one shared password — production hashes cannot be
 // replayed against the emulator, so there is nothing to preserve.
@@ -28,7 +39,10 @@ for (const v of ["FIRESTORE_EMULATOR_HOST", "FIREBASE_AUTH_EMULATOR_HOST"]) {
   }
 }
 
-admin.initializeApp({ projectId: PROJECT_ID });
+admin.initializeApp({
+  projectId: PROJECT_ID,
+  storageBucket: STORAGE_BUCKET,
+});
 const db = admin.firestore();
 const auth = admin.auth();
 
@@ -156,8 +170,47 @@ for (const entry of await readdir(".")) {
   }
 }
 
+/**
+ * Uploads the resort logos. The landing page reads them straight from Storage
+ * (App.tsx listAll on `resorts/{id}/logo/`), so without this the local app
+ * renders every resort without its image.
+ */
+async function seedStorage() {
+  console.log("\n▸ Storage");
+
+  if (!process.env.STORAGE_EMULATOR_HOST) {
+    console.warn("  ! storage emulator not running — skipping");
+    return;
+  }
+
+  let manifest;
+  try {
+    manifest = JSON.parse(
+      await readFile(path.join(SEED_DIR, "storage-manifest.json"), "utf8")
+    );
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+    console.warn('  ! no storage-manifest.json — rerun "npm run db:pull"');
+    return;
+  }
+
+  const bucket = admin.storage().bucket();
+  for (const entry of manifest) {
+    const contents = await readFile(
+      path.join(SEED_DIR, "storage", entry.localName)
+    );
+    await bucket.file(entry.path).save(contents, {
+      contentType: entry.contentType,
+      resumable: false,
+    });
+    console.log(`  ${entry.path}`);
+  }
+  console.log(`  → ${manifest.length} files uploaded`);
+}
+
 await seedFirestore();
 await seedAuthUsers();
+await seedStorage();
 await exportState();
 
 console.log("\n✔ Emulators seeded.");

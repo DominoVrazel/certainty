@@ -1,15 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-
-import {
-  collection,
-  Firestore,
-  getDocs,
-  getFirestore,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../services/FirebaseService";
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
 
 enum VerifyUserStatus {
@@ -18,36 +10,6 @@ enum VerifyUserStatus {
   Success,
   Fail,
   None,
-}
-
-async function getUserByEmail(db: Firestore, email: string) {
-  const users = collection(db, "users");
-  const usersQuery = query(users, where("email", "==", email));
-  const userQueryDocs = await getDocs(usersQuery);
-
-  return userQueryDocs.docs[0];
-}
-
-async function getSessionEmail(db: Firestore, uuid: string) {
-  const reservationsRef = collection(db, "verify_user_sessions");
-  const sessionQuery = query(reservationsRef, where("uuid", "==", uuid));
-  const docs = await getDocs(sessionQuery);
-  const session = docs.docs[0];
-
-  return session.data().email;
-}
-
-async function isUserVerified(db: Firestore, email: string) {
-  const user = await getUserByEmail(db, email);
-  return user.data().isVerified === true;
-}
-
-async function verifyUser(db: Firestore, email: string) {
-  const user = await getUserByEmail(db, email);
-
-  await updateDoc(user.ref, {
-    isVerified: true,
-  });
 }
 
 const VerifyUserMessage: React.FC<{ userStatus: VerifyUserStatus }> = (
@@ -80,35 +42,38 @@ const VerifyUser: React.FC = () => {
   const uuid = queryParams.get("uuid") as string;
 
   useEffect(() => {
+    /**
+     * Verification runs server-side now.
+     *
+     * It used to read `verify_user_sessions`, look the account up by e-mail and
+     * flip `isVerified` straight from the browser. That forced both collections
+     * to be world-readable and writable — and anyone who could read a
+     * verification token could verify, or hijack, somebody else's account.
+     */
     const verifyUserLogic = async () => {
-      const db = getFirestore();
-      let userEmail;
+      const verifyUserAccount = httpsCallable<
+        { uuid: string },
+        { status: string }
+      >(functions, "verifyUserAccount");
 
       try {
-        userEmail = await getSessionEmail(db, uuid);
-      } catch (error) {
-        console.log("Error: ", error);
-        setStatus(VerifyUserStatus.EmailNotFound);
-        setVerifyLoadingState(LoaderState.Finished);
-        return;
-      }
+        const response = await verifyUserAccount({ uuid });
 
-      const isVerified = await isUserVerified(db, userEmail);
-      if (isVerified) {
-        setStatus(VerifyUserStatus.AlreadyVerified);
-        setVerifyLoadingState(LoaderState.Finished);
-        return;
-      }
-      try {
-        await verifyUser(db, userEmail);
+        switch (response.data?.status) {
+          case "VERIFIED":
+            setStatus(VerifyUserStatus.Success);
+            break;
+          case "ALREADY_VERIFIED":
+            setStatus(VerifyUserStatus.AlreadyVerified);
+            break;
+          default:
+            setStatus(VerifyUserStatus.EmailNotFound);
+        }
       } catch (error) {
-        console.log("Error: ", error);
+        console.error("Verification failed:", error);
         setStatus(VerifyUserStatus.Fail);
-        setVerifyLoadingState(LoaderState.Finished);
-        return;
       }
 
-      setStatus(VerifyUserStatus.Success);
       setVerifyLoadingState(LoaderState.Finished);
     };
 
@@ -117,7 +82,6 @@ const VerifyUser: React.FC = () => {
 
   return (
     <>
-      {/* {email && <p>Email: {email}</p>} */}
       <div className="ForgottenPass-body">
         <LoadingAnimation state={verifyLoadingState}></LoadingAnimation>
         <VerifyUserMessage userStatus={status}></VerifyUserMessage>

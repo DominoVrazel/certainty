@@ -16,6 +16,7 @@ import AddPromocodes from "./AddPromocodes";
 import ImageUpload from "./ImageUpload";
 
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
+import { authReady } from "../services/FirebaseService";
 
 interface Resort {
   id: string;
@@ -251,7 +252,9 @@ function AdminPage() {
   };
 
   useEffect(() => {
-    fetchUsers();
+    // Listing users is admin-only, so the auth token has to be attached before
+    // the query goes out — otherwise it is denied and the list renders empty.
+    authReady.then(fetchUsers);
   }, [db]);
 
   const fetchReservations = async () => {

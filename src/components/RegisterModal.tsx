@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { registerUser } from "../services/FirebaseService";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../services/FirebaseService";
-import { addDoc, collection, getFirestore } from "firebase/firestore";
 import { Link } from "react-router-dom";
 
 interface RegisterModalProps {
@@ -10,34 +9,19 @@ interface RegisterModalProps {
   setShowLoginModal: (show: boolean) => void;
 }
 
+/**
+ * The verification token is created server-side. It used to be generated here
+ * and written straight into `verify_user_sessions`, which meant that collection
+ * had to be client-writable — and readable tokens let anyone verify, or take
+ * over, any account.
+ */
 async function sendRegistrationEmail(email: string, firstName: string) {
-  const sendVerifyEmail = httpsCallable<{
-    emailData: {
-      recipient: string;
-      subject: string;
-      userFirstName: string;
-      emailIdentifier: string;
-      uuid: string;
-    };
-  }>(functions, "sendEmail");
+  const startEmailVerification = httpsCallable<
+    { email: string; userFirstName: string },
+    { ok: boolean }
+  >(functions, "startEmailVerification");
 
-  const uuid = crypto.randomUUID();
-  const db = getFirestore();
-
-  await addDoc(collection(db, "verify_user_sessions"), {
-    uuid: uuid,
-    email,
-  });
-
-  await sendVerifyEmail({
-    emailData: {
-      recipient: email,
-      subject: "Overenie emailu",
-      userFirstName: firstName,
-      emailIdentifier: "USER_VERIFY_EMAIL",
-      uuid,
-    },
-  });
+  await startEmailVerification({ email, userFirstName: firstName });
 }
 
 const RegisterModal: React.FC<RegisterModalProps> = ({

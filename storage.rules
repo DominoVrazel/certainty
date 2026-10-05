@@ -2,10 +2,26 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // NOTE: This mirrors the rules currently deployed in production.
-    // They are fully open — see README-LOCAL.md before deploying anything.
+
+    function isAdmin() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Resort logos render on the public landing page, so they stay readable by
+    // anyone. Only admins upload them, and only images, capped at 5 MB — with
+    // the previous open rule anyone could have filled the bucket.
+    match /resorts/{resortId}/logo/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin()
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
     match /{allPaths=**} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

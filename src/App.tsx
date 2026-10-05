@@ -16,7 +16,7 @@ import GDPRPage from "./components/GDPRPage";
 
 import ReservationConfirm from "./components/ReservationConfirm";
 import ForgottenPassword from "./components/ForgottenPassword";
-import { logoutUser } from "./services/FirebaseService";
+import { auth, authReady, logoutUser } from "./services/FirebaseService";
 import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
 
 import Dropdown from "react-bootstrap/Dropdown";
@@ -54,6 +54,25 @@ function App() {
 
   const db = getFirestore();
   const storage = getStorage();
+
+  useEffect(() => {
+    /**
+     * The session shown in the UI lives in localStorage, but every Firestore
+     * read is authorised by the Firebase Auth token. Those two can drift apart
+     * — an expired or cleared Auth session leaves localStorage claiming the
+     * user is signed in. Under the old open rules nothing broke; now the
+     * screens that need a token (the admin club list, for one) would silently
+     * render empty. Reconcile them at start-up so a lost token surfaces as
+     * "logged out" rather than as missing data.
+     */
+    authReady.then(() => {
+      if (!auth.currentUser && localStorage.getItem("userEmail")) {
+        localStorage.clear();
+        setUser(null);
+        setIsLoggedIn(false);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const storedFirstName = localStorage.getItem("userFirstName");

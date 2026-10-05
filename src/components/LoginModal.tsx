@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { loginUser, checkIfEmailExists } from "../services/FirebaseService";
+import { loginUser } from "../services/FirebaseService";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../services/FirebaseService";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
 
 function LoginModal() {
   // State to store form data
@@ -84,25 +83,16 @@ function LoginModal() {
     event.preventDefault();
     setErrorMessage(null);
     try {
-      const emailExists = await checkIfEmailExists(resetEmail);
-      if (!emailExists) {
-        setErrorMessage(
-          "Zadajte email alebo skontrolujte správnosť svojho emailu."
-        );
-        return;
-      }
+      // The token is created and e-mailed server-side. Doing it here forced
+      // `user_sessions` to be client-writable, and the old existence check
+      // told anyone whether an address was registered.
+      const startPasswordReset = httpsCallable<
+        { email: string },
+        { ok: boolean }
+      >(functions, "startPasswordReset");
 
-      const useremailIdentifier = "USER_FORGOTTEN_PASSWORD";
+      await startPasswordReset({ email: resetEmail });
 
-      const uuid = crypto.randomUUID();
-      const db = getFirestore();
-
-      await addDoc(collection(db, "user_sessions"), {
-        uuid: uuid,
-        email: resetEmail,
-      });
-
-      await sendEmail("Obnovenie hesla", resetEmail, useremailIdentifier, uuid);
       setErrorMessage(
         "Email na obnovenie hesla bol odoslaný. <br /><br /> (Ak email neprichádza: počkajte 10 minút alebo skontrolujte SPAM.)"
       );

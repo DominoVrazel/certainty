@@ -2,10 +2,109 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // NOTE: This mirrors the rules currently deployed in production.
-    // They are fully open — see README-LOCAL.md before deploying anything.
-    match /{document=**} {
-      allow read, write: if true;
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function myEmail() {
+      return request.auth.token.email;
+    }
+
+    // One document read per evaluation. Acceptable: admin paths are rare, and
+    // the alternative (a custom claim) needs a backend to set it.
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // The catalogue is what an anonymous visitor sees on the landing page and
+    // in the calendar, so it stays world-readable. Only admins change it.
+    match /resorts/{resortId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /courses/{courseId} {
+        allow read: if true;
+        allow write: if isAdmin();
+
+        match /seasons/{seasonId} {
+          allow read: if true;
+          allow write: if isAdmin();
+        }
+      }
+    }
+
+    // Personal data of ~107 real people. A club sees only itself; admins see
+    // everyone because the admin screen lists clubs and their contacts.
+    //
+    // Note there is deliberately no "read by email" path: login now signs in
+    // first and then reads its own document by uid. Querying users by email
+    // while logged out would let anyone enumerate registered addresses.
+    match /users/{userId} {
+      allow get: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      allow list: if isAdmin();
+
+      // Registration writes the profile immediately after createUser, so the
+      // client is already authenticated as that uid by then.
+      allow create: if signedIn()
+                    && request.auth.uid == userId
+                    && request.resource.data.isAdmin == false;
+
+      // A club may edit its own profile but may never promote itself.
+      allow update: if isAdmin()
+                    || (signedIn()
+                        && request.auth.uid == userId
+                        && request.resource.data.isAdmin == resource.data.isAdmin
+                        && request.resource.data.isVerified == resource.data.isVerified);
+
+      allow delete: if isAdmin();
+    }
+
+    // The calendar is public, but only a signed-in club can book, and only the
+    // booking club or an admin may change or cancel it.
+    match /reservations/{reservationId} {
+      function ownsReservation() {
+        return signedIn() && resource.data.user.email == myEmail();
+      }
+
+      allow read: if true;
+
+      allow create: if signedIn()
+                    && request.resource.data.user.email == myEmail();
+
+      // Any participant may update: joining and leaving adjusts availableRacers
+      // on this document. Ownership of the booking is enforced on delete.
+      allow update: if signedIn();
+
+      allow delete: if ownsReservation() || isAdmin();
+
+      // Document id is the joining club's email, so a club can only add or
+      // remove itself. Admins may remove anyone.
+      match /addedUsers/{memberEmail} {
+        allow read: if true;
+        allow create, update: if signedIn() && memberEmail == myEmail();
+        allow delete: if isAdmin() || (signedIn() && memberEmail == myEmail());
+      }
+    }
+
+    // Rendered on the public calendar; only admins open and close tracks.
+    match /closedTracks/{trackId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Password-reset and e-mail-verification tokens. Anyone who can read these
+    // can take over any account, so no client may touch them at all — the
+    // Cloud Functions that create and consume them use the Admin SDK, which
+    // bypasses these rules.
+    match /user_sessions/{sessionId} {
+      allow read, write: if false;
+    }
+
+    match /verify_user_sessions/{sessionId} {
+      allow read, write: if false;
     }
   }
 }
