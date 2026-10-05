@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getFirestore,
   collection,
@@ -25,6 +25,15 @@ import ShowInfoModal from "./ShowInfoModal";
 import { fetchPromoCodes, deletePromoCodes } from "./getPromoCodes";
 
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
+import CalendarWeek from "./calendar/CalendarWeek";
+import type {
+  CalendarActions,
+  Day,
+  ReservationDetails,
+  Season,
+  User,
+  Week,
+} from "../types/calendar";
 
 import "../Modal.css";
 import "../ResortPage.css";
@@ -35,50 +44,10 @@ interface ResortPageProps {
   isLoggedIn: boolean;
 }
 
-interface Day {
-  dayOfWeek: Record<string, string>;
-  date: string;
-  training?: string;
-  timeSessions?: { startTime: string; endTime: string }[];
-}
 
-interface Week {
-  startDate: string;
-  endDate: string;
-  days: Day[];
-  season: string;
-}
 
-interface Season {
-  id: string;
-  season: string;
-  weeks: Week[];
-}
 
-interface User {
-  email: string;
-  firstName: string;
-  secondName: string;
-  sportClub?: string; // Optional field
-  ownRacers: number;
-  tel_number: string; // Required field
-}
 
-interface ReservationDetails {
-  createdAt: string;
-  date: string;
-  discipline: string;
-  category: string;
-  tickets: number;
-  lineNumber: number;
-  availableRacers: number;
-  status: string;
-  user: User;
-  id: string;
-  session: { startTime: string; endTime: string };
-  addedUsers?: User[]; // Add the addedUsers property
-  // Include any other fields you expect in your reservation details
-}
 
 const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   const [courses, setCourses] = useState<{ id: string; name: string }[]>([]);
@@ -370,434 +339,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     return days;
   };
 
-  const renderCalendar = (weeks: Week[], course: string) => {
-    const currentDateForCourse = currentDates[course] || new Date();
-    const daysInRange = getDaysInRange(currentDateForCourse, 7);
-    const days = weeks.flatMap((week) => week.days);
-    const filteredDays = days.filter((day) =>
-      daysInRange.some(
-        (rangeDate) => day.date === format(rangeDate, "yyyy-MM-dd")
-      )
-    );
-
-    const capacity = courseCapacities[course] || 0;
-    const individualLineCapacity = individualLineCapacities[course] || 0;
-    const today = format(new Date(), "yyyy-MM-dd");
-
-    const toggleDropdown = (key: string) => {
-      setDropdownVisible((prev) => ({
-        ...prev,
-        [key]: !prev[key],
-      }));
-    };
-
-    return (
-      <div className="current-week-container">
-        <div className="week-navigation">
-          <div className="navigate-backwards">
-            <button
-              onClick={() => handlePreviousWeek(course)}
-              disabled={currentDateForCourse <= new Date()}
-            >
-              <i className="fas fa-arrow-circle-left"></i>
-              <span className="tooltip-text">naspäť</span>
-            </button>
-          </div>
-          <div className="curr-date-heading">
-            <p>
-              REZERVÁCIE od {format(currentDateForCourse, "dd.MM.yy")} do{" "}
-              {format(addDays(currentDateForCourse, 6), "dd.MM.yy")}
-            </p>
-          </div>
-          <div className="navigate-forwards">
-            <button
-              onClick={() => handleNextWeek(course, isAdmin)}
-              disabled={
-                addDays(currentDateForCourse, 7) >
-                (isAdmin ? addDays(new Date(), 365) : addDays(new Date(), 14))
-              }
-            >
-              <span className="tooltip-text">dopredu</span>
-              <i className="fas fa-arrow-circle-right"></i>
-            </button>
-          </div>
-        </div>
-
-        <div className="week-hints">
-          <div className="hints-left">
-            <button onClick={handleInfoClick} className="info-button">
-              <i className="fas fa-glasses"></i> Návod ako postupovať
-            </button>
-          </div>
-          <div className="hints-right">
-            <i className="fas fa-circle free"></i> Voľná
-            <i className="fas fa-circle created"></i> Vytvorená
-            <i className="fas fa-circle confirmed"></i> Potvrdená
-          </div>
-        </div>
-        <div className="calendar-week">
-          {filteredDays.length > 0 ? (
-            filteredDays.map((day) => {
-              const isWeekend =
-                new Date(day.date).getDay() === 6 ||
-                new Date(day.date).getDay() === 0;
-
-              return (
-                <div
-                  className={`whole-day-info ${isWeekend ? "weekend" : ""}`}
-                  key={day.date + course}
-                >
-                  <div className="day">{`${day.dayOfWeek[lang]}: ${formatDate(
-                    day.date
-                  )}`}</div>
-                  <div className="calendar-day">
-                    {[...Array(capacity)].map((_, index) => {
-                      const trackKey = `${course}_${index + 1}_${day.date}`;
-                      const closedTrack = closedTracks[trackKey];
-                      const isClosed = !!closedTrack;
-
-                      return (
-                        <div
-                          key={`${day.date}_${index}`}
-                          className={`line-container ${
-                            isClosed ? "closed" : ""
-                          }`}
-                        >
-                          <div className="session-course-lines">
-                            <span>TRAŤ {index + 1}</span>
-                            {isAdmin && (
-                              <button
-                                className="track-toggle-button"
-                                onClick={() => {
-                                  if (isClosed) {
-                                    handleOpenTrack(
-                                      course,
-                                      index + 1,
-                                      day.date
-                                    );
-                                  } else {
-                                    setCloseTrackDetails({
-                                      course,
-                                      lineNumber: index + 1,
-                                      date: day.date,
-                                    });
-                                    setIsCloseModalOpen(true);
-                                  }
-                                }}
-                              >
-                                <i
-                                  className={
-                                    isClosed ? "fa fa-unlock-alt" : "fa fa-lock"
-                                  }
-                                ></i>
-                                <span className="tooltip-text">
-                                  {isClosed ? "Otvorit trať" : "Zavrieť trať"}
-                                </span>
-                              </button>
-                            )}
-                          </div>
-
-                          {isClosed ? (
-                            <div className="closed-reason">
-                              <strong>Dôvod uzávierky:</strong> <br></br>
-                              {closedTrack.reason || "No reason provided"}
-                            </div>
-                          ) : (
-                            day.timeSessions?.map((session, sessionIndex) => {
-                              const reservationKey = `${day.date}_${
-                                session.startTime
-                              }_${session.endTime}_${course}_${index + 1}`;
-                              const isReserved =
-                                reservationExists[reservationKey];
-
-                              return (
-                                <div
-                                  className={`res-container ${
-                                    isClosed
-                                      ? "closed"
-                                      : isReserved
-                                      ? isReserved.status === "potvrdená"
-                                        ? "potvrdená"
-                                        : "vytvorená"
-                                      : "not-reserved"
-                                  }`}
-                                  key={`${reservationKey}_${sessionIndex}`}
-                                >
-                                  {!isClosed && (
-                                    <div className="res-details-container">
-                                      <div className="session-course-times">
-                                        {session.startTime} - {session.endTime}
-                                      </div>
-
-                                      {isReserved &&
-                                      typeof isReserved === "object" ? (
-                                        <>
-                                          {(isLoggedIn &&
-                                            (isReserved.user.email ===
-                                              localStorage.getItem(
-                                                "userEmail"
-                                              ) ||
-                                              isReserved.addedUsers?.some(
-                                                (user) =>
-                                                  user.email ===
-                                                  localStorage.getItem(
-                                                    "userEmail"
-                                                  )
-                                              ))) ||
-                                          isAdmin ? (
-                                            <>
-                                              {day.date !== today &&
-                                                (isReserved.status !==
-                                                  "potvrdená" ||
-                                                  isAdmin) && (
-                                                  <div className="delEditButtons-group">
-                                                    <button
-                                                      className="handler-edit"
-                                                      onClick={() =>
-                                                        handleEdit(isReserved)
-                                                      }
-                                                    >
-                                                      <i
-                                                        className={
-                                                          isReserved.user
-                                                            .email ===
-                                                            localStorage.getItem(
-                                                              "userEmail"
-                                                            ) || isAdmin
-                                                            ? "fas fa-pen"
-                                                            : "fa fa-wrench"
-                                                        }
-                                                      ></i>
-                                                      <span className="tooltip-text">
-                                                        {isReserved.user
-                                                          .email ===
-                                                          localStorage.getItem(
-                                                            "userEmail"
-                                                          ) || isAdmin
-                                                          ? "Upraviť rezerváciu"
-                                                          : "Editovať rezerváciu"}
-                                                      </span>
-                                                    </button>
-                                                    {(isReserved.user.email ===
-                                                      localStorage.getItem(
-                                                        "userEmail"
-                                                      ) ||
-                                                      isAdmin) && (
-                                                      <button
-                                                        className="handler-delete"
-                                                        onClick={() =>
-                                                          handleDelete(
-                                                            reservationExists[
-                                                              reservationKey
-                                                            ]?.id || "",
-                                                            isReserved.user
-                                                              .email,
-                                                            isReserved.user
-                                                              .firstName,
-                                                            isReserved.user
-                                                              .secondName
-                                                          )
-                                                        }
-                                                      >
-                                                        <i className="fas fa-trash-alt"></i>
-                                                        <span className="tooltip-text">
-                                                          Zmazať svoju
-                                                          rezerváciu
-                                                        </span>
-                                                      </button>
-                                                    )}
-                                                  </div>
-                                                )}
-                                            </>
-                                          ) : null}
-
-                                          <div className="res-details">
-                                            <div>
-                                              {isReserved.availableRacers !==
-                                              undefined ? (
-                                                isReserved.availableRacers >
-                                                0 ? (
-                                                  <>
-                                                    <b>VOĽNÝCH:</b>{" "}
-                                                    {`${
-                                                      isReserved.availableRacers
-                                                    } / ${
-                                                      individualLineCapacities[
-                                                        course
-                                                      ] || "N/A"
-                                                    }`}
-                                                  </>
-                                                ) : (
-                                                  "OBSADENÉ"
-                                                )
-                                              ) : (
-                                                <div className="loading-indicator">
-                                                  Načítavam...
-                                                </div>
-                                              )}
-                                              <hr></hr>
-                                              <b>DISCIPLÍNA:</b>{" "}
-                                              {isReserved.discipline || "N/A"}
-                                              <br></br>
-                                              <b>KATEGÓRIA:</b>{" "}
-                                              {isReserved.category || "N/A"}
-                                            </div>
-                                            <div>
-                                              <div>
-                                                <button
-                                                  className="clubs-dropdown-button"
-                                                  onClick={() =>
-                                                    toggleDropdown(
-                                                      reservationKey
-                                                    )
-                                                  }
-                                                >
-                                                  <i className="fa fa-sort-down"></i>
-                                                  <b>ZOBRAZIŤ KLUBY</b>
-                                                </button>
-                                                {dropdownVisible[
-                                                  reservationKey
-                                                ] && (
-                                                  <div className="dropdown-content">
-                                                    <b>KLUB:</b>{" "}
-                                                    {`${isReserved.user.sportClub}`}
-                                                    <br></br>
-                                                    <b>POČET JAZDCOV:</b>{" "}
-                                                    {`${isReserved.user.ownRacers}`}
-                                                    <br></br>
-                                                    <b>KONTAKT:</b>{" "}
-                                                    {`${isReserved.user.tel_number}`}
-                                                    {isReserved.addedUsers?.map(
-                                                      (user, idx) => (
-                                                        <div key={idx}>
-                                                          <hr></hr>
-                                                          <b>KLUB:</b>{" "}
-                                                          {user.sportClub}
-                                                          <br></br>
-                                                          <b>
-                                                            POČET JAZDCOV:
-                                                          </b>{" "}
-                                                          {user.ownRacers}
-                                                          <br></br>
-                                                          <b>KONTAKT:</b>{" "}
-                                                          {user.tel_number}
-                                                        </div>
-                                                      )
-                                                    )}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            </div>
-                                          </div>
-
-                                          <button
-                                            className="detail-button"
-                                            onClick={() => {
-                                              setDetailsReservation(isReserved);
-                                              setIsDetailsModalOpen(true);
-                                            }}
-                                          >
-                                            <i className="fa fa-info-circle"></i>
-                                            DETAIL
-                                          </button>
-
-                                          {((!isLoggedIn &&
-                                            isReserved.availableRacers !== 0) ||
-                                            (isReserved.availableRacers !== 0 &&
-                                              isReserved.availableRacers <
-                                                individualLineCapacity &&
-                                              isReserved.user.email !==
-                                                localStorage.getItem(
-                                                  "userEmail"
-                                                ) &&
-                                              !isReserved.addedUsers?.some(
-                                                (user) =>
-                                                  user.email ===
-                                                  localStorage.getItem(
-                                                    "userEmail"
-                                                  )
-                                              ))) && (
-                                            <button
-                                              className="add-to-training-button"
-                                              onClick={() => {
-                                                if (!isLoggedIn) {
-                                                  alert(
-                                                    "Musíte sa najprv prihlásiť."
-                                                  );
-                                                } else {
-                                                  handleAddToTrainingClick(
-                                                    day.date,
-                                                    session,
-                                                    course,
-                                                    index + 1,
-                                                    isReserved.user.sportClub ||
-                                                      ""
-                                                  );
-                                                }
-                                              }}
-                                            >
-                                              PRIDAŤ SA NA TRÉNING
-                                            </button>
-                                          )}
-
-                                          {isAdmin &&
-                                            isReserved.status !==
-                                              "potvrdená" && (
-                                              <button
-                                                className="accept-training-button"
-                                                onClick={() =>
-                                                  handleConfirmReservation(
-                                                    isReserved.id
-                                                  )
-                                                }
-                                              >
-                                                <i className="fa fa-check"></i>
-                                                POTVRDIŤ TRÉNING
-                                              </button>
-                                            )}
-                                        </>
-                                      ) : (
-                                        <>
-                                          {day.date !== today && (
-                                            <button
-                                              className="reservation-button"
-                                              onClick={() =>
-                                                handleSessionClick(
-                                                  day.date,
-                                                  session,
-                                                  course,
-                                                  index + 1
-                                                )
-                                              }
-                                              disabled={day.date === today}
-                                            >
-                                              REZERVOVAŤ
-                                            </button>
-                                          )}
-                                        </>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <p className="unable-calendar-p">
-              Nedostupný žiadny ďalší tréningový deň.
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   const sendEmail = async (
     reservationId: string | undefined,
@@ -1436,6 +977,74 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     }));
   };
 
+  // --- calendar wiring ------------------------------------------------------
+  //
+  // The calendar is memoised, so everything handed to it has to keep a stable
+  // identity between renders — otherwise React.memo compares new objects every
+  // time and nothing is actually skipped.
+
+  const viewer = useMemo(
+    () => ({
+      isLoggedIn,
+      isAdmin,
+      email: localStorage.getItem("userEmail"),
+    }),
+    [isLoggedIn, isAdmin]
+  );
+
+  const reservationFor = useCallback(
+    (date: string, startTime: string, endTime: string, lineNumber: number) =>
+      reservationExists[
+        `${date}_${startTime}_${endTime}_${selectedCourse}_${lineNumber}`
+      ],
+    [reservationExists, selectedCourse]
+  );
+
+  const closedTrackFor = useCallback(
+    (lineNumber: number, date: string) =>
+      closedTracks[`${selectedCourse}_${lineNumber}_${date}`],
+    [closedTracks, selectedCourse]
+  );
+
+  const dayLabel = useCallback(
+    (day: Day) => `${day.dayOfWeek[lang]}: ${formatDate(day.date)}`,
+    [lang]
+  );
+
+  const calendarActions = useMemo<CalendarActions>(
+    () => ({
+      onReserve: (date, session, lineNumber) =>
+        handleSessionClick(date, session, selectedCourse ?? "", lineNumber),
+      onEdit: (reservation) => handleEdit(reservation),
+      onDelete: (id, email, firstName, secondName) =>
+        handleDelete(id, email, firstName, secondName),
+      onShowDetails: (reservation) => {
+        setDetailsReservation(reservation);
+        setIsDetailsModalOpen(true);
+      },
+      onJoinTraining: (date, session, lineNumber, sportClub) =>
+        handleAddToTrainingClick(
+          date,
+          session,
+          selectedCourse ?? "",
+          lineNumber,
+          sportClub
+        ),
+      onConfirm: (reservationId) => handleConfirmReservation(reservationId),
+      onCloseTrack: (lineNumber, date) => {
+        setCloseTrackDetails({
+          course: selectedCourse ?? "",
+          lineNumber,
+          date,
+        });
+        setIsCloseModalOpen(true);
+      },
+      onOpenTrack: (lineNumber, date) =>
+        handleOpenTrack(selectedCourse ?? "", lineNumber, date),
+    }),
+    [selectedCourse, isAdmin]
+  );
+
   return (
     <div className="resort-page">
       <div className="training-courses">
@@ -1463,7 +1072,23 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           {selectedCourse &&
             seasons[selectedCourse]?.map((season) => (
               <div key={season.id}>
-                {renderCalendar(season.weeks, selectedCourse)}
+                <CalendarWeek
+                  weeks={season.weeks}
+                  weekStart={currentDates[selectedCourse] || new Date()}
+                  capacity={courseCapacities[selectedCourse] || 0}
+                  individualLineCapacity={
+                    individualLineCapacities[selectedCourse] || 0
+                  }
+                  closedTrackFor={closedTrackFor}
+                  reservationFor={reservationFor}
+                  viewer={viewer}
+                  actions={calendarActions}
+                  onPreviousWeek={() => handlePreviousWeek(selectedCourse)}
+                  onNextWeek={() => handleNextWeek(selectedCourse, isAdmin)}
+                  onShowInfo={handleInfoClick}
+                  dayLabel={dayLabel}
+                  lang={lang}
+                />
               </div>
             ))}
 

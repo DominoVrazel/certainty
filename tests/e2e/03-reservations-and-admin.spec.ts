@@ -110,6 +110,35 @@ test.describe("reservations", () => {
       .toBeGreaterThan(freeBefore);
   });
 
+  test("the clubs dropdown opens per cell and shows the booking club", async ({
+    page,
+  }) => {
+    // Dropdown state lives inside the session cell now. It used to sit in a
+    // page-level record, so opening one re-rendered every cell in the week.
+    await bookFirstFreeSlot(page, 4);
+    await expect(page.getByText(/VOĽNÝCH:/).first()).toBeVisible({
+      timeout: 20_000,
+    });
+
+    const toggles = page.getByRole("button", { name: /ZOBRAZIŤ KLUBY/ });
+    await expect(toggles.first()).toBeVisible();
+
+    // Closed to begin with.
+    await expect(page.getByText(/POČET JAZDCOV:/)).toHaveCount(0);
+
+    await toggles.first().click();
+    await expect(page.getByText(/POČET JAZDCOV:/).first()).toBeVisible();
+    await expect(page.getByText(/KLUB:/).first()).toBeVisible();
+
+    // Only the cell that was clicked opens.
+    await expect(page.getByText(/POČET JAZDCOV:/)).toHaveCount(1);
+
+    await toggles.first().click();
+    await expect(page.getByText(/POČET JAZDCOV:/)).toHaveCount(0);
+
+    await deleteAllOwnReservations(page);
+  });
+
   test("remaining capacity reflects the racers entered", async ({ page }) => {
     await bookFirstFreeSlot(page, 7);
 
