@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { db, storage } from "../services/FirebaseService"; // Ensure this path is correct
+import { AUTO_CONFIRM_FIELD } from "../services/resorts";
 
 interface AddResortDataProps {
   onUpdate: () => void;
@@ -64,6 +65,9 @@ const AddResortData: React.FC<AddResortDataProps> = ({ onUpdate }) => {
       await setDoc(resortDocRef, {
         name: resortName,
         email: resortEmail,
+        // Written out rather than left to the reader's default, so the
+        // setting is visible in the console and can be flipped either way.
+        [AUTO_CONFIRM_FIELD]: true,
       });
 
       alert("Stredisko úspešne pridané do databázy!");

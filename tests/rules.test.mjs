@@ -182,6 +182,28 @@ describe("public catalogue", () => {
     await assertFails(deleteDoc(doc(club, "resorts", "Bachledka")));
   });
 
+  // Automatic confirmation lives on the resort document, so the rule that
+  // guards the catalogue is also the rule that guards the setting. Worth its
+  // own test: a club that could flip it would be confirming its own bookings
+  // at every resort.
+  test("ordinary club cannot switch automatic confirmation", async () => {
+    await seed();
+    await assertFails(
+      updateDoc(doc(club, "resorts", "Bachledka"), {
+        autoConfirmReservations: false,
+      })
+    );
+  });
+
+  test("admin can switch automatic confirmation", async () => {
+    await seed();
+    await assertSucceeds(
+      updateDoc(doc(adminUser, "resorts", "Bachledka"), {
+        autoConfirmReservations: false,
+      })
+    );
+  });
+
   test("admin can manage resorts, courses and seasons", async () => {
     await seed();
     await assertSucceeds(

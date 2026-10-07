@@ -5,11 +5,20 @@ import {
   clearFutureTrainings,
   createVerifiedAccount,
   openAccountMenu,
+  setResortAutoConfirm,
   uniqueEmail,
 } from "./helpers";
 
 test.beforeEach(async () => {
   await clearFutureTrainings();
+});
+
+// Self-confirmation is what a resort gets when it turns automatic confirmation
+// off, and the default is on. Restored even when a test fails, because the
+// whole suite shares one emulator and the setting would otherwise leak into
+// another file.
+test.afterEach(async () => {
+  await setResortAutoConfirm("Bachledka", true);
 });
 
 async function signIn(page: any, email: string) {
@@ -30,6 +39,7 @@ test("a club confirms its own attendance, without the resort doing it", async ({
 }) => {
   const email = uniqueEmail("confirm");
   await createVerifiedAccount(email, DEV_PASSWORD);
+  await setResortAutoConfirm("Bachledka", false);
   page.on("dialog", (d) => d.accept());
 
   await signIn(page, email);

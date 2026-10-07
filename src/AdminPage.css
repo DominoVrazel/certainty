@@ -158,6 +158,14 @@ body {
   text-align: center !important;
 }
 
+/* Explains what the setting above it does, so the admin is not guessing. */
+.form-hint {
+  margin: 0;
+  font-size: 0.8vw;
+  color: #777;
+  text-align: center;
+}
+
 .form-string-input {
   width: 100%;
   padding: 0.6vw 0.8vw;

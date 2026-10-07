@@ -282,6 +282,50 @@ export async function findUserByEmail(email: string) {
 }
 
 /**
+ * Switches a resort's automatic confirmation on or off.
+ *
+ * Written straight through the REST API rather than by driving the admin
+ * screen, so a test about booking does not depend on the admin UI as well. The
+ * admin UI has its own test.
+ */
+export async function setResortAutoConfirm(
+  resortId: string,
+  enabled: boolean
+): Promise<void> {
+  const res = await fetch(
+    `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents/resorts/${resortId}` +
+      `?updateMask.fieldPaths=autoConfirmReservations`,
+    {
+      method: "PATCH",
+      headers: ADMIN_HEADERS,
+      body: JSON.stringify({
+        fields: { autoConfirmReservations: { booleanValue: enabled } },
+      }),
+    }
+  );
+  if (!res.ok) {
+    throw new Error(
+      `could not set autoConfirmReservations on ${resortId}: ${res.status} ${await res.text()}`
+    );
+  }
+}
+
+export async function getResortAutoConfirm(
+  resortId: string
+): Promise<boolean> {
+  const res = await fetch(
+    `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents/resorts/${resortId}`,
+    { headers: ADMIN_HEADERS }
+  );
+  if (!res.ok) throw new Error(`resort ${resortId} not readable: ${res.status}`);
+  const body = (await res.json()) as {
+    fields?: { autoConfirmReservations?: { booleanValue?: boolean } };
+  };
+  // Absent counts as on, the same default the app applies.
+  return body.fields?.autoConfirmReservations?.booleanValue !== false;
+}
+
+/**
  * Removes trainings dated from today onwards.
  *
  * Only tests create future trainings — everything migrated from production is

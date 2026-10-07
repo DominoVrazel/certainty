@@ -14,6 +14,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./FirebaseService";
+import { autoConfirmFrom } from "./resorts";
 
 /**
  * Every write to a training goes through here.
@@ -159,15 +160,28 @@ const count = (value: unknown) => {
   return Number.isFinite(n) ? n : 0;
 };
 
+/**
+ * Every stored aggregate, recomputed from the participants.
+ *
+ * `status` belongs here with the rest of them. It used to be set only where
+ * somebody remembered to — confirming did, joining and leaving did not — so a
+ * training that lost its one unconfirmed club stayed "created" for ever, and
+ * one that gained a club after everybody had confirmed stayed "confirmed".
+ * Derived in one place, it cannot drift from `confirmedCount`.
+ */
 function totals(participants: Record<string, Participant>) {
   const list = Object.values(participants);
+  const confirmedCount = list.filter((p) => p.confirmedAt).length;
   return {
     participantUids: Object.keys(participants),
     clubs: [...new Set(list.map((p) => p.sportClub).filter(Boolean))],
     racersTotal: list.reduce((s, p) => s + count(p.racers), 0),
     coachesTotal: list.reduce((s, p) => s + count(p.coaches), 0),
     participantCount: list.length,
-    confirmedCount: list.filter((p) => p.confirmedAt).length,
+    confirmedCount,
+    status: (list.length > 0 && confirmedCount === list.length
+      ? "confirmed"
+      : "created") as Training["status"],
   };
 }
 
@@ -185,7 +199,9 @@ export interface ParticipantInput {
 
 function newParticipant(
   input: ParticipantInput,
-  role: ParticipantRole
+  role: ParticipantRole,
+  /** Resorts that confirm automatically count the club in straight away. */
+  confirmed: boolean
 ): Participant {
   return {
     sportClub: input.sportClub,
@@ -198,7 +214,7 @@ function newParticipant(
     tickets: input.tickets ?? 0,
     role,
     joinedAt: Timestamp.now(),
-    confirmedAt: null,
+    confirmedAt: confirmed ? Timestamp.now() : null,
     checkedInAt: null,
     attended: null,
   };
@@ -219,6 +235,7 @@ export async function createTraining(
 ): Promise<string> {
   const id = slotId(slot);
   const ref = doc(db, "trainings", id);
+  const resortRef = doc(db, "resorts", slot.resortId);
   const startAt = localInstant(slot.date, slot.session.startTime);
 
   if (startAt.getTime() <= Date.now()) {
@@ -237,7 +254,14 @@ export async function createTraining(
       );
     }
 
-    const participants = { [owner.uid]: newParticipant(owner, "owner") };
+    // Read inside the transaction rather than taken from the caller, so a tab
+    // left open since before the admin changed the setting still books under
+    // the setting that is actually in force.
+    const autoConfirm = autoConfirmFrom((await tx.get(resortRef)).data());
+
+    const participants = {
+      [owner.uid]: newParticipant(owner, "owner", autoConfirm),
+    };
 
     tx.set(ref, {
       resortId: slot.resortId,
@@ -250,7 +274,6 @@ export async function createTraining(
       endAt: Timestamp.fromDate(localInstant(slot.date, slot.session.endTime)),
       discipline: details.discipline,
       category: details.category,
-      status: "created",
       note: "",
       noteUpdatedBy: null,
       noteUpdatedAt: null,
@@ -286,12 +309,16 @@ export async function joinTraining(
       throw new TrainingError("already-joined", "Už ste pridaní na tento tréning.");
     }
 
+    const autoConfirm = autoConfirmFrom(
+      (await tx.get(doc(db, "resorts", data.resortId))).data()
+    );
+
     // Recomputed from the value read inside the transaction. The old code
     // subtracted from a number the modal had captured when it opened, which
     // could be arbitrarily stale.
     const participants = {
       ...data.participants,
-      [joiner.uid]: newParticipant(joiner, "joined"),
+      [joiner.uid]: newParticipant(joiner, "joined", autoConfirm),
     };
     const next = totals(participants);
 
@@ -468,9 +495,7 @@ export async function confirmAttendance(
 
     tx.update(ref, {
       [`participants.${uid}.confirmedAt`]: Timestamp.now(),
-      confirmedCount: next.confirmedCount,
-      status:
-        next.confirmedCount === next.participantCount ? "confirmed" : "created",
+      ...next,
       updatedAt: serverTimestamp(),
     });
   });
@@ -491,18 +516,6 @@ export async function checkIn(
     [`participants.${uid}.checkedInAt`]: attended ? Timestamp.now() : null,
     [`participants.${uid}.attended`]: attended,
     updatedAt: serverTimestamp(),
-  });
-}
-
-/** Marks the booking accepted by the resort. */
-export async function confirmTraining(trainingId: string): Promise<void> {
-  await runTransaction(db, async (tx) => {
-    const ref = doc(db, "trainings", trainingId);
-    const snap = await tx.get(ref);
-    if (!snap.exists()) {
-      throw new TrainingError("gone", "Tento tréning už neexistuje.");
-    }
-    tx.update(ref, { status: "confirmed", updatedAt: serverTimestamp() });
   });
 }
 

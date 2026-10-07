@@ -20,6 +20,7 @@ import ImageUpload from "./ImageUpload";
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
 import { authReady } from "../services/FirebaseService";
 import MonthlyReport from "./admin/MonthlyReport";
+import { autoConfirmFrom, setAutoConfirm } from "../services/resorts";
 
 interface Resort {
   id: string;
@@ -86,6 +87,8 @@ function AdminPage() {
   const [selectedSeason, setSelectedSeason] = useState<string | null>(null); // State to hold the selected season
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0); // State for current week index
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+  const [autoConfirm, setAutoConfirmState] = useState(true);
+  const [savingAutoConfirm, setSavingAutoConfirm] = useState(false);
   const [users, setUsers] = useState<User[]>([]); // State to hold users
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const db = getFirestore();
@@ -206,33 +209,59 @@ function AdminPage() {
     }
   }, [selectedResort, selectedCourse, db]);
 
+  // One read of the resort document for everything stored on it, rather than
+  // one per setting.
   useEffect(() => {
     if (selectedResort) {
-      const fetchPromoCodes = async () => {
+      const fetchResortSettings = async () => {
         try {
-          console.log("Fetching promo codes for resort:", selectedResort); // Debugging log
           const resortDoc = await getDoc(doc(db, "resorts", selectedResort));
           if (resortDoc.exists()) {
             const data = resortDoc.data();
-            const promoCodesData = data.promocodes.map(
+            // A resort with no promo codes has no field at all, and mapping
+            // over undefined threw before the rest of the settings could load.
+            const promoCodesData = (data.promocodes ?? []).map(
               (promo: any, index: number) => ({
                 id: index.toString(),
                 code: promo.Code,
                 Promo_name: promo.Promo_name,
               })
             );
-            console.log("Fetched promo codes:", promoCodesData); // Debugging log
             setPromoCodes(promoCodesData);
+            setAutoConfirmState(autoConfirmFrom(data));
           } else {
             console.log("No such document!");
           }
         } catch (error) {
-          console.error("Chyba napájania kolekcie promocodes: ", error);
+          console.error("Chyba napájania nastavení strediska: ", error);
         }
       };
-      fetchPromoCodes();
+      fetchResortSettings();
     }
   }, [selectedResort, db]);
+
+  /**
+   * Turns automatic confirmation on or off for this resort.
+   *
+   * On — the default — a booking counts as confirmed the moment it is made, so
+   * nobody has to click anything. Off puts the club back in charge of saying it
+   * is coming.
+   */
+  const handleAutoConfirmToggle = async (enabled: boolean) => {
+    if (!selectedResort) return;
+    const previous = autoConfirm;
+    setAutoConfirmState(enabled);
+    setSavingAutoConfirm(true);
+    try {
+      await setAutoConfirm(selectedResort, enabled);
+    } catch (error) {
+      console.error("Nastavenie sa nepodarilo uložiť: ", error);
+      setAutoConfirmState(previous);
+      alert("Nastavenie sa nepodarilo uložiť.");
+    } finally {
+      setSavingAutoConfirm(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -476,6 +505,7 @@ function AdminPage() {
                   <label className="form-label-content">
                     Vyberte si stredisko:
                     <select
+                      id="settings-resort"
                       value={selectedResort || ""}
                       onChange={(e) => {
                         setSelectedResort(e.target.value);
@@ -490,6 +520,24 @@ function AdminPage() {
                       ))}
                     </select>
                   </label>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label-content" htmlFor="auto-confirm">
+                    <input
+                      id="auto-confirm"
+                      type="checkbox"
+                      checked={autoConfirm}
+                      disabled={!selectedResort || savingAutoConfirm}
+                      onChange={(e) => handleAutoConfirmToggle(e.target.checked)}
+                    />{" "}
+                    Automaticky potvrdzovať rezervácie
+                  </label>
+                  <p className="form-hint">
+                    {autoConfirm
+                      ? "Rezervácia je potvrdená hneď po vytvorení. Kluby nemusia nič potvrdzovať."
+                      : "Každý klub si musí účasť na tréningu potvrdiť sám."}
+                  </p>
                 </div>
 
                 <div className="Image-promos-subcont">

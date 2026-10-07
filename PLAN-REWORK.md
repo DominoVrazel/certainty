@@ -8,7 +8,7 @@
 | 2 — migračný skript, overený a idempotentný | ✅ hotové |
 | 3 — prestavba frontendu (extrakcia + dátová vrstva) | ✅ hotové |
 | 4 — nasadenie indexov do produkcie | ✅ hotové, stavajú sa |
-| 4b — všetky 9 nových funkcionalít | ✅ hotové |
+| 4b — nové funkcionality | ✅ hotové |
 | 5 — záloha tesne pred migráciou | ⬜ |
 | 6 — read-only build s bannerom | ⬜ |
 | 7 — migrácia produkcie | ⬜ |
@@ -20,10 +20,10 @@
 Vetva `rework`, nepushnutá. Do produkcie zatiaľ išli **len indexy** — sú aditívne
 a stará appka ich nepoužíva.
 
-Testovacie siete: 54 testov pravidiel, 25 E2E, test súbežnosti, overenie
+Testovacie siete: 56 testov pravidiel, 28 E2E, test súbežnosti, overenie
 migrácie a overenie osirelých záznamov.
 
-### Funkcionality (požiadavky 1–9)
+### Funkcionality
 
 | # | funkcionalita | commit |
 |---|---|---|
@@ -36,6 +36,7 @@ migrácie a overenie osirelých záznamov.
 | 7 | admin zakladá a presúva tréningy za klub | `b679276` |
 | 8 | blokovanie jednotlivých blokov na trať | `6be3eb3` |
 | 9 | zdieľaná poznámka pre trénerov | `6be3eb3` |
+| 10 | automatické potvrdzovanie rezervácií (nastavenie strediska, default zapnuté) | — |
 
 ## Kde pokračovať
 
