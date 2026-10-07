@@ -8,6 +8,7 @@
 | 2 — migračný skript, overený a idempotentný | ✅ hotové |
 | 3 — prestavba frontendu (extrakcia + dátová vrstva) | ✅ hotové |
 | 4 — nasadenie indexov do produkcie | ✅ hotové, stavajú sa |
+| 4b — všetky 9 nových funkcionalít | ✅ hotové |
 | 5 — záloha tesne pred migráciou | ⬜ |
 | 6 — read-only build s bannerom | ⬜ |
 | 7 — migrácia produkcie | ⬜ |
@@ -19,14 +20,32 @@
 Vetva `rework`, nepushnutá. Do produkcie zatiaľ išli **len indexy** — sú aditívne
 a stará appka ich nepoužíva.
 
-Testovacie siete: 50 testov pravidiel, 20 E2E, test súbežnosti, overenie
+Testovacie siete: 54 testov pravidiel, 25 E2E, test súbežnosti, overenie
 migrácie a overenie osirelých záznamov.
 
-## Kde začať
+### Funkcionality (požiadavky 1–9)
 
-**Krok 1 = oprava `scripts/pull-prod-data.mjs`**, aby sťahovanie z produkcie zachytilo
-aj osirelé záznamy. Je to čisté čítanie, nič nemení, a bez neho sa migrácia nedá
-poriadne otestovať. Detaily nižšie v sekcii *Migrácia*.
+| # | funkcionalita | commit |
+|---|---|---|
+| 1 | odchod z tréningu bez zrušenia pre ostatných | `d16468f` |
+| 2 | editovanie rezervácie (počty, disciplína) | `d16468f` |
+| 3 | počet trénerov vedľa závodníkov | `6be3eb3` |
+| 4 | check-in klubu pri príchode | `6be3eb3` |
+| 5 | mesačný report (kluby, závodníci) | `b7f672c` |
+| 6 | klub potvrdzuje sám, bez admina | `6be3eb3` |
+| 7 | admin zakladá a presúva tréningy za klub | `b679276` |
+| 8 | blokovanie jednotlivých blokov na trať | `6be3eb3` |
+| 9 | zdieľaná poznámka pre trénerov | `6be3eb3` |
+
+## Kde pokračovať
+
+Lokálna časť je hotová: model, výkon aj všetkých 9 funkcionalít beží proti
+migrovanému emulátoru a je pokrytá testami. **Ďalej už nasleduje len nasadenie,
+teda kroky 5–11 v sekcii *Poradie nasadenia*** — a ten prvý z nich sa dotýka
+produkcie, takže ich začíname až na výslovný pokyn.
+
+Pred krokom 5 ešte treba: pushnúť vetvu `rework` a skontrolovať, že nasadené indexy
+prešli z `CREATING` do `READY`.
 
 Celé poradie nasadenia je v tabuľke na konci.
 
