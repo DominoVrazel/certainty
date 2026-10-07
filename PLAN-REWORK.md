@@ -1,5 +1,27 @@
 # Plán: prestavba dátového modelu + výkon
 
+## Stav (aktualizované 7. 10. 2026)
+
+| krok | stav |
+|---|---|
+| 1 — zachytenie osirelých záznamov v snapshote | ✅ hotové |
+| 2 — migračný skript, overený a idempotentný | ✅ hotové |
+| 3 — prestavba frontendu (extrakcia + dátová vrstva) | ✅ hotové |
+| 4 — nasadenie indexov do produkcie | ✅ hotové, stavajú sa |
+| 5 — záloha tesne pred migráciou | ⬜ |
+| 6 — read-only build s bannerom | ⬜ |
+| 7 — migrácia produkcie | ⬜ |
+| 8 — overenie | ⬜ |
+| 9 — nasadenie frontendu + pravidiel | ⬜ |
+| 10 — odležanie | ⬜ |
+| 11 — odstránenie starých kolekcií | ⬜ |
+
+Vetva `rework`, nepushnutá. Do produkcie zatiaľ išli **len indexy** — sú aditívne
+a stará appka ich nepoužíva.
+
+Testovacie siete: 50 testov pravidiel, 20 E2E, test súbežnosti, overenie
+migrácie a overenie osirelých záznamov.
+
 ## Kde začať
 
 **Krok 1 = oprava `scripts/pull-prod-data.mjs`**, aby sťahovanie z produkcie zachytilo
