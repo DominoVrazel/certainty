@@ -95,6 +95,62 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // The new model: a training is one document holding its participants, so a
+    // club joining or leaving never touches a second document and can never
+    // orphan one. Everything below is enforced per document.
+    match /trainings/{trainingId} {
+
+      // Rules cannot compute "today", but they can compare request.time to a
+      // stored instant — which is exactly why startAt exists. Past trainings
+      // are frozen for everyone, so history stays trustworthy for reporting.
+      function startsInFuture(data) {
+        return data.startAt > request.time;
+      }
+
+      function isParticipant() {
+        return signedIn() && request.auth.uid in resource.data.participantUids;
+      }
+
+      // Joining means adding yourself: you are not in the document yet, but you
+      // must be in the version you are writing.
+      function isJoining() {
+        return signedIn()
+          && !(request.auth.uid in resource.data.participantUids)
+          && request.auth.uid in request.resource.data.participantUids;
+      }
+
+      allow read: if true;
+
+      allow create: if signedIn()
+                    && startsInFuture(request.resource.data)
+                    && request.auth.uid in request.resource.data.participantUids;
+
+      allow update: if signedIn()
+                    && startsInFuture(resource.data)
+                    && startsInFuture(request.resource.data)
+                    && (isAdmin() || isParticipant() || isJoining());
+
+      // `resource` is null when the document does not exist; without the guard
+      // the rule throws an evaluation error instead of simply refusing.
+      allow delete: if resource != null
+                    && startsInFuture(resource.data)
+                    && (isAdmin() || isParticipant());
+    }
+
+    // Rendered on the public calendar; only admins open and close anything.
+    match /closures/{closureId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Participation records whose booking was deleted before the migration.
+    // They hold personal data and exist only as evidence, so they are
+    // admin-only and never writable from the app.
+    match /trainingsOrphanedParticipants/{recordId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // Password-reset and e-mail-verification tokens. Anyone who can read these
     // can take over any account, so no client may touch them at all — the
     // Cloud Functions that create and consume them use the Admin SDK, which
