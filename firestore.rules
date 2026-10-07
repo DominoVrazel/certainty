@@ -130,6 +130,19 @@ service cloud.firestore {
                     && startsInFuture(request.resource.data)
                     && (isAdmin() || isParticipant() || isJoining());
 
+      // Checking in happens when a club actually turns up, which is after the
+      // session has started — so it needs a carve-out from the rule above. It
+      // is deliberately narrow: only while the session is running, only a club
+      // already on the training, only the participants map, and the totals the
+      // monthly report aggregates on must not move.
+      allow update: if signedIn()
+                    && isParticipant()
+                    && request.time < resource.data.endAt
+                    && request.resource.data.racersTotal == resource.data.racersTotal
+                    && request.resource.data.participantCount == resource.data.participantCount
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['participants', 'updatedAt']);
+
       // `resource` is null when the document does not exist; without the guard
       // the rule throws an evaluation error instead of simply refusing.
       allow delete: if resource != null

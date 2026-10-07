@@ -26,6 +26,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   isLoggedIn,
 }) => {
   const [racers, setRacers] = useState<number>(1);
+  const [coaches, setCoaches] = useState<number>(0);
   const [tickets, setTickets] = useState<number>(0);
   const [discipline, setDiscipline] = useState<string>("Slalom"); // Default discipline
   const [category, setCategory] = useState<string>("Žiaci");
@@ -42,7 +43,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ racers, discipline, course, category, tickets });
+    onSubmit({ racers, coaches, discipline, course, category, tickets });
     onClose(); // Close the modal after submission
   };
 
@@ -82,6 +83,18 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                 min={1}
                 onChange={(e) => setRacers(parseInt(e.target.value))}
                 required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="coaches">Počet trénerov:</label>
+              <input
+                className="form-control"
+                id="coaches"
+                type="number"
+                value={coaches}
+                min={0}
+                onChange={(e) => setCoaches(parseInt(e.target.value) || 0)}
               />
             </div>
 

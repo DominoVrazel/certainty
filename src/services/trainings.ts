@@ -7,6 +7,7 @@ import {
   onSnapshot,
   query,
   runTransaction,
+  updateDoc,
   serverTimestamp,
   Timestamp,
   where,
@@ -152,13 +153,19 @@ export function localInstant(date: string, time: string): Date {
   return new Date(instant);
 }
 
+/** Coerces to a number, because `0 + "3"` is `"03"` and the totals are stored. */
+const count = (value: unknown) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+};
+
 function totals(participants: Record<string, Participant>) {
   const list = Object.values(participants);
   return {
     participantUids: Object.keys(participants),
     clubs: [...new Set(list.map((p) => p.sportClub).filter(Boolean))],
-    racersTotal: list.reduce((s, p) => s + (p.racers ?? 0), 0),
-    coachesTotal: list.reduce((s, p) => s + (p.coaches ?? 0), 0),
+    racersTotal: list.reduce((s, p) => s + count(p.racers), 0),
+    coachesTotal: list.reduce((s, p) => s + count(p.coaches), 0),
     participantCount: list.length,
     confirmedCount: list.filter((p) => p.confirmedAt).length,
   };
@@ -186,8 +193,8 @@ function newParticipant(
     secondName: input.secondName,
     email: input.email,
     tel_number: input.tel_number,
-    racers: input.racers,
-    coaches: input.coaches ?? 0,
+    racers: count(input.racers),
+    coaches: count(input.coaches),
     tickets: input.tickets ?? 0,
     role,
     joinedAt: Timestamp.now(),
@@ -421,6 +428,66 @@ export async function updateTrainingDetails(
       throw new TrainingError("gone", "Tento tréning už neexistuje.");
     }
     tx.update(ref, { ...changes, updatedAt: serverTimestamp() });
+  });
+}
+
+/**
+ * A club confirms it is coming.
+ *
+ * Confirmation used to be the resort admin's job, which meant somebody had to
+ * chase every booking. Each club now confirms its own attendance, and the
+ * training counts as confirmed once every club on it has.
+ */
+export async function confirmAttendance(
+  trainingId: string,
+  uid: string
+): Promise<void> {
+  await runTransaction(db, async (tx) => {
+    const ref = doc(db, "trainings", trainingId);
+    const snap = await tx.get(ref);
+    if (!snap.exists()) {
+      throw new TrainingError("gone", "Tento tréning už neexistuje.");
+    }
+
+    const data = snap.data() as Training;
+    if (!data.participants?.[uid]) {
+      throw new TrainingError(
+        "not-a-participant",
+        "Na tomto tréningu nie ste prihlásení."
+      );
+    }
+
+    const participants = {
+      ...data.participants,
+      [uid]: { ...data.participants[uid], confirmedAt: Timestamp.now() },
+    };
+    const next = totals(participants);
+
+    tx.update(ref, {
+      [`participants.${uid}.confirmedAt`]: Timestamp.now(),
+      confirmedCount: next.confirmedCount,
+      status:
+        next.confirmedCount === next.participantCount ? "confirmed" : "created",
+      updatedAt: serverTimestamp(),
+    });
+  });
+}
+
+/**
+ * A club marks itself present on the day.
+ *
+ * One field write, no transaction: it touches only this club's own record and
+ * no total depends on it.
+ */
+export async function checkIn(
+  trainingId: string,
+  uid: string,
+  attended: boolean
+): Promise<void> {
+  await updateDoc(doc(db, "trainings", trainingId), {
+    [`participants.${uid}.checkedInAt`]: attended ? Timestamp.now() : null,
+    [`participants.${uid}.attended`]: attended,
+    updatedAt: serverTimestamp(),
   });
 }
 

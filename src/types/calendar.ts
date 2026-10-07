@@ -78,8 +78,11 @@ export interface CalendarActions {
     sportClub: string
   ) => void;
   onConfirm: (trainingId: string) => void;
+  onCheckIn: (trainingId: string, attended: boolean) => void;
   onCloseTrack: (lineNumber: number, date: string) => void;
   onOpenTrack: (lineNumber: number, date: string) => void;
+  /** Reopens a single blocked time block. */
+  onOpenBlock: (lineNumber: number, date: string, startTime: string) => void;
 }
 
 /** Who is looking at the calendar — constant for a whole render. */

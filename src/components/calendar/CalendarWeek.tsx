@@ -16,6 +16,10 @@ interface CalendarWeekProps {
   capacity: number;
   individualLineCapacity: number;
   closedTrackFor: (lineNumber: number, date: string) => ClosedTrack | undefined;
+  closureForSessionFor: (
+    lineNumber: number,
+    date: string
+  ) => (startTime: string) => ClosedTrack | undefined;
   trainingFor: (
     date: string,
     startTime: string,
@@ -39,6 +43,7 @@ const CalendarWeek: React.FC<CalendarWeekProps> = ({
   capacity,
   individualLineCapacity,
   closedTrackFor,
+  closureForSessionFor,
   trainingFor,
   viewer,
   actions,
@@ -110,6 +115,7 @@ const CalendarWeek: React.FC<CalendarWeekProps> = ({
               day={day}
               capacity={capacity}
               closedTrackFor={closedTrackFor}
+              closureForSessionFor={closureForSessionFor}
               trainingFor={trainingFor}
               individualLineCapacity={individualLineCapacity}
               today={today}

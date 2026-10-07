@@ -21,7 +21,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   isExistingReservation = false, // Default to false if not provided
   existingDetails = {},
 }) => {
-  const [racers, setRacers] = useState<number>(1); // Default to 1 racer
+  const [racers, setRacers] = useState<number>(1);
+  const [coaches, setCoaches] = useState<number>(0); // Default to 1 racer
   const [discipline, setDiscipline] = useState<string>("Slalom"); // Default discipline
   const [category, setCategory] = useState<string>("Žiaci");
   const db = getFirestore();
@@ -77,6 +78,17 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
               />
             </div>
 
+            <div className="form-group">
+              <label htmlFor="coaches">Počet trénerov:</label>
+              <input
+                className="form-control"
+                id="coaches"
+                type="number"
+                value={coaches}
+                min={0}
+                onChange={(e) => setCoaches(parseInt(e.target.value) || 0)}
+              />
+            </div>
             <button className="RegButton" type="submit">
               Rezervovať
             </button>

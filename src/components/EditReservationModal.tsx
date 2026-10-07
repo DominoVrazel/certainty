@@ -42,18 +42,27 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
     discipline: training.discipline ?? "",
     category: training.category ?? "",
     ownRacers: mine?.racers ?? 0,
+    ownCoaches: mine?.coaches ?? 0,
+    note: training.note ?? "",
   });
 
   const availableDisciplines = ["Slalom", "Obrovský slalom"];
   const availableCategories = ["Predžiaci", "Žiaci", "Juniori"];
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "ownRacers" ? parseInt(value, 10) : value,
+      // Numeric fields must be parsed here. A string slipping through makes the
+      // service's totals concatenate instead of add — 0 + "3" is "03".
+      [name]:
+        name === "ownRacers" || name === "ownCoaches"
+          ? parseInt(value, 10) || 0
+          : value,
     }));
   };
 
@@ -62,13 +71,24 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
     setVerifyLoadingState(LoaderState.Loading);
 
     try {
-      if (uid && mine && formData.ownRacers !== mine.racers) {
+      if (
+        uid &&
+        mine &&
+        (formData.ownRacers !== mine.racers ||
+          formData.ownCoaches !== mine.coaches)
+      ) {
         await updateParticipant(
           training.id,
           uid,
-          { racers: formData.ownRacers },
+          { racers: formData.ownRacers, coaches: formData.ownCoaches },
           individualLineCapacity
         );
+      }
+
+      // The note is shared: any club on the training may write it, since it is
+      // where coaches agree who sets the course and who brings what.
+      if (formData.note !== (training.note ?? "")) {
+        await updateTrainingDetails(training.id, { note: formData.note });
       }
 
       if (isOwner || isAdmin) {
@@ -111,6 +131,29 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
               />
             </div>
           )}
+          {mine && (
+            <div className="form-group">
+              <label htmlFor="ownCoaches">Počet trénerov:</label>
+              <input
+                className="form-control"
+                type="number"
+                name="ownCoaches"
+                value={formData.ownCoaches}
+                onChange={handleInputChange}
+                min="0"
+              />
+            </div>
+          )}
+          <div className="form-group">
+            <label htmlFor="note">Poznámka (kto stavia trať, kto čo prinesie):</label>
+            <textarea
+              className="form-control"
+              name="note"
+              rows={3}
+              value={formData.note}
+              onChange={handleInputChange}
+            />
+          </div>
           {(isOwner || isAdmin) && (
             <>
               <div className="form-group">

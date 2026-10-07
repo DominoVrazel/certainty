@@ -290,6 +290,15 @@ export async function findUserByEmail(email: string) {
  * one instead of its own.
  */
 export async function clearFutureTrainings(): Promise<number> {
+  // Closures are test leftovers too: a failed run leaves a blocked time block
+  // behind, and the next run then counts one fewer bookable slot than it
+  // expects — a failure that looks like a product bug.
+  const trainings = await clearFutureIn("trainings");
+  const closures = await clearFutureIn("closures");
+  return trainings + closures;
+}
+
+async function clearFutureIn(collectionId: string): Promise<number> {
   const today = new Date().toISOString().slice(0, 10);
 
   const res = await fetch(
@@ -299,7 +308,7 @@ export async function clearFutureTrainings(): Promise<number> {
       headers: { Authorization: "Bearer owner", "Content-Type": "application/json" },
       body: JSON.stringify({
         structuredQuery: {
-          from: [{ collectionId: "trainings" }],
+          from: [{ collectionId }],
           where: {
             fieldFilter: {
               field: { fieldPath: "date" },

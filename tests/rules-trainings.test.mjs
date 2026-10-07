@@ -36,6 +36,9 @@ const ADMIN = "admin-uid";
 
 const FUTURE = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 const PAST = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+// A session that started an hour ago and runs for another hour.
+const RUNNING_START = new Date(Date.now() - 60 * 60 * 1000);
+const RUNNING_END = new Date(Date.now() + 60 * 60 * 1000);
 
 let env;
 let anon, club, other, adminUser;
@@ -150,6 +153,16 @@ async function seed() {
         participants: { [CLUB]: participant("Alpha") },
       })
     );
+
+    // In progress right now: started an hour ago, ends in an hour.
+    await setDoc(doc(db, "trainings", "running"), {
+      ...trainingDoc({
+        startAt: RUNNING_START,
+        participantUids: [CLUB],
+        participants: { [CLUB]: participant("Alpha") },
+      }),
+      endAt: RUNNING_END,
+    });
 
     await setDoc(doc(db, "closures", "Bachledka__C1__2099-01-11__ALL__L1"), {
       resortId: "Bachledka",
@@ -329,6 +342,48 @@ describe("the past is frozen", () => {
     await seed();
     await assertFails(
       updateDoc(doc(club, "trainings", "future-open"), { startAt: PAST })
+    );
+  });
+});
+
+describe("checking in", () => {
+  test("a club can mark itself present once the session has started", async () => {
+    await seed();
+    await assertSucceeds(
+      updateDoc(doc(club, "trainings", "running"), {
+        [`participants.${CLUB}.attended`]: true,
+        [`participants.${CLUB}.checkedInAt`]: new Date(),
+      })
+    );
+  });
+
+  test("checking in cannot be used to rewrite the racer count", async () => {
+    // History feeds the monthly report, so the carve-out must not become a
+    // way to edit a session that has already started.
+    await seed();
+    await assertFails(
+      updateDoc(doc(club, "trainings", "running"), {
+        [`participants.${CLUB}.attended`]: true,
+        racersTotal: 999,
+      })
+    );
+  });
+
+  test("a club not on the training cannot check in", async () => {
+    await seed();
+    await assertFails(
+      updateDoc(doc(other, "trainings", "running"), {
+        [`participants.${OTHER}.attended`]: true,
+      })
+    );
+  });
+
+  test("a finished training still cannot be touched", async () => {
+    await seed();
+    await assertFails(
+      updateDoc(doc(club, "trainings", "past"), {
+        [`participants.${CLUB}.attended`]: true,
+      })
     );
   });
 });

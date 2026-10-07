@@ -71,12 +71,16 @@ const SessionCell: React.FC<SessionCellProps> = ({
     participants[0]?.[1];
 
   const myUid = viewer.uid;
-  const isParticipant = !!(myUid && training.participants?.[myUid]);
+  const mine = myUid ? training.participants?.[myUid] : undefined;
+  const isParticipant = !!mine;
   const isOwner = !!(myUid && training.participants?.[myUid]?.role === "owner");
 
   const mayManage = (viewer.isLoggedIn && isParticipant) || viewer.isAdmin;
-  const mayEditNow =
-    date !== today && (training.status !== "confirmed" || viewer.isAdmin);
+  // Editable while the training is still ahead. It used to lock once the
+  // status was "confirmed", which meant the resort had accepted it — now the
+  // clubs confirm their own attendance, so that same rule would have a club
+  // lock itself out of its own booking the moment it said it was coming.
+  const mayEditNow = date !== today;
 
   const canJoin =
     racersFree > 0 && (!viewer.isLoggedIn || (!isParticipant && viewer.isLoggedIn));
@@ -133,6 +137,21 @@ const SessionCell: React.FC<SessionCellProps> = ({
             <b>DISCIPLÍNA:</b> {training.discipline || "N/A"}
             <br></br>
             <b>KATEGÓRIA:</b> {training.category || "N/A"}
+            <br></br>
+            <b>POTVRDENÉ:</b> {training.confirmedCount ?? 0} /{" "}
+            {training.participantCount ?? 0}
+            {training.coachesTotal > 0 && (
+              <>
+                <br></br>
+                <b>TRÉNERI:</b> {training.coachesTotal}
+              </>
+            )}
+            {training.note && (
+              <>
+                <hr></hr>
+                <b>POZNÁMKA:</b> {training.note}
+              </>
+            )}
           </div>
           <div>
             <div>
@@ -151,6 +170,8 @@ const SessionCell: React.FC<SessionCellProps> = ({
                       <b>KLUB:</b> {p.sportClub}
                       <br></br>
                       <b>POČET JAZDCOV:</b> {p.racers}
+                      <br></br>
+                      <b>TRÉNEROV:</b> {p.coaches ?? 0}
                       <br></br>
                       <b>KONTAKT:</b> {p.tel_number}
                     </div>
@@ -189,13 +210,28 @@ const SessionCell: React.FC<SessionCellProps> = ({
           </button>
         )}
 
-        {viewer.isAdmin && training.status !== "confirmed" && (
+        {/* Confirming is the club's own job now; the resort no longer has to
+            chase every booking. */}
+        {isParticipant && !mine?.confirmedAt && (
           <button
             className="accept-training-button"
             onClick={() => actions.onConfirm(training.id)}
           >
             <i className="fa fa-check"></i>
-            POTVRDIŤ TRÉNING
+            POTVRDIŤ ÚČASŤ
+          </button>
+        )}
+
+        {/* On the day itself, the club marks that it actually turned up. */}
+        {isParticipant && date === today && (
+          <button
+            className="accept-training-button"
+            onClick={() => actions.onCheckIn(training.id, !mine?.attended)}
+          >
+            <i
+              className={mine?.attended ? "fa fa-user-check" : "fa fa-flag"}
+            ></i>
+            {mine?.attended ? "SME TU" : "OZNAČIŤ PRÍCHOD"}
           </button>
         )}
       </div>

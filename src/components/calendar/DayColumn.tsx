@@ -13,6 +13,10 @@ interface DayColumnProps {
   /** How many parallel tracks this course has. */
   capacity: number;
   closedTrackFor: (lineNumber: number, date: string) => ClosedTrack | undefined;
+  closureForSessionFor: (
+    lineNumber: number,
+    date: string
+  ) => (startTime: string) => ClosedTrack | undefined;
   trainingFor: (
     date: string,
     startTime: string,
@@ -30,6 +34,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
   day,
   capacity,
   closedTrackFor,
+  closureForSessionFor,
   trainingFor,
   individualLineCapacity,
   today,
@@ -52,6 +57,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
               day={day}
               lineNumber={lineNumber}
               closedTrack={closedTrackFor(lineNumber, day.date)}
+              closureForSession={closureForSessionFor(lineNumber, day.date)}
               trainingFor={trainingFor}
               individualLineCapacity={individualLineCapacity}
               today={today}

@@ -12,6 +12,8 @@ interface TrackColumnProps {
   day: Day;
   lineNumber: number;
   closedTrack?: ClosedTrack;
+  /** Closure covering just one block, if any. */
+  closureForSession?: (startTime: string) => ClosedTrack | undefined;
   /** Looks a booking up by the slot it occupies. */
   trainingFor: (
     date: string,
@@ -30,6 +32,7 @@ const TrackColumn: React.FC<TrackColumnProps> = ({
   day,
   lineNumber,
   closedTrack,
+  closureForSession,
   trainingFor,
   individualLineCapacity,
   today,
@@ -65,7 +68,45 @@ const TrackColumn: React.FC<TrackColumnProps> = ({
           {closedTrack.reason || "No reason provided"}
         </div>
       ) : (
-        day.timeSessions?.map((session, sessionIndex) => (
+        day.timeSessions?.map((session, sessionIndex) => {
+          const blockClosure = closureForSession?.(session.startTime);
+          if (blockClosure) {
+            return (
+              <div
+                className="res-container closed"
+                key={`${day.date}_${session.startTime}_${lineNumber}_closed`}
+              >
+                <div className="closed-reason">
+                  <strong>
+                    {session.startTime} - {session.endTime}
+                  </strong>
+                  <br></br>
+                  {blockClosure.reason || "Blok je uzavretý"}
+                  {viewer.isAdmin && (
+                    <>
+                      <br></br>
+                      {/* The track header's lock only knows about whole-day
+                          closures, so a blocked block needs its own control. */}
+                      <button
+                        className="track-toggle-button"
+                        onClick={() =>
+                          actions.onOpenBlock(
+                            lineNumber,
+                            day.date,
+                            session.startTime
+                          )
+                        }
+                      >
+                        <i className="fa fa-unlock-alt"></i>
+                        <span className="tooltip-text">Otvoriť blok</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          }
+          return (
           <SessionCell
             key={`${day.date}_${session.startTime}_${session.endTime}_${lineNumber}_${sessionIndex}`}
             date={day.date}
@@ -82,7 +123,8 @@ const TrackColumn: React.FC<TrackColumnProps> = ({
             viewer={viewer}
             actions={actions}
           />
-        ))
+          );
+        })
       )}
     </div>
   );

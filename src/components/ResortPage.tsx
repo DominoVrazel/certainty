@@ -29,7 +29,8 @@ import CalendarWeek from "./calendar/CalendarWeek";
 import { slotKey, useTrainingWeek } from "../hooks/useTrainingWeek";
 import {
   cancelTraining,
-  confirmTraining,
+  checkIn,
+  confirmAttendance,
   createTraining,
   closureId,
   getTraining,
@@ -469,6 +470,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           email: userEmail,
           tel_number: localStorage.getItem("userTel_number"),
           racers: formData.racers,
+          coaches: formData.coaches ?? 0,
           tickets: formData.tickets,
         },
         {
@@ -640,51 +642,42 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     setIsEditModalOpen(true); // Open the edit modal
   };
 
-  const handleConfirmReservation = async (trainingId: string) => {
+  /**
+   * The club confirms its own attendance.
+   *
+   * This used to be an admin action, with a link e-mailed to the resort — which
+   * meant somebody had to chase every booking. The training flips to confirmed
+   * once every club on it has confirmed.
+   */
+  const handleConfirmAttendance = async (trainingId: string) => {
+    const uid = localStorage.getItem("userId");
+    if (!uid) return;
+
     try {
       setVerifyLoadingState(LoaderState.Loading);
-
-      const training = await getTraining(trainingId);
-      await confirmTraining(trainingId);
-
-      const owner = Object.values(training?.participants ?? {}).find(
-        (p) => p.role === "owner"
-      );
-
-      if (owner?.email && owner.firstName && owner.secondName) {
-        sendEmail(
-          undefined,
-          `Vasa rezervacia na ${training?.date} bola potvrdena `,
-          owner.email,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          owner.firstName,
-          owner.secondName,
-          undefined,
-          undefined,
-          "USER_ACCEPTED_RES"
-        );
-      }
-
-      setIsReservationConfirmed(true);
+      await confirmAttendance(trainingId, uid);
     } catch (error) {
-      console.error("Error confirming training: ", error);
+      console.error("Error confirming attendance: ", error);
       alert(
         error instanceof TrainingError
           ? error.message
-          : "Pri potvrdzovani trneingu doslo k chybe."
+          : "Ucast sa nepodarilo potvrdit."
       );
     } finally {
       setVerifyLoadingState(LoaderState.Finished);
+    }
+  };
+
+  /** Marks the club present on the day of the training. */
+  const handleCheckIn = async (trainingId: string, attended: boolean) => {
+    const uid = localStorage.getItem("userId");
+    if (!uid) return;
+
+    try {
+      await checkIn(trainingId, uid, attended);
+    } catch (error) {
+      console.error("Error checking in: ", error);
+      alert("Prichod sa nepodarilo oznacit.");
     }
   };
 
@@ -699,7 +692,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     setIsAddToTrainingModalOpen(true);
   };
 
-  const handleAddToTrainingSubmit = async (formData: { racers: number }) => {
+  const handleAddToTrainingSubmit = async (formData: {
+    racers: number;
+    coaches?: number;
+  }) => {
     if (!addToTrainingSession) return;
 
     const { date, session, course, lineNumber } = addToTrainingSession;
@@ -738,6 +734,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           email: userEmail,
           tel_number: localStorage.getItem("userTel_number"),
           racers: formData.racers,
+          coaches: formData.coaches ?? 0,
         },
         individualLineCapacities[course]
       );
@@ -787,21 +784,28 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     course: string,
     lineNumber: number,
     date: string,
-    reason: string
+    reason: string,
+    session: { startTime: string; endTime: string } | null
   ) => {
     try {
+      // A whole-day closure and a single-block one are the same document with
+      // a different scope, so one query serves both.
       await setDoc(
-        doc(db, "closures", closureId(resortId, course, date, lineNumber)),
+        doc(
+          db,
+          "closures",
+          closureId(resortId, course, date, lineNumber, session?.startTime)
+        ),
         {
           resortId,
           courseId: course,
           date,
           lineNumber,
-          // Whole-day for now; per-block closures are the additive half of the
-          // feature this shape was designed for.
-          scope: "day",
-          session: null,
-          startAt: Timestamp.fromDate(new Date(`${date}T00:00:00`)),
+          scope: session ? "session" : "day",
+          session,
+          startAt: Timestamp.fromDate(
+            new Date(`${date}T${session?.startTime ?? "00:00"}:00`)
+          ),
           reason,
           closedAt: new Date(),
           closedBy: localStorage.getItem("userId"),
@@ -816,11 +820,17 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   const handleOpenTrack = async (
     course: string,
     lineNumber: number,
-    date: string
+    date: string,
+    /** Omitted for a whole-day closure, given for a single block. */
+    startTime?: string
   ) => {
     try {
       await deleteDoc(
-        doc(db, "closures", closureId(resortId, course, date, lineNumber))
+        doc(
+          db,
+          "closures",
+          closureId(resortId, course, date, lineNumber, startTime)
+        )
       );
     } catch (error) {
       console.error("Error reopening track: ", error);
@@ -866,6 +876,22 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     [closureBySlot]
   );
 
+  const closureForSessionFor = useCallback(
+    (lineNumber: number, date: string) => (startTime: string) => {
+      const closure = closureBySlot.get(`${date}_${startTime}_${lineNumber}`);
+      return closure ? { reason: closure.reason ?? "" } : undefined;
+    },
+    [closureBySlot]
+  );
+
+  const sessionsForSelectedCourse = useMemo(() => {
+    if (!selectedCourse) return [];
+    const days = (seasons[selectedCourse] ?? []).flatMap((s) =>
+      s.weeks.flatMap((w) => w.days)
+    );
+    return days.find((d) => d.timeSessions?.length)?.timeSessions ?? [];
+  }, [seasons, selectedCourse]);
+
   const dayLabel = useCallback(
     (day: Day) => `${day.dayOfWeek[lang]}: ${formatDate(day.date)}`,
     [lang]
@@ -889,7 +915,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           lineNumber,
           sportClub
         ),
-      onConfirm: (trainingId) => handleConfirmReservation(trainingId),
+      onConfirm: (trainingId) => handleConfirmAttendance(trainingId),
+      onCheckIn: (trainingId, attended) =>
+        handleCheckIn(trainingId, attended),
       onCloseTrack: (lineNumber, date) => {
         setCloseTrackDetails({
           course: selectedCourse ?? "",
@@ -900,6 +928,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       },
       onOpenTrack: (lineNumber, date) =>
         handleOpenTrack(selectedCourse ?? "", lineNumber, date),
+      onOpenBlock: (lineNumber, date, startTime) =>
+        handleOpenTrack(selectedCourse ?? "", lineNumber, date, startTime),
     }),
     [selectedCourse, isAdmin]
   );
@@ -939,6 +969,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                     individualLineCapacities[selectedCourse] || 0
                   }
                   closedTrackFor={closedTrackFor}
+                  closureForSessionFor={closureForSessionFor}
                   trainingFor={trainingFor}
                   viewer={viewer}
                   actions={calendarActions}
@@ -1003,13 +1034,15 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           {isCloseModalOpen && closeTrackDetails && (
             <CloseTrackModal
               isOpen={isCloseModalOpen}
+              timeSessions={sessionsForSelectedCourse}
               onClose={() => setIsCloseModalOpen(false)}
-              onSubmit={(reason) => {
+              onSubmit={(reason, session) => {
                 handleCloseTrack(
                   closeTrackDetails.course,
                   closeTrackDetails.lineNumber,
                   closeTrackDetails.date,
-                  reason
+                  reason,
+                  session
                 );
                 setIsCloseModalOpen(false);
               }}
