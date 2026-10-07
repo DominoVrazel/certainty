@@ -26,6 +26,19 @@ import { fetchPromoCodes, deletePromoCodes } from "./getPromoCodes";
 
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
 import CalendarWeek from "./calendar/CalendarWeek";
+import { slotKey, useTrainingWeek } from "../hooks/useTrainingWeek";
+import {
+  cancelTraining,
+  confirmTraining,
+  createTraining,
+  closureId,
+  getTraining,
+  joinTraining,
+  leaveTraining,
+  slotId,
+  TrainingError,
+  type Training,
+} from "../services/trainings";
 import type {
   CalendarActions,
   Day,
@@ -75,15 +88,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     existingDetails?: any;
   } | null>(null);
 
-  const [reservationExists, setReservationExists] = useState<
-    Record<string, ReservationDetails | null>
-  >({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State to control edit modal
-  const [editReservationDetails, setEditReservationDetails] =
-    useState<ReservationDetails | null>(null); // State for the reservation being edited
+  const [editTraining, setEditTraining] = useState<Training | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [detailsReservation, setDetailsReservation] =
-    useState<ReservationDetails | null>(null);
+  const [detailsTraining, setDetailsTraining] = useState<Training | null>(null);
   const [isAddToTrainingModalOpen, setIsAddToTrainingModalOpen] =
     useState(false);
   const [addToTrainingSession, setAddToTrainingSession] = useState<{
@@ -97,9 +105,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   const [dropdownVisible, setDropdownVisible] = useState<
     Record<string, boolean>
   >({});
-  const [closedTracks, setClosedTracks] = useState<
-    Record<string, { reason: string }>
-  >({});
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
   const [closeTrackDetails, setCloseTrackDetails] = useState<{
     course: string;
@@ -112,6 +117,17 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     setisShowInfoModalOpen(true);
   };
   const isAdmin = localStorage.getItem("userAdmin") === "true";
+  const viewerUid = localStorage.getItem("userId");
+
+  const weekStart = selectedCourse
+    ? currentDates[selectedCourse] || new Date()
+    : new Date();
+
+  const { bySlot, closureBySlot } = useTrainingWeek(
+    resortId,
+    selectedCourse,
+    weekStart
+  );
 
   const [resortEmail, setResortEmail] = useState<string | null>(null);
   const [verifyLoadingState, setVerifyLoadingState] = useState(
@@ -189,6 +205,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         }
       } catch (error) {
         console.error("Error fetching data: ", error);
+      } finally {
+        // The calendar itself is driven by a listener now, so the page is ready
+        // as soon as the courses and seasons it renders have arrived.
+        setVerifyLoadingState(LoaderState.Finished);
       }
     };
 
@@ -223,80 +243,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       }
     }
 
-    const fetchReservations = async (isAdmin: boolean) => {
-      try {
-        const today = new Date();
-        const endDate = new Date();
-        endDate.setDate(today.getDate() + (isAdmin ? 365 : 21));
-
-        const startDateStr = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-        const endDateStr = endDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-
-        const reservationsQuery = query(
-          collection(db, "reservations"),
-          where("date", ">=", startDateStr),
-          where("date", "<=", endDateStr)
-        );
-
-        const reservationsSnapshot = await getDocs(reservationsQuery);
-
-        const reservations: Record<string, ReservationDetails> = {};
-        for (const reservationDoc of reservationsSnapshot.docs) {
-          const reservationData = reservationDoc.data();
-
-          const reservationKey = `${reservationData.date}_${reservationData.session.startTime}_${reservationData.session.endTime}_${reservationData.reservationDetails.course}_${reservationData.lineNumber}`;
-
-          const addedUsersSnapshot = await getDocs(
-            collection(reservationDoc.ref, "addedUsers")
-          );
-          const addedUsers = addedUsersSnapshot.docs.map((doc) => doc.data());
-
-          reservations[reservationKey] = {
-            createdAt: reservationData.createdAt,
-            date: reservationData.date,
-            discipline: reservationData.discipline,
-            category: reservationData.category,
-            tickets: reservationData.tickets,
-            lineNumber: reservationData.lineNumber,
-            availableRacers: reservationData.availableRacers,
-            status: reservationData.status,
-            user: reservationData.user,
-            id: reservationDoc.id,
-            session: reservationData.session,
-            addedUsers: addedUsers as User[],
-          };
-        }
-        setReservationExists(reservations);
-        setVerifyLoadingState(LoaderState.Finished);
-      } catch (error) {
-        console.error("Error fetching reservations: ", error);
-      }
-    };
-
-    const fetchClosedTracks = async () => {
-      try {
-        const db = getFirestore();
-        const closedTracksSnapshot = await getDocs(
-          collection(db, "closedTracks")
-        );
-        const closedTracksData: Record<string, { reason: string }> = {};
-
-        closedTracksSnapshot.forEach((doc) => {
-          const data = doc.data();
-          const trackKey = `${data.course}_${data.lineNumber}_${data.date}`;
-          closedTracksData[trackKey] = { reason: data.reason };
-        });
-
-        setClosedTracks(closedTracksData);
-      } catch (error) {
-        console.error("Error fetching closed tracks: ", error);
-      }
-    };
-
     fetchCoursesAndSeasons();
     fetchResortEmail();
-    fetchReservations(isAdmin);
-    fetchClosedTracks();
   }, [db, resortId]);
 
   function formatDate(date: string) {
@@ -422,7 +370,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   ) => {
     const reservationKey = `${date}_${session.startTime}_${session.endTime}_${course}_${lineNumber}`;
 
-    if (reservationExists[reservationKey]) {
+    if (bySlot.has(slotKey(date, session.startTime, session.endTime, lineNumber))) {
       try {
         const reservationsRef = collection(db, "reservations");
         const q = query(
@@ -495,40 +443,41 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       const userFirstName = localStorage.getItem("userFirstName");
       const userSecondName = localStorage.getItem("userSecondName");
 
-      const availableRacers =
-        individualLineCapacities[selectedSession.course] - formData.racers;
-
-      if (availableRacers < 0) {
-        console.error("Not enough available racers.");
-        alert("Nedostatok voľných miest.");
+      const uid = localStorage.getItem("userId");
+      if (!uid) {
+        alert("Musíte sa najprv prihlásiť.");
         setVerifyLoadingState(LoaderState.Finished);
         return;
       }
 
-      await setDoc(reservationRef, {
-        date: selectedSession?.date || "",
-        session: selectedSession.session,
-        discipline: formData.discipline,
-        category: formData.category,
-        tickets: formData.tickets,
-        status: "vytvorená",
-        availableRacers: availableRacers,
-        createdAt: new Date(),
-        user: {
-          email: localStorage.getItem("userEmail"),
-          firstName: localStorage.getItem("userFirstName"),
-          secondName: localStorage.getItem("userSecondName"),
+      // One transaction over a slot-derived document id. Capacity is checked
+      // against what the transaction reads, not against a number captured when
+      // the modal opened.
+      const trainingId = await createTraining(
+        {
+          resortId,
+          courseId: selectedSession.course,
+          date: selectedSession.date,
+          session: selectedSession.session,
+          lineNumber: selectedSession.lineNumber,
+        },
+        {
+          uid,
           sportClub: localStorage.getItem("userSportClub"),
-          ownRacers: formData.racers,
+          firstName: userFirstName,
+          secondName: userSecondName,
+          email: userEmail,
           tel_number: localStorage.getItem("userTel_number"),
+          racers: formData.racers,
+          tickets: formData.tickets,
         },
-        reservationDetails: {
-          resort: resortId,
-          course: selectedSession.course,
-          courseName: courseName,
-        },
-        lineNumber: selectedSession.lineNumber,
-      });
+        {
+          discipline: formData.discipline,
+          category: formData.category,
+          courseName,
+          capacity: individualLineCapacities[selectedSession.course],
+        }
+      );
 
       const useremailSubject = `Úspešná rezervácie tréningu na ${selectedSession.date}`;
       const useremailIdentifier = "USER_SUCCESS_RES";
@@ -536,7 +485,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       // send email to user
       if (userEmail && userFirstName && userSecondName) {
         sendEmail(
-          reservationRef.id,
+          trainingId,
           useremailSubject,
           userEmail,
           courseName,
@@ -567,7 +516,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
       if (userEmail && userFirstName && userSecondName) {
         sendEmail(
-          reservationRef.id,
+          trainingId,
           adminEmailSubject,
           adminEmailRecipient,
           courseName,
@@ -595,26 +544,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
       const reservationKey = `${selectedSession.date}_${selectedSession.session.startTime}_${selectedSession.session.endTime}_${selectedSession.course}_${selectedSession.lineNumber}`;
 
-      setReservationExists((prev) => ({
-        ...prev,
-        [reservationKey]: {
-          availableRacers: formData.availableRacers,
-          discipline: formData.discipline,
-          category: formData.category,
-          tickets: formData.tickets,
-          status: "vytvorená", // or whatever status you want to set
-          user: {
-            email: localStorage.getItem("userEmail"),
-            firstName: localStorage.getItem("userFirstName"),
-            secondName: localStorage.getItem("userSecondName"),
-            sportClub: localStorage.getItem("userSportClub"),
-            ownRacers: formData.racers,
-            tel_number: localStorage.getItem("userTel_number"),
-          },
-        } as ReservationDetails, // Cast to ReservationDetails
-      }));
       setSelectedSession(null);
-      await handleUpdate(isAdmin);
 
       alert("Ďakujeme za rezerváciu, tešíme sa na vás.");
       setVerifyLoadingState(LoaderState.Finished);
@@ -628,38 +558,51 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     setSelectedSession(null);
   };
 
-  const handleDelete = async (
-    reservationId: string,
-    userEmail: string,
-    userFirstName: string,
-    userSecondName: string
-  ) => {
+  /**
+   * One control, two outcomes.
+   *
+   * A club that merely joined leaves, and the training carries on for everyone
+   * else — previously the joined clubs lived in a subcollection of the booking,
+   * so cancelling it stranded them. The organising club (or an admin) removing
+   * itself cancels the training only when nobody else is left; otherwise the
+   * earliest joiner takes it over. The service decides, because only it sees
+   * the participant list inside the transaction.
+   */
+  const handleLeaveOrCancel = async (training: Training) => {
+    const uid = localStorage.getItem("userId");
+    if (!uid) return;
+
+    const others = Object.keys(training.participants ?? {}).filter(
+      (k) => k !== uid
+    );
+    const isParticipant = !!training.participants?.[uid];
+    const cancellingForEveryone = isAdmin && !isParticipant;
+
+    const question = cancellingForEveryone
+      ? "Naozaj zrušiť tento tréning pre všetky kluby?"
+      : others.length > 0 && training.participants?.[uid]?.role !== "owner"
+      ? "Naozaj sa odhlásiť z tohto tréningu?"
+      : others.length > 0
+      ? "Naozaj sa odhlásiť? Tréning zostane ostatným klubom."
+      : "Naozaj zrušiť túto rezerváciu?";
+
+    if (!window.confirm(question)) return;
+
     setVerifyLoadingState(LoaderState.Loading);
-    if (!reservationId) {
-      console.error("Error: reservationId is undefined or null.");
-      return;
-    }
-
     try {
-      // Create a reference to the specific reservation document using reservationId
-      const reservationRef = doc(db, "reservations", reservationId);
-      await deleteDoc(reservationRef);
+      if (cancellingForEveryone) {
+        await cancelTraining(training.id);
+      } else {
+        await leaveTraining(training.id, uid);
+      }
 
-      const updatedReservations = { ...reservationExists };
-      delete updatedReservations[reservationId]; // Delete the reservation from state
-      setReservationExists(updatedReservations);
-    } catch (error) {
-      console.error("Error deleting reservation: ", error);
-      alert("Pri zrušení rezervácie došlo k chybe.");
-    } finally {
-      // Reset loading state
-      await handleUpdate(isAdmin);
-      const useremailSubject = "Vaša rezervácia bola zrušená";
-      const useremailIdentifier = "USER_DELETE_RES";
+      const userEmail = localStorage.getItem("userEmail");
+      const userFirstName = localStorage.getItem("userFirstName");
+      const userSecondName = localStorage.getItem("userSecondName");
       if (userEmail && userFirstName && userSecondName && isAdmin) {
         sendEmail(
           undefined,
-          useremailSubject,
+          "Vaša rezervácia bola zrušená",
           userEmail,
           undefined,
           undefined,
@@ -676,123 +619,72 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           userSecondName,
           undefined,
           undefined,
-          useremailIdentifier
+          "USER_DELETE_RES"
         );
-      } else {
-        console.error("User email is null. Cannot send email.");
       }
+    } catch (error) {
+      console.error("Error leaving training: ", error);
+      alert(
+        error instanceof TrainingError
+          ? error.message
+          : "Pri zrušení rezervácie došlo k chybe."
+      );
+    } finally {
+      // No refetch: the week listener repaints on its own.
       setVerifyLoadingState(LoaderState.Finished);
     }
   };
 
-  const handleEdit = (existingDetails: ReservationDetails) => {
-    setEditReservationDetails(existingDetails); // Set the reservation details to be edited
+  const handleEdit = (training: Training) => {
+    setEditTraining(training);
     setIsEditModalOpen(true); // Open the edit modal
   };
 
-  const handleConfirmReservation = async (reservationId: string) => {
+  const handleConfirmReservation = async (trainingId: string) => {
     try {
       setVerifyLoadingState(LoaderState.Loading);
-      const reservationRef = doc(db, "reservations", reservationId);
-      await updateDoc(reservationRef, { status: "potvrdená" });
 
-      const reservationDoc = await getDoc(reservationRef);
-      if (reservationDoc.exists()) {
-        const reservationData = reservationDoc.data();
-        const userEmail = reservationData.user.email;
-        const userFirstName = reservationData.user.firstName;
-        const userSecondName = reservationData.user.secondName;
+      const training = await getTraining(trainingId);
+      await confirmTraining(trainingId);
 
-        const userConfirmEmailSubject = `Vaša rezervácia na ${reservationData.date} bola potvrdená `;
-        const useremailIdentifier = "USER_ACCEPTED_RES";
+      const owner = Object.values(training?.participants ?? {}).find(
+        (p) => p.role === "owner"
+      );
 
-        if (userEmail && userFirstName && userSecondName) {
-          sendEmail(
-            undefined,
-            userConfirmEmailSubject,
-            userEmail,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            userFirstName,
-            userSecondName,
-            undefined,
-            undefined,
-            useremailIdentifier
-          );
-        } else {
-          console.error("User email is null. Cannot send email.");
-        }
-
-        await handleUpdate(isAdmin);
-        setIsReservationConfirmed(true);
-        console.log("Reservation status updated to 'potvrdená'");
-      } else {
-        console.error("No such reservation!");
+      if (owner?.email && owner.firstName && owner.secondName) {
+        sendEmail(
+          undefined,
+          `Vasa rezervacia na ${training?.date} bola potvrdena `,
+          owner.email,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          owner.firstName,
+          owner.secondName,
+          undefined,
+          undefined,
+          "USER_ACCEPTED_RES"
+        );
       }
+
+      setIsReservationConfirmed(true);
     } catch (error) {
-      console.error("Error updating reservation status: ", error);
+      console.error("Error confirming training: ", error);
+      alert(
+        error instanceof TrainingError
+          ? error.message
+          : "Pri potvrdzovani trneingu doslo k chybe."
+      );
     } finally {
       setVerifyLoadingState(LoaderState.Finished);
-    }
-  };
-
-  const handleUpdate = async (isAdmin: boolean) => {
-    try {
-      const today = new Date();
-      const endDate = new Date();
-      endDate.setDate(today.getDate() + (isAdmin ? 365 : 21));
-
-      const startDateStr = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-      const endDateStr = endDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-
-      const reservationsQuery = query(
-        collection(db, "reservations"),
-        where("date", ">=", startDateStr),
-        where("date", "<=", endDateStr)
-      );
-      const reservationsSnapshot = await getDocs(reservationsQuery);
-
-      const reservations: Record<string, ReservationDetails> = {};
-      for (const reservationDoc of reservationsSnapshot.docs) {
-        const reservationData = reservationDoc.data();
-
-        const reservationKey = `${reservationData.date}_${reservationData.session.startTime}_${reservationData.session.endTime}_${reservationData.reservationDetails.course}_${reservationData.lineNumber}`;
-
-        const addedUsersSnapshot = await getDocs(
-          collection(reservationDoc.ref, "addedUsers")
-        );
-        const addedUsers = addedUsersSnapshot.docs.map(
-          (doc) => doc.data() as User
-        );
-
-        reservations[reservationKey] = {
-          createdAt: reservationData.createdAt,
-          date: reservationData.date,
-          availableRacers: reservationData.availableRacers,
-          discipline: reservationData.discipline,
-          category: reservationData.category,
-          tickets: reservationData.tickets,
-          lineNumber: reservationData.lineNumber,
-          session: reservationData.session,
-          status: reservationData.status,
-          user: reservationData.user,
-          id: reservationDoc.id,
-          addedUsers: addedUsers,
-        };
-      }
-
-      setReservationExists(reservations);
-    } catch (error) {
-      console.error("Error updating reservations: ", error);
     }
   };
 
@@ -810,118 +702,84 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   const handleAddToTrainingSubmit = async (formData: { racers: number }) => {
     if (!addToTrainingSession) return;
 
+    const { date, session, course, lineNumber } = addToTrainingSession;
+    const uid = localStorage.getItem("userId");
+    const userEmail = localStorage.getItem("userEmail");
+    const userFirstName = localStorage.getItem("userFirstName");
+    const userSecondName = localStorage.getItem("userSecondName");
+    const ZSL_code = localStorage.getItem("userZSL_code") || "";
+
+    if (!uid || !userEmail || !userFirstName || !userSecondName) {
+      console.error("User information is missing. Cannot add to training.");
+      return;
+    }
+
     try {
       setVerifyLoadingState(LoaderState.Loading);
-      const { date, session, course, lineNumber } = addToTrainingSession;
-      const db = getFirestore();
-      const userEmail = localStorage.getItem("userEmail");
-      const userFirstName = localStorage.getItem("userFirstName");
-      const userSecondName = localStorage.getItem("userSecondName");
-      const sportClub = localStorage.getItem("userSportClub");
-      const ZSL_code = localStorage.getItem("userZSL_code") || "";
-      const tel_number = localStorage.getItem("userTel_number");
 
-      if (!userEmail || !userFirstName || !userSecondName) {
-        console.error("User information is missing. Cannot add to training.");
-        return;
-      }
+      const trainingId = slotId({
+        resortId,
+        courseId: course,
+        date,
+        session,
+        lineNumber,
+      });
 
-      // Query to find the existing reservation
-      const reservationsRef = collection(db, "reservations");
-      const q = query(
-        reservationsRef,
-        where("date", "==", date),
-        where("session.startTime", "==", session.startTime),
-        where("session.endTime", "==", session.endTime),
-        where("reservationDetails.course", "==", course),
-        where("lineNumber", "==", lineNumber)
+      // The capacity check happens inside the transaction, against the
+      // participants it reads there. The old code subtracted from a number the
+      // modal had captured when it opened.
+      await joinTraining(
+        trainingId,
+        {
+          uid,
+          sportClub: localStorage.getItem("userSportClub"),
+          firstName: userFirstName,
+          secondName: userSecondName,
+          email: userEmail,
+          tel_number: localStorage.getItem("userTel_number"),
+          racers: formData.racers,
+        },
+        individualLineCapacities[course]
       );
-      const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
-        const existingReservationDoc = querySnapshot.docs[0];
-        const existingReservationData = existingReservationDoc.data();
+      const promoCodes = await fetchPromoCodes(resortId, ZSL_code);
+      const promoCodesString = promoCodes.map((promo) => promo.code).join(",");
+      await deletePromoCodes(resortId, promoCodes);
 
-        const newAvailableRacers =
-          existingReservationData.availableRacers - formData.racers;
-        if (newAvailableRacers < 0) {
-          alert("Nedostatok voľných miest.");
-          return;
-        }
+      sendEmail(
+        trainingId,
+        `Uspesna rezervacia treningu na ${date}`,
+        userEmail,
+        undefined,
+        course,
+        date,
+        session.startTime,
+        session.endTime,
+        lineNumber,
+        formData.racers,
+        undefined,
+        undefined,
+        undefined,
+        promoCodesString,
+        userFirstName,
+        userSecondName,
+        undefined,
+        undefined,
+        "USER_ADDED_TO_TRAINING"
+      );
 
-        // Check if the user already exists in the addedUsers subcollection
-        const addedUsersRef = collection(
-          existingReservationDoc.ref,
-          "addedUsers"
-        );
-        const userDocRef = doc(addedUsersRef, userEmail);
-        const userDocSnapshot = await getDoc(userDocRef);
-
-        const promoCodes = await fetchPromoCodes(resortId, ZSL_code);
-        const promoCodesString = promoCodes
-          .map((promo) => promo.code)
-          .join(",");
-
-        await deletePromoCodes(resortId, promoCodes);
-
-        const useremailSubject = `Úspešná rezervácie tréningu na ${addToTrainingSession.date}`;
-        const useremailIdentifier = "USER_ADDED_TO_TRAINING";
-
-        // send email to user
-        if (userEmail && userFirstName && userSecondName) {
-          sendEmail(
-            reservationsRef.id,
-            useremailSubject,
-            userEmail,
-            undefined,
-            addToTrainingSession.course,
-            addToTrainingSession.date,
-            addToTrainingSession.session.startTime,
-            addToTrainingSession.session.endTime,
-            addToTrainingSession.lineNumber,
-            formData.racers,
-            addToTrainingSession.sportClub,
-            undefined,
-            undefined,
-            promoCodesString,
-            userFirstName,
-            userSecondName,
-            undefined,
-            undefined,
-            useremailIdentifier
-          );
-        } else {
-          console.error("User email is null. Cannot send email.");
-        }
-
-        if (!userDocSnapshot.exists()) {
-          // Add the new user to the addedUsers subcollection
-          await setDoc(userDocRef, {
-            email: userEmail,
-            firstName: userFirstName,
-            secondName: userSecondName,
-            sportClub: sportClub,
-            ownRacers: formData.racers,
-            tel_number: tel_number,
-          });
-
-          // Update the existing reservation to decrement the number of available racers
-          await updateDoc(existingReservationDoc.ref, {
-            availableRacers: newAvailableRacers,
-          });
-
-          console.log("Successfully added to training!");
-          await handleUpdate(isAdmin);
-          setVerifyLoadingState(LoaderState.Finished);
-          alert("Boli ste úspešne pridaní na tréning.");
-        } else {
-          alert("Už ste pridaní na tento tréning.");
-        }
-      } else {
-        alert("Nebola nájdená žiadna existujúca rezervácia.");
-      }
+      setIsAddToTrainingModalOpen(false);
+      setAddToTrainingSession(null);
+      alert("Boli ste pridani na trening.");
     } catch (error) {
-      alert("Pri pridávaní na tréning došlo k chybe.");
+      console.error("Error adding to training: ", error);
+      alert(
+        error instanceof TrainingError
+          ? error.message
+          : "Pri pridavani na trening doslo k chybe."
+      );
+    } finally {
+      setVerifyLoadingState(LoaderState.Finished);
     }
   };
 
@@ -931,18 +789,28 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     date: string,
     reason: string
   ) => {
-    const trackKey = `${course}_${lineNumber}_${date}`;
-    const db = getFirestore();
-    const closedTrackRef = doc(db, "closedTracks", trackKey);
-    await setDoc(closedTrackRef, {
-      course: course,
-      lineNumber: lineNumber,
-      date: date,
-      closedAt: new Date(),
-      reason: reason,
-    });
-
-    setClosedTracks((prev) => ({ ...prev, [trackKey]: { reason } }));
+    try {
+      await setDoc(
+        doc(db, "closures", closureId(resortId, course, date, lineNumber)),
+        {
+          resortId,
+          courseId: course,
+          date,
+          lineNumber,
+          // Whole-day for now; per-block closures are the additive half of the
+          // feature this shape was designed for.
+          scope: "day",
+          session: null,
+          startAt: Timestamp.fromDate(new Date(`${date}T00:00:00`)),
+          reason,
+          closedAt: new Date(),
+          closedBy: localStorage.getItem("userId"),
+        }
+      );
+    } catch (error) {
+      console.error("Error closing track: ", error);
+      alert("Trat sa nepodarilo zavriet.");
+    }
   };
 
   const handleOpenTrack = async (
@@ -950,23 +818,13 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     lineNumber: number,
     date: string
   ) => {
-    const trackKey = `${course}_${lineNumber}_${date}`;
-    const db = getFirestore();
-    const closedTrackRef = doc(db, "closedTracks", trackKey); // Include the document ID
-
     try {
-      await deleteDoc(closedTrackRef);
-
-      setClosedTracks((prev) => {
-        const newClosedTracks = { ...prev };
-        delete newClosedTracks[trackKey];
-        return newClosedTracks;
-      });
-
-      console.log(`Track ${trackKey} successfully reopened.`);
+      await deleteDoc(
+        doc(db, "closures", closureId(resortId, course, date, lineNumber))
+      );
     } catch (error) {
       console.error("Error reopening track: ", error);
-      alert("Pri otváraní trate došlo k chybe.");
+      alert("Trat sa nepodarilo otvorit.");
     }
   };
 
@@ -988,22 +846,24 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       isLoggedIn,
       isAdmin,
       email: localStorage.getItem("userEmail"),
+      // Participants are keyed by Auth uid in the new model.
+      uid: viewerUid,
     }),
-    [isLoggedIn, isAdmin]
+    [isLoggedIn, isAdmin, viewerUid]
   );
 
-  const reservationFor = useCallback(
+  const trainingFor = useCallback(
     (date: string, startTime: string, endTime: string, lineNumber: number) =>
-      reservationExists[
-        `${date}_${startTime}_${endTime}_${selectedCourse}_${lineNumber}`
-      ],
-    [reservationExists, selectedCourse]
+      bySlot.get(slotKey(date, startTime, endTime, lineNumber)),
+    [bySlot]
   );
 
   const closedTrackFor = useCallback(
-    (lineNumber: number, date: string) =>
-      closedTracks[`${selectedCourse}_${lineNumber}_${date}`],
-    [closedTracks, selectedCourse]
+    (lineNumber: number, date: string) => {
+      const closure = closureBySlot.get(`${date}_ALL_${lineNumber}`);
+      return closure ? { reason: closure.reason ?? "" } : undefined;
+    },
+    [closureBySlot]
   );
 
   const dayLabel = useCallback(
@@ -1015,11 +875,10 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     () => ({
       onReserve: (date, session, lineNumber) =>
         handleSessionClick(date, session, selectedCourse ?? "", lineNumber),
-      onEdit: (reservation) => handleEdit(reservation),
-      onDelete: (id, email, firstName, secondName) =>
-        handleDelete(id, email, firstName, secondName),
-      onShowDetails: (reservation) => {
-        setDetailsReservation(reservation);
+      onEdit: (training) => handleEdit(training),
+      onLeaveOrCancel: (training) => handleLeaveOrCancel(training),
+      onShowDetails: (training) => {
+        setDetailsTraining(training);
         setIsDetailsModalOpen(true);
       },
       onJoinTraining: (date, session, lineNumber, sportClub) =>
@@ -1030,7 +889,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           lineNumber,
           sportClub
         ),
-      onConfirm: (reservationId) => handleConfirmReservation(reservationId),
+      onConfirm: (trainingId) => handleConfirmReservation(trainingId),
       onCloseTrack: (lineNumber, date) => {
         setCloseTrackDetails({
           course: selectedCourse ?? "",
@@ -1080,7 +939,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                     individualLineCapacities[selectedCourse] || 0
                   }
                   closedTrackFor={closedTrackFor}
-                  reservationFor={reservationFor}
+                  trainingFor={trainingFor}
                   viewer={viewer}
                   actions={calendarActions}
                   onPreviousWeek={() => handlePreviousWeek(selectedCourse)}
@@ -1102,7 +961,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
               }
               onClose={handleCloseModal}
               onSubmit={handleReservationSubmit}
-              onUpdate={() => handleUpdate(isAdmin)}
               course={selectedSession.course}
               isExistingReservation={Boolean(selectedSession.existingDetails)} // Indicate if it's an existing reservation
               existingDetails={selectedSession.existingDetails} // Pass existing reservation details // Pass delete function
@@ -1122,20 +980,22 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           )}
 
           {/* Modal for editing reservation */}
-          {isEditModalOpen && editReservationDetails && (
+          {isEditModalOpen && editTraining && (
             <EditReservationModal
-              reservationDetails={editReservationDetails} // Pass the reservation details
-              onClose={() => setIsEditModalOpen(false)} // Close function
-              isLoggedIn={isLoggedIn} // Pass login status if needed
-              isAdmin={isAdmin} // Pass admin status if needed
-              onUpdate={() => handleUpdate(isAdmin)}
+              training={editTraining}
+              individualLineCapacity={
+                individualLineCapacities[editTraining.courseId] || 0
+              }
+              onClose={() => setIsEditModalOpen(false)}
+              isLoggedIn={isLoggedIn}
+              isAdmin={isAdmin}
               setVerifyLoadingState={setVerifyLoadingState}
             />
           )}
 
-          {isDetailsModalOpen && detailsReservation && (
+          {isDetailsModalOpen && detailsTraining && (
             <ReservationDetailsModal
-              reservationDetails={detailsReservation}
+              training={detailsTraining}
               onClose={() => setIsDetailsModalOpen(false)}
             />
           )}

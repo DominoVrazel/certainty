@@ -1,7 +1,7 @@
 import React, { useState } from "react";
+import type { Training } from "../../services/trainings";
 import type {
   CalendarActions,
-  ReservationDetails,
   TimeSession,
   Viewer,
 } from "../../types/calendar";
@@ -10,8 +10,8 @@ interface SessionCellProps {
   date: string;
   session: TimeSession;
   lineNumber: number;
-  /** `null` is what the page's slot lookup returns for a free slot. */
-  reservation?: ReservationDetails | null;
+  training?: Training;
+  /** Maximum racers allowed on one track for one block. */
   individualLineCapacity: number;
   today: string;
   viewer: Viewer;
@@ -29,7 +29,7 @@ const SessionCell: React.FC<SessionCellProps> = ({
   date,
   session,
   lineNumber,
-  reservation,
+  training,
   individualLineCapacity,
   today,
   viewer,
@@ -37,15 +37,9 @@ const SessionCell: React.FC<SessionCellProps> = ({
 }) => {
   const [clubsVisible, setClubsVisible] = useState(false);
 
-  const statusClass = reservation
-    ? reservation.status === "potvrdená"
-      ? "potvrdená"
-      : "vytvorená"
-    : "not-reserved";
-
-  if (!reservation) {
+  if (!training) {
     return (
-      <div className={`res-container ${statusClass}`}>
+      <div className="res-container not-reserved">
         <div className="res-details-container">
           <div className="session-course-times">
             {session.startTime} - {session.endTime}
@@ -64,21 +58,28 @@ const SessionCell: React.FC<SessionCellProps> = ({
     );
   }
 
-  const isOwner = reservation.user.email === viewer.email;
-  const hasJoined = reservation.addedUsers?.some(
-    (user) => user.email === viewer.email
-  );
-  const mayManage = (viewer.isLoggedIn && (isOwner || hasJoined)) || viewer.isAdmin;
+  const statusClass = training.status === "confirmed" ? "potvrdená" : "vytvorená";
+
+  // Derived, not stored. The old `availableRacers` was a hand-maintained
+  // counter that baked in whatever capacity applied when it was written, so a
+  // later change to the course capacity silently made it wrong.
+  const racersFree = Math.max(individualLineCapacity - training.racersTotal, 0);
+
+  const participants = Object.entries(training.participants ?? {});
+  const owner =
+    participants.find(([, p]) => p.role === "owner")?.[1] ??
+    participants[0]?.[1];
+
+  const myUid = viewer.uid;
+  const isParticipant = !!(myUid && training.participants?.[myUid]);
+  const isOwner = !!(myUid && training.participants?.[myUid]?.role === "owner");
+
+  const mayManage = (viewer.isLoggedIn && isParticipant) || viewer.isAdmin;
   const mayEditNow =
-    date !== today && (reservation.status !== "potvrdená" || viewer.isAdmin);
-  const mayDelete = isOwner || viewer.isAdmin;
+    date !== today && (training.status !== "confirmed" || viewer.isAdmin);
 
   const canJoin =
-    (!viewer.isLoggedIn && reservation.availableRacers !== 0) ||
-    (reservation.availableRacers !== 0 &&
-      reservation.availableRacers < individualLineCapacity &&
-      !isOwner &&
-      !hasJoined);
+    racersFree > 0 && (!viewer.isLoggedIn || (!isParticipant && viewer.isLoggedIn));
 
   return (
     <div className={`res-container ${statusClass}`}>
@@ -91,7 +92,7 @@ const SessionCell: React.FC<SessionCellProps> = ({
           <div className="delEditButtons-group">
             <button
               className="handler-edit"
-              onClick={() => actions.onEdit(reservation)}
+              onClick={() => actions.onEdit(training)}
             >
               <i
                 className={isOwner || viewer.isAdmin ? "fas fa-pen" : "fa fa-wrench"}
@@ -102,45 +103,36 @@ const SessionCell: React.FC<SessionCellProps> = ({
                   : "Editovať rezerváciu"}
               </span>
             </button>
-            {mayDelete && (
-              <button
-                className="handler-delete"
-                onClick={() =>
-                  actions.onDelete(
-                    reservation.id || "",
-                    reservation.user.email,
-                    reservation.user.firstName,
-                    reservation.user.secondName
-                  )
-                }
-              >
-                <i className="fas fa-trash-alt"></i>
-                <span className="tooltip-text">Zmazať svoju rezerváciu</span>
-              </button>
-            )}
+            <button
+              className="handler-delete"
+              onClick={() => actions.onLeaveOrCancel(training)}
+            >
+              <i className="fas fa-trash-alt"></i>
+              <span className="tooltip-text">
+                {/* Leaving no longer cancels the training for the clubs that
+                    joined it — the defect that stranded 101 records. */}
+                {isOwner || viewer.isAdmin
+                  ? "Zmazať svoju rezerváciu"
+                  : "Odhlásiť sa z tréningu"}
+              </span>
+            </button>
           </div>
         )}
 
         <div className="res-details">
           <div>
-            {reservation.availableRacers !== undefined ? (
-              reservation.availableRacers > 0 ? (
-                <>
-                  <b>VOĽNÝCH:</b>{" "}
-                  {`${reservation.availableRacers} / ${
-                    individualLineCapacity || "N/A"
-                  }`}
-                </>
-              ) : (
-                "OBSADENÉ"
-              )
+            {racersFree > 0 ? (
+              <>
+                <b>VOĽNÝCH:</b>{" "}
+                {`${racersFree} / ${individualLineCapacity || "N/A"}`}
+              </>
             ) : (
-              <div className="loading-indicator">Načítavam...</div>
+              "OBSADENÉ"
             )}
             <hr></hr>
-            <b>DISCIPLÍNA:</b> {reservation.discipline || "N/A"}
+            <b>DISCIPLÍNA:</b> {training.discipline || "N/A"}
             <br></br>
-            <b>KATEGÓRIA:</b> {reservation.category || "N/A"}
+            <b>KATEGÓRIA:</b> {training.category || "N/A"}
           </div>
           <div>
             <div>
@@ -153,19 +145,14 @@ const SessionCell: React.FC<SessionCellProps> = ({
               </button>
               {clubsVisible && (
                 <div className="dropdown-content">
-                  <b>KLUB:</b> {`${reservation.user.sportClub}`}
-                  <br></br>
-                  <b>POČET JAZDCOV:</b> {`${reservation.user.ownRacers}`}
-                  <br></br>
-                  <b>KONTAKT:</b> {`${reservation.user.tel_number}`}
-                  {reservation.addedUsers?.map((user, idx) => (
-                    <div key={idx}>
-                      <hr></hr>
-                      <b>KLUB:</b> {user.sportClub}
+                  {participants.map(([uid, p], idx) => (
+                    <div key={uid}>
+                      {idx > 0 && <hr></hr>}
+                      <b>KLUB:</b> {p.sportClub}
                       <br></br>
-                      <b>POČET JAZDCOV:</b> {user.ownRacers}
+                      <b>POČET JAZDCOV:</b> {p.racers}
                       <br></br>
-                      <b>KONTAKT:</b> {user.tel_number}
+                      <b>KONTAKT:</b> {p.tel_number}
                     </div>
                   ))}
                 </div>
@@ -176,7 +163,7 @@ const SessionCell: React.FC<SessionCellProps> = ({
 
         <button
           className="detail-button"
-          onClick={() => actions.onShowDetails(reservation)}
+          onClick={() => actions.onShowDetails(training)}
         >
           <i className="fa fa-info-circle"></i>
           DETAIL
@@ -193,7 +180,7 @@ const SessionCell: React.FC<SessionCellProps> = ({
                   date,
                   session,
                   lineNumber,
-                  reservation.user.sportClub || ""
+                  owner?.sportClub || ""
                 );
               }
             }}
@@ -202,10 +189,10 @@ const SessionCell: React.FC<SessionCellProps> = ({
           </button>
         )}
 
-        {viewer.isAdmin && reservation.status !== "potvrdená" && (
+        {viewer.isAdmin && training.status !== "confirmed" && (
           <button
             className="accept-training-button"
-            onClick={() => actions.onConfirm(reservation.id)}
+            onClick={() => actions.onConfirm(training.id)}
           >
             <i className="fa fa-check"></i>
             POTVRDIŤ TRÉNING

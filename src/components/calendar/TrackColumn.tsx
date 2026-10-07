@@ -1,10 +1,10 @@
 import React from "react";
 import SessionCell from "./SessionCell";
+import type { Training } from "../../services/trainings";
 import type {
   CalendarActions,
   ClosedTrack,
   Day,
-  ReservationDetails,
   Viewer,
 } from "../../types/calendar";
 
@@ -13,12 +13,12 @@ interface TrackColumnProps {
   lineNumber: number;
   closedTrack?: ClosedTrack;
   /** Looks a booking up by the slot it occupies. */
-  reservationFor: (
+  trainingFor: (
     date: string,
     startTime: string,
     endTime: string,
     lineNumber: number
-  ) => ReservationDetails | null | undefined;
+  ) => Training | undefined;
   individualLineCapacity: number;
   today: string;
   viewer: Viewer;
@@ -30,7 +30,7 @@ const TrackColumn: React.FC<TrackColumnProps> = ({
   day,
   lineNumber,
   closedTrack,
-  reservationFor,
+  trainingFor,
   individualLineCapacity,
   today,
   viewer,
@@ -71,7 +71,7 @@ const TrackColumn: React.FC<TrackColumnProps> = ({
             date={day.date}
             session={session}
             lineNumber={lineNumber}
-            reservation={reservationFor(
+            training={trainingFor(
               day.date,
               session.startTime,
               session.endTime,

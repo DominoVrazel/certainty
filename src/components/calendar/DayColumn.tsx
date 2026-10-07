@@ -1,10 +1,10 @@
 import React from "react";
 import TrackColumn from "./TrackColumn";
+import type { Training } from "../../services/trainings";
 import type {
   CalendarActions,
   ClosedTrack,
   Day,
-  ReservationDetails,
   Viewer,
 } from "../../types/calendar";
 
@@ -13,12 +13,12 @@ interface DayColumnProps {
   /** How many parallel tracks this course has. */
   capacity: number;
   closedTrackFor: (lineNumber: number, date: string) => ClosedTrack | undefined;
-  reservationFor: (
+  trainingFor: (
     date: string,
     startTime: string,
     endTime: string,
     lineNumber: number
-  ) => ReservationDetails | null | undefined;
+  ) => Training | undefined;
   individualLineCapacity: number;
   today: string;
   label: string;
@@ -30,7 +30,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
   day,
   capacity,
   closedTrackFor,
-  reservationFor,
+  trainingFor,
   individualLineCapacity,
   today,
   label,
@@ -52,7 +52,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
               day={day}
               lineNumber={lineNumber}
               closedTrack={closedTrackFor(lineNumber, day.date)}
-              reservationFor={reservationFor}
+              trainingFor={trainingFor}
               individualLineCapacity={individualLineCapacity}
               today={today}
               viewer={viewer}

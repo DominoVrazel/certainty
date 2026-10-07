@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
 import { addDays, format } from "date-fns";
 import DayColumn from "./DayColumn";
+import type { Training } from "../../services/trainings";
 import type {
   CalendarActions,
   ClosedTrack,
   Day,
-  ReservationDetails,
   Viewer,
   Week,
 } from "../../types/calendar";
@@ -16,12 +16,12 @@ interface CalendarWeekProps {
   capacity: number;
   individualLineCapacity: number;
   closedTrackFor: (lineNumber: number, date: string) => ClosedTrack | undefined;
-  reservationFor: (
+  trainingFor: (
     date: string,
     startTime: string,
     endTime: string,
     lineNumber: number
-  ) => ReservationDetails | null | undefined;
+  ) => Training | undefined;
   viewer: Viewer;
   actions: CalendarActions;
   onPreviousWeek: () => void;
@@ -39,7 +39,7 @@ const CalendarWeek: React.FC<CalendarWeekProps> = ({
   capacity,
   individualLineCapacity,
   closedTrackFor,
-  reservationFor,
+  trainingFor,
   viewer,
   actions,
   onPreviousWeek,
@@ -110,7 +110,7 @@ const CalendarWeek: React.FC<CalendarWeekProps> = ({
               day={day}
               capacity={capacity}
               closedTrackFor={closedTrackFor}
-              reservationFor={reservationFor}
+              trainingFor={trainingFor}
               individualLineCapacity={individualLineCapacity}
               today={today}
               label={dayLabel(day)}

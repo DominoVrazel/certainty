@@ -1,193 +1,93 @@
 import React, { useState } from "react";
 import Modal from "./Modal";
-import { updateDoc, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
-import { getFirestore } from "firebase/firestore"; // Ensure you import Firestore methods
-
-import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
-
-interface User {
-  email: string;
-  firstName: string;
-  secondName: string;
-  sportClub?: string; // Optional field
-  ownRacers: number; // Required field
-}
+import { LoaderState } from "./LoadingAnimation";
+import {
+  TrainingError,
+  updateParticipant,
+  updateTrainingDetails,
+  type Training,
+} from "../services/trainings";
 
 interface EditReservationModalProps {
-  reservationDetails: {
-    id: string;
-    availableRacers: number;
-    discipline: string;
-    category: string;
-    tickets: number;
-    status: string;
-
-    user: User;
-    addedUsers?: User[];
-  };
+  training: Training;
+  individualLineCapacity: number;
   onClose: () => void;
-  onUpdate: () => void;
   isLoggedIn: boolean;
   isAdmin: boolean;
-  setVerifyLoadingState: (state: LoaderState) => void; // Add loading state handler prop
+  setVerifyLoadingState: (state: LoaderState) => void;
 }
 
+/**
+ * Edits one booking.
+ *
+ * All the Firestore work moved to services/trainings.ts. What used to happen
+ * here was a pair of un-transacted writes that recomputed remaining capacity
+ * from `availableRacers` as it looked when the modal opened — an unbounded
+ * window for a lost update, and one of the reasons the counter could drift.
+ * Deleting also lived here, duplicating the calendar's own control; it is now
+ * only in the calendar, where leaving and cancelling are the same action.
+ */
 const EditReservationModal: React.FC<EditReservationModalProps> = ({
-  reservationDetails,
+  training,
+  individualLineCapacity,
   onClose,
-  onUpdate,
-  isLoggedIn,
   isAdmin,
   setVerifyLoadingState,
 }) => {
-  const db = getFirestore(); // Initialize Firestore
-  const loggedInUserEmail = localStorage.getItem("userEmail");
-
-  const isOwner = reservationDetails.user.email === loggedInUserEmail;
-  const addedUser = reservationDetails.addedUsers?.find(
-    (user) => user.email === loggedInUserEmail
-  );
+  const uid = localStorage.getItem("userId");
+  const mine = uid ? training.participants?.[uid] : undefined;
+  const isOwner = mine?.role === "owner";
 
   const [formData, setFormData] = useState({
-    racers: reservationDetails.availableRacers,
-    discipline: reservationDetails.discipline,
-    category: reservationDetails.category,
-    status: reservationDetails.status,
-    ownRacers: isOwner
-      ? reservationDetails.user.ownRacers
-      : addedUser?.ownRacers || 0,
+    discipline: training.discipline ?? "",
+    category: training.category ?? "",
+    ownRacers: mine?.racers ?? 0,
   });
 
   const availableDisciplines = ["Slalom", "Obrovský slalom"];
-  const availableCategories = ["Predžiaci", "Žiaci", "Juniori"]; // Add your disciplines here
+  const availableCategories = ["Predžiaci", "Žiaci", "Juniori"];
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    const parsedValue = name === "ownRacers" ? parseInt(value, 10) : value;
-
     setFormData((prev) => ({
       ...prev,
-      [name]: parsedValue, // Update state with parsed value
+      [name]: name === "ownRacers" ? parseInt(value, 10) : value,
     }));
   };
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault();
     setVerifyLoadingState(LoaderState.Loading);
+
     try {
-      const reservationRef = doc(db, "reservations", reservationDetails.id);
+      if (uid && mine && formData.ownRacers !== mine.racers) {
+        await updateParticipant(
+          training.id,
+          uid,
+          { racers: formData.ownRacers },
+          individualLineCapacity
+        );
+      }
 
       if (isOwner || isAdmin) {
-        const updates: any = {
+        await updateTrainingDetails(training.id, {
           discipline: formData.discipline,
           category: formData.category,
-          status: formData.status,
-        };
-
-        if (isOwner) {
-          const ownRacersDifference =
-            formData.ownRacers - reservationDetails.user.ownRacers;
-
-          // Update availableRacers based on the difference
-          const newAvailableRacers =
-            reservationDetails.availableRacers - ownRacersDifference;
-          if (newAvailableRacers < 0) {
-            alert("Nedostatok voľných miest pre zvolený počet pretekárov.");
-            setVerifyLoadingState(LoaderState.Finished);
-            return;
-          }
-          updates.availableRacers = newAvailableRacers;
-          updates["user.ownRacers"] = formData.ownRacers;
-        }
-
-        await updateDoc(reservationRef, updates);
-      } else if (addedUser) {
-        const ownRacersDifference = formData.ownRacers - addedUser.ownRacers;
-
-        // Update availableRacers based on the difference
-        const newAvailableRacers =
-          reservationDetails.availableRacers - ownRacersDifference;
-
-        if (newAvailableRacers < 0) {
-          alert("Nedostatok voľných miest pre zvolený počet pretekárov.");
-          setVerifyLoadingState(LoaderState.Finished);
-          return;
-        }
-        // Fetch the current document
-        const addedUserRef = doc(
-          db,
-          "reservations",
-          reservationDetails.id,
-          "addedUsers",
-          addedUser.email // assuming email is the document ID in the addedUsers subcollection
-        );
-
-        const addedUserDoc = await getDoc(addedUserRef);
-        // Update the document with the modified addedUsers array
-        if (addedUserDoc.exists()) {
-          // Update the ownRacers field for this addedUser if the document exists
-          await updateDoc(addedUserRef, {
-            ownRacers: formData.ownRacers,
-          });
-        } else {
-          // If the document doesn't exist, create it with the necessary data
-          await setDoc(addedUserRef, {
-            email: addedUser.email,
-            firstName: addedUser.firstName,
-            secondName: addedUser.secondName,
-            sportClub: addedUser.sportClub,
-            ownRacers: formData.ownRacers,
-          });
-        }
-
-        // Update the main reservation document's availableRacers field
-        await updateDoc(reservationRef, {
-          availableRacers: newAvailableRacers,
         });
       }
-      await onUpdate();
-      onClose(); // Close the modal
+
+      onClose();
     } catch (error) {
-      console.error("Error updating reservation: ", error);
-      alert("There was an error updating the reservation.");
+      console.error("Error updating training: ", error);
+      alert(
+        error instanceof TrainingError
+          ? error.message
+          : "Rezerváciu sa nepodarilo upraviť."
+      );
     } finally {
       setVerifyLoadingState(LoaderState.Finished);
-    }
-  };
-
-  const handleDelete = async () => {
-    setVerifyLoadingState(LoaderState.Loading);
-    try {
-      const reservationRef = doc(db, "reservations", reservationDetails.id);
-      if (isOwner || isAdmin) {
-        await deleteDoc(reservationRef);
-      } else if (addedUser) {
-        // Remove the added user from the subcollection
-        const addedUserRef = doc(
-          db,
-          "reservations",
-          reservationDetails.id,
-          "addedUsers",
-          addedUser.email
-        );
-        await deleteDoc(addedUserRef);
-
-        // Update the main reservation document's availableRacers field
-        const newAvailableRacers =
-          reservationDetails.availableRacers + addedUser.ownRacers;
-        await updateDoc(reservationRef, {
-          availableRacers: newAvailableRacers,
-        });
-      }
-      await onUpdate();
-      onClose(); // Close the modal
-    } catch (error) {
-      console.error("Error deleting reservation: ", error);
-      alert("There was an error deleting the reservation.");
-    } finally {
-      setVerifyLoadingState(LoaderState.Finished); // Ensure loading state is set to Finished
     }
   };
 
@@ -197,7 +97,7 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
         <form onSubmit={handleSave}>
           <h2 className="heading">Upraviť rezerváciu</h2>
           <br></br>
-          {!isAdmin && (
+          {mine && (
             <div className="form-group">
               <label htmlFor="ownRacers">Počet pretekárov:</label>
               <input
@@ -251,11 +151,6 @@ const EditReservationModal: React.FC<EditReservationModalProps> = ({
             Uložiť
           </button>
         </form>
-        {!isOwner && addedUser && !isAdmin && (
-          <button className="ResDelButton" onClick={handleDelete}>
-            Zmazať rezerváciu
-          </button>
-        )}
       </div>
     </Modal>
   );

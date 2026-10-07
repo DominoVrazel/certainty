@@ -8,7 +8,6 @@ interface ReservationModalProps {
   individualLineCapacity: number;
   onClose: () => void;
   onSubmit: (formData: any) => void;
-  onUpdate: () => void;
   course: string;
   isExistingReservation?: boolean; // New prop to indicate if it's an existing reservation
   existingDetails?: any; // Add this prop to pass existing reservation details
@@ -21,7 +20,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   individualLineCapacity,
   onClose,
   onSubmit,
-  onUpdate,
   course,
   isExistingReservation = false, // Default to false if not provided
   existingDetails = {},
@@ -45,7 +43,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({ racers, discipline, course, category, tickets });
-    onUpdate(); // Update the reservation list after submission
     onClose(); // Close the modal after submission
   };
 

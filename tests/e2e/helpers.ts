@@ -280,3 +280,50 @@ export async function findUserByEmail(email: string) {
   );
   return hit?.document ?? null;
 }
+
+/**
+ * Removes trainings dated from today onwards.
+ *
+ * Only tests create future trainings — everything migrated from production is
+ * in the past — so this clears test leftovers without touching the seeded data.
+ * Without it a failed run leaves a booking behind and the next run joins that
+ * one instead of its own.
+ */
+export async function clearFutureTrainings(): Promise<number> {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const res = await fetch(
+    `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents:runQuery`,
+    {
+      method: "POST",
+      headers: { Authorization: "Bearer owner", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: "trainings" }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: "date" },
+              op: "GREATER_THAN_OR_EQUAL",
+              value: { stringValue: today },
+            },
+          },
+        },
+      }),
+    }
+  );
+
+  const rows = (await res.json()) as { document?: { name: string } }[];
+  const names = Array.isArray(rows)
+    ? rows.filter((r) => r.document).map((r) => r.document!.name)
+    : [];
+
+  await Promise.all(
+    names.map((name) =>
+      fetch(`${FIRESTORE_EMULATOR}/v1/${name}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer owner" },
+      })
+    )
+  );
+  return names.length;
+}

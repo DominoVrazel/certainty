@@ -1,32 +1,34 @@
 import React from "react";
 import Modal from "./Modal";
 import { format } from "date-fns";
+import type { Training } from "../services/trainings";
 
 interface ReservationDetailsModalProps {
-  reservationDetails: {
-    createdAt: string;
-    date: string;
-    discipline: string;
-    category: string;
-    lineNumber: number;
-    availableRacers: number;
-    session: { startTime: string; endTime: string };
-    status: string;
-    user: {
-      email: string;
-      firstName: string;
-      secondName: string;
-      sportClub?: string;
-      ownRacers: number;
-    };
-  };
+  training: Training;
+  /** Needed to show free space, which is derived rather than stored. */
+  individualLineCapacity?: number;
   onClose: () => void;
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  created: "vytvorená",
+  confirmed: "potvrdená",
+};
+
 const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
-  reservationDetails,
+  training,
+  individualLineCapacity,
   onClose,
 }) => {
+  const participants = Object.values(training.participants ?? {});
+  const owner =
+    participants.find((p) => p.role === "owner") ?? participants[0];
+
+  const racersFree =
+    individualLineCapacity !== undefined
+      ? Math.max(individualLineCapacity - training.racersTotal, 0)
+      : null;
+
   return (
     <Modal show={true} onClose={onClose}>
       <div className="reservation-details-modal">
@@ -34,46 +36,52 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
         <br></br>
         <p>
           <b>Zarezervoval/a: </b>
-          {reservationDetails.user.firstName}{" "}
-          {reservationDetails.user.secondName}
+          {owner?.firstName} {owner?.secondName}
         </p>
         <p>
           <b>Športový club: </b>
-          {reservationDetails.user.sportClub}
+          {owner?.sportClub}
         </p>
         <p>
           <b>Kategória: </b>
-          {reservationDetails.category}, <b>Pretekárov: </b>{" "}
-          {reservationDetails.user.ownRacers}
+          {training.category}, <b>Pretekárov: </b> {owner?.racers}
         </p>
         <p>
           <b>Disciplína: </b>
-          {reservationDetails.discipline}, <b>línia: </b>{" "}
-          {reservationDetails.lineNumber}
+          {training.discipline}, <b>línia: </b> {training.lineNumber}
         </p>
         <br></br>
+        {racersFree !== null && (
+          <p>
+            <b>Počet voľných miest: </b>
+            {racersFree}
+          </p>
+        )}
         <p>
-          <b>Počet voľných miest: </b>
-          {reservationDetails.availableRacers}
+          <b>Prihlásené kluby: </b>
+          {training.clubs?.join(", ") || "—"}
+        </p>
+        <p>
+          <b>Pretekárov spolu: </b>
+          {training.racersTotal}
         </p>
         <p>
           <b>Deň tréningu: </b>
-          {formatDate(reservationDetails.date)}
+          {formatDate(training.date)}
         </p>
 
         <p>
           <b>Tréning od: </b>
-          {reservationDetails.session.startTime} <b>do:</b>{" "}
-          {reservationDetails.session.endTime}
+          {training.session.startTime} <b>do:</b> {training.session.endTime}
         </p>
         <br></br>
         <p>
           <b>Status rezervácie: </b>
-          {reservationDetails.status}
+          {STATUS_LABELS[training.status] ?? training.status}
         </p>
         <p>
           <b>Vytvorená: </b>
-          {formatTimestamp(reservationDetails.createdAt)}
+          {formatTimestamp(training.createdAt)}
         </p>
       </div>
     </Modal>
@@ -81,15 +89,12 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
 };
 
 function formatTimestamp(timestamp: any) {
+  if (!timestamp) return "—";
   const date =
-    timestamp instanceof Object
-      ? format(new Date(timestamp.seconds * 1000), "dd.MM.yyyy")
-      : format(new Date(timestamp), "dd.MM.yyyy");
-  const time =
-    timestamp instanceof Object
-      ? format(new Date(timestamp.seconds * 1000), "HH:mm")
-      : format(new Date(timestamp), "HH:mm");
-  return `${date} o ${time}`;
+    timestamp instanceof Object && "seconds" in timestamp
+      ? new Date(timestamp.seconds * 1000)
+      : new Date(timestamp);
+  return `${format(date, "dd.MM.yyyy")} o ${format(date, "HH:mm")}`;
 }
 
 function formatDate(date: string) {
