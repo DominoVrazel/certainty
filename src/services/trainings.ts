@@ -213,6 +213,8 @@ export async function createTraining(
     category: string;
     courseName?: string | null;
     capacity: number;
+    /** Set when an admin books on a club's behalf, for the audit trail. */
+    createdBy?: string | null;
   }
 ): Promise<string> {
   const id = slotId(slot);
@@ -254,8 +256,9 @@ export async function createTraining(
       noteUpdatedAt: null,
       participants,
       ...totals(participants),
-      createdBy: owner.uid,
-      createdOnBehalfOf: null,
+      createdBy: details.createdBy ?? owner.uid,
+      createdOnBehalfOf:
+        details.createdBy && details.createdBy !== owner.uid ? owner.uid : null,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -501,6 +504,66 @@ export async function confirmTraining(trainingId: string): Promise<void> {
     }
     tx.update(ref, { status: "confirmed", updatedAt: serverTimestamp() });
   });
+}
+
+/**
+ * Moves a training to a different day, time or track.
+ *
+ * Two documents change, because the slot is the document id — the booking is
+ * written at the new slot and removed from the old one. Both halves are in one
+ * transaction, and the target is read first so a move can never land on top of
+ * somebody else's booking.
+ */
+export async function moveTraining(
+  trainingId: string,
+  target: SlotRef
+): Promise<string> {
+  const fromRef = doc(db, "trainings", trainingId);
+  const toId = slotId(target);
+  const toRef = doc(db, "trainings", toId);
+
+  if (toId === trainingId) return trainingId;
+
+  const startAt = localInstant(target.date, target.session.startTime);
+  if (startAt.getTime() <= Date.now()) {
+    throw new TrainingError("past", "Nový termín už prebehol.");
+  }
+
+  await runTransaction(db, async (tx) => {
+    // Both reads must happen before any write in a Firestore transaction.
+    const existingTarget = await tx.get(toRef);
+    const source = await tx.get(fromRef);
+
+    if (!source.exists()) {
+      throw new TrainingError("gone", "Tento tréning už neexistuje.");
+    }
+    if (existingTarget.exists()) {
+      throw new TrainingError(
+        "slot-taken",
+        "Na cieľovom termíne už je iná rezervácia."
+      );
+    }
+
+    const data = source.data() as Training;
+
+    tx.set(toRef, {
+      ...data,
+      resortId: target.resortId,
+      courseId: target.courseId,
+      date: target.date,
+      session: target.session,
+      lineNumber: target.lineNumber,
+      startAt: Timestamp.fromDate(startAt),
+      endAt: Timestamp.fromDate(
+        localInstant(target.date, target.session.endTime)
+      ),
+      movedFrom: trainingId,
+      updatedAt: serverTimestamp(),
+    });
+    tx.delete(fromRef);
+  });
+
+  return toId;
 }
 
 export async function getTraining(trainingId: string): Promise<Training | null> {

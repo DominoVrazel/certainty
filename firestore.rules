@@ -121,9 +121,12 @@ service cloud.firestore {
 
       allow read: if true;
 
+      // An admin may book on a club's behalf, so the writer is not
+      // necessarily among the participants.
       allow create: if signedIn()
                     && startsInFuture(request.resource.data)
-                    && request.auth.uid in request.resource.data.participantUids;
+                    && (isAdmin()
+                        || request.auth.uid in request.resource.data.participantUids);
 
       allow update: if signedIn()
                     && startsInFuture(resource.data)

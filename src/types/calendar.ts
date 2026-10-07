@@ -78,6 +78,8 @@ export interface CalendarActions {
     sportClub: string
   ) => void;
   onConfirm: (trainingId: string) => void;
+  /** Admin only: move a booking to another slot. */
+  onMove: (training: Training) => void;
   onCheckIn: (trainingId: string, attended: boolean) => void;
   onCloseTrack: (lineNumber: number, date: string) => void;
   onOpenTrack: (lineNumber: number, date: string) => void;

@@ -182,6 +182,16 @@ const SessionCell: React.FC<SessionCellProps> = ({
           </div>
         </div>
 
+        {viewer.isAdmin && date !== today && (
+          <button
+            className="detail-button"
+            onClick={() => actions.onMove(training)}
+          >
+            <i className="fa fa-arrows-alt"></i>
+            PRESUNÚŤ
+          </button>
+        )}
+
         <button
           className="detail-button"
           onClick={() => actions.onShowDetails(training)}

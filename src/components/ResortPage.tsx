@@ -26,6 +26,7 @@ import { fetchPromoCodes, deletePromoCodes } from "./getPromoCodes";
 
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
 import CalendarWeek from "./calendar/CalendarWeek";
+import MoveTrainingModal from "./MoveTrainingModal";
 import { slotKey, useTrainingWeek } from "../hooks/useTrainingWeek";
 import {
   cancelTraining,
@@ -36,6 +37,8 @@ import {
   getTraining,
   joinTraining,
   leaveTraining,
+  // Aliased: the page already has state called moveTraining.
+  moveTraining as moveTrainingTo,
   slotId,
   TrainingError,
   type Training,
@@ -91,6 +94,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State to control edit modal
   const [editTraining, setEditTraining] = useState<Training | null>(null);
+  const [moveTraining, setMoveTraining] = useState<Training | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [detailsTraining, setDetailsTraining] = useState<Training | null>(null);
   const [isAddToTrainingModalOpen, setIsAddToTrainingModalOpen] =
@@ -668,6 +672,36 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     }
   };
 
+  /**
+   * Moves a booking to another slot, keeping every club already on it.
+   * Previously the only option was delete and rebook, which lost the joiners.
+   */
+  const handleMoveTraining = async (target: {
+    date: string;
+    session: { startTime: string; endTime: string };
+    lineNumber: number;
+  }) => {
+    if (!moveTraining) return;
+    try {
+      setVerifyLoadingState(LoaderState.Loading);
+      await moveTrainingTo(moveTraining.id, {
+        resortId,
+        courseId: moveTraining.courseId,
+        ...target,
+      });
+      setMoveTraining(null);
+    } catch (error) {
+      console.error("Error moving training: ", error);
+      alert(
+        error instanceof TrainingError
+          ? error.message
+          : "Trening sa nepodarilo presunut."
+      );
+    } finally {
+      setVerifyLoadingState(LoaderState.Finished);
+    }
+  };
+
   /** Marks the club present on the day of the training. */
   const handleCheckIn = async (trainingId: string, attended: boolean) => {
     const uid = localStorage.getItem("userId");
@@ -884,6 +918,18 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     [closureBySlot]
   );
 
+  const visibleDaysForSelectedCourse = useMemo(() => {
+    if (!selectedCourse) return [];
+    const dates = new Set(
+      Array.from({ length: 7 }, (_, i) =>
+        format(addDays(weekStart, i), "yyyy-MM-dd")
+      )
+    );
+    return (seasons[selectedCourse] ?? [])
+      .flatMap((s) => s.weeks.flatMap((w) => w.days))
+      .filter((d) => dates.has(d.date));
+  }, [seasons, selectedCourse, weekStart]);
+
   const sessionsForSelectedCourse = useMemo(() => {
     if (!selectedCourse) return [];
     const days = (seasons[selectedCourse] ?? []).flatMap((s) =>
@@ -916,6 +962,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           sportClub
         ),
       onConfirm: (trainingId) => handleConfirmAttendance(trainingId),
+      onMove: (training) => {
+        setMoveTraining(training);
+      },
       onCheckIn: (trainingId, attended) =>
         handleCheckIn(trainingId, attended),
       onCloseTrack: (lineNumber, date) => {
@@ -1028,6 +1077,17 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
             <ReservationDetailsModal
               training={detailsTraining}
               onClose={() => setIsDetailsModalOpen(false)}
+            />
+          )}
+
+          {moveTraining && (
+            <MoveTrainingModal
+              training={moveTraining}
+              days={visibleDaysForSelectedCourse}
+              timeSessions={sessionsForSelectedCourse}
+              trackCount={courseCapacities[selectedCourse ?? ""] || 0}
+              onClose={() => setMoveTraining(null)}
+              onSubmit={handleMoveTraining}
             />
           )}
 
