@@ -88,8 +88,10 @@ test.describe("registration and e-mail verification", () => {
     expect(link).toContain("localhost:5174");
 
     await page.goto(link);
+    // The verification call is the first hit on that Cloud Function in a run,
+    // and a cold function in the emulator can take a while to answer.
     await expect(page.getByText(/uspesne overeny|uz overeny/i)).toBeVisible({
-      timeout: 20_000,
+      timeout: 45_000,
     });
 
     await expect

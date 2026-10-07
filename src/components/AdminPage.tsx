@@ -8,6 +8,8 @@ import {
   deleteDoc,
   getDoc,
   updateDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import AddSeasonData from "./AddSeasonData";
 import AddResortData from "./AddResortData";
@@ -17,6 +19,7 @@ import ImageUpload from "./ImageUpload";
 
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
 import { authReady } from "../services/FirebaseService";
+import MonthlyReport from "./admin/MonthlyReport";
 
 interface Resort {
   id: string;
@@ -113,6 +116,10 @@ function AdminPage() {
       });
 
       setResorts(resortsData);
+
+      // Default to the first resort so the statistics tab has something to
+      // report on without the admin picking from a dropdown first.
+      setSelectedResort((current) => current ?? resortsData[0]?.id ?? null);
     } catch (error) {
       console.error("Chyba napájania kolekcie resorts: ", error);
     }
@@ -257,49 +264,78 @@ function AdminPage() {
     authReady.then(fetchUsers);
   }, [db]);
 
+  /**
+   * Loads the bookings the admin calendar shows.
+   *
+   * This used to read the entire `reservations` collection and then one
+   * subcollection per booking — 705 documents and 705 sequential round trips.
+   * It ran on mount, saturated the connection and starved every other read on
+   * the page, which is why the resort list beside it came back empty.
+   *
+   * Now it reads a bounded window of `trainings`, where participants travel
+   * inside the booking.
+   */
   const fetchReservations = async () => {
     try {
       setVerifyLoadingState(LoaderState.Loading);
-      const querySnapshot = await getDocs(collection(db, "reservations"));
-      const reservationsData: Reservation[] = [];
-      for (const doc of querySnapshot.docs) {
-        const data = doc.data();
 
-        // Fetch addedUsers subcollection
-        const addedUsersSnapshot = await getDocs(
-          collection(doc.ref, "addedUsers")
-        );
-        const addedUsers = addedUsersSnapshot.docs.map(
-          (userDoc) => userDoc.data() as User
-        );
+      const from = new Date();
+      from.setMonth(from.getMonth() - 1);
+      const to = new Date();
+      to.setMonth(to.getMonth() + 6);
+      const iso = (d: Date) => d.toISOString().slice(0, 10);
 
-        reservationsData.push({
-          id: doc.id,
-          date: data.date,
-          discipline: data.discipline,
+      const snap = await getDocs(
+        query(
+          collection(db, "trainings"),
+          where("date", ">=", iso(from)),
+          where("date", "<=", iso(to))
+        )
+      );
+
+      const reservationsData: Reservation[] = snap.docs.map((d) => {
+        const t = d.data() as any;
+        const participants = Object.values(t.participants ?? {}) as any[];
+        const owner =
+          participants.find((p) => p.role === "owner") ?? participants[0] ?? {};
+
+        return {
+          id: d.id,
+          date: t.date,
+          discipline: t.discipline,
           reservationDetails: {
-            resort: data.reservationDetails.resort,
-            course: data.reservationDetails.course,
-            courseName: data.reservationDetails.courseName,
+            resort: t.resortId,
+            course: t.courseId,
+            courseName: t.courseName,
           },
-          availableRacers: data.availableRacers,
+          availableRacers: t.racersTotal,
           user: {
-            email: data.user.email,
-            firstName: data.user.firstName,
-            secondName: data.user.secondName,
-            ownRacers: data.user.ownRacers,
-            sportClub: data.user.sportClub,
+            email: owner.email,
+            firstName: owner.firstName,
+            secondName: owner.secondName,
+            ownRacers: owner.racers,
+            sportClub: owner.sportClub,
           },
-          addedUsers: addedUsers,
-        });
-      }
-      console.log("Fetched reservations:", reservationsData); // Debugging log
+          addedUsers: participants
+            .filter((p) => p.role !== "owner")
+            .map((p) => ({
+              email: p.email,
+              firstName: p.firstName,
+              secondName: p.secondName,
+              ownRacers: p.racers,
+              sportClub: p.sportClub,
+            })) as User[],
+        };
+      });
+
       setReservations(reservationsData);
-      setVerifyLoadingState(LoaderState.Finished);
     } catch (error) {
       console.error("Error fetching reservations: ", error);
+    } finally {
+      setVerifyLoadingState(LoaderState.Finished);
     }
   };
+
 
   useEffect(() => {
     fetchReservations();
@@ -474,6 +510,7 @@ function AdminPage() {
         {activeTab === "usersCalendar" && (
           <>
             <div className="statisticsTab">
+              <MonthlyReport resortId={selectedResort ?? undefined} />
               <div className="siteUsers">
                 <h4>Všetci požívatelia</h4>
                 {users.length > 0 ? (
