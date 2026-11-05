@@ -1,13 +1,13 @@
 # Plán: prestavba dátového modelu + výkon
 
-## Stav (aktualizované 7. 10. 2026)
+## Stav (aktualizované 5. 11. 2026)
 
 | krok | stav |
 |---|---|
 | 1 — zachytenie osirelých záznamov v snapshote | ✅ hotové |
 | 2 — migračný skript, overený a idempotentný | ✅ hotové |
 | 3 — prestavba frontendu (extrakcia + dátová vrstva) | ✅ hotové |
-| 4 — nasadenie indexov do produkcie | ✅ hotové, stavajú sa |
+| 4 — nasadenie indexov do produkcie | ✅ hotové, všetkých päť `READY` |
 | 4b — nové funkcionality | ✅ hotové |
 | 5 — záloha tesne pred migráciou | ⬜ |
 | 6 — read-only build s bannerom | ⬜ |
@@ -17,8 +17,8 @@
 | 10 — odležanie | ⬜ |
 | 11 — odstránenie starých kolekcií | ⬜ |
 
-Vetva `rework`, nepushnutá. Do produkcie zatiaľ išli **len indexy** — sú aditívne
-a stará appka ich nepoužíva.
+Vetva `rework` je pushnutá (`ce43c50`). Do produkcie zatiaľ išli **len indexy**
+— sú aditívne a stará appka ich nepoužíva.
 
 Testovacie siete: 56 testov pravidiel, 28 E2E, test súbežnosti, overenie
 migrácie a overenie osirelých záznamov.
@@ -36,17 +36,19 @@ migrácie a overenie osirelých záznamov.
 | 7 | admin zakladá a presúva tréningy za klub | `b679276` |
 | 8 | blokovanie jednotlivých blokov na trať | `6be3eb3` |
 | 9 | zdieľaná poznámka pre trénerov | `6be3eb3` |
-| 10 | automatické potvrdzovanie rezervácií (nastavenie strediska, default zapnuté) | — |
+| 10 | automatické potvrdzovanie rezervácií (nastavenie strediska, default zapnuté) | `ce43c50` |
 
 ## Kde pokračovať
 
-Lokálna časť je hotová: model, výkon aj všetkých 9 funkcionalít beží proti
+Lokálna časť je hotová: model, výkon aj všetky funkcionality beží proti
 migrovanému emulátoru a je pokrytá testami. **Ďalej už nasleduje len nasadenie,
 teda kroky 5–11 v sekcii *Poradie nasadenia*** — a ten prvý z nich sa dotýka
 produkcie, takže ich začíname až na výslovný pokyn.
 
-Pred krokom 5 ešte treba: pushnúť vetvu `rework` a skontrolovať, že nasadené indexy
-prešli z `CREATING` do `READY`.
+Oboje, čo malo predchádzať kroku 5, je hotové: vetva je pushnutá a všetkých päť
+indexov je `READY`. Overené aj to, čo si plán žiadal overiť pred krokom 7 —
+projekt je na Blaze, **Point-in-Time Recovery je zapnutý** (7-dňové okno) a
+databáza má `DELETE_PROTECTION_ENABLED`. Zálohou teda nie je len `db:pull`.
 
 Celé poradie nasadenia je v tabuľke na konci.
 
@@ -74,7 +76,7 @@ zobrazený týždeň, a pre každú z nich sekvenčne dočíta `addedUsers` — 
 **každom** zápise cez `handleUpdate`.
 
 Cieľ: jeden konzistentný model, ktorý tieto defekty odstráni štrukturálne (nie
-záplatou), zrýchli kalendár a unesie všetkých 9 funkcionalít. Historické dáta sa
+záplatou), zrýchli kalendár a unesie všetky funkcionality. Historické dáta sa
 prepíšu do rovnakého tvaru — needitovateľné v kalendári, dostupné adminovi pre výpočty.
 
 ---
