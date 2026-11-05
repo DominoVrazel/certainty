@@ -28,6 +28,7 @@ import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
 import CalendarWeek from "./calendar/CalendarWeek";
 import MoveTrainingModal from "./MoveTrainingModal";
 import { slotKey, useTrainingWeek } from "../hooks/useTrainingWeek";
+import { currentSeasons, todayIso } from "../services/seasons";
 import {
   cancelTraining,
   checkIn,
@@ -170,28 +171,27 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
               "seasons"
             )
           );
-          const filteredSeasons: Season[] = [];
-          const currentSeason = getCurrentSeason();
-
-          seasonsSnapshot.forEach((seasonDoc) => {
+          const allSeasons: Season[] = seasonsSnapshot.docs.map((seasonDoc) => {
             const data = seasonDoc.data();
-            if (data.season.includes(currentSeason)) {
-              filteredSeasons.push({
-                id: seasonDoc.id,
-                season: data.season,
-                weeks: data.weeks.map((week: Week) => ({
-                  ...week,
-                  days: week.days.map((day: Day) => ({
-                    ...day,
-                    timeSessions: courseData.timeSessions || [],
-                  })),
+            return {
+              id: seasonDoc.id,
+              season: data.season,
+              startDate: data.startDate ?? "",
+              endDate: data.endDate ?? "",
+              weeks: (data.weeks ?? []).map((week: Week) => ({
+                ...week,
+                days: week.days.map((day: Day) => ({
+                  ...day,
+                  timeSessions: courseData.timeSessions || [],
                 })),
-              });
-            }
+              })),
+            };
           });
 
-          if (filteredSeasons.length > 0) {
-            fetchedSeasons[courseName] = filteredSeasons;
+          // By date, not by what the season is called. See currentSeasons().
+          const relevant = currentSeasons(allSeasons, todayIso());
+          if (relevant.length > 0) {
+            fetchedSeasons[courseName] = relevant;
           }
         }
 
@@ -230,23 +230,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         console.error("Error fetching resort email: ", error);
       }
     };
-
-    function getCurrentSeason() {
-      const currentDate = new Date();
-      const currentYear = currentDate.getFullYear();
-      const currentMonth = currentDate.getMonth() + 1;
-
-      // const currentMonth = 6;
-
-      if (currentMonth < 6) {
-        //very important to have the month in the right order. Displaying seasons by that.
-        const previousYear = currentYear - 1;
-        return `${previousYear}/${currentYear}`;
-      } else {
-        const nextYear = currentYear + 1;
-        return `${currentYear}/${nextYear}`;
-      }
-    }
 
     fetchCoursesAndSeasons();
     fetchResortEmail();
@@ -1022,6 +1005,25 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                 />
               </div>
             ))}
+
+          {/* A slope with no current season used to render nothing at all — no
+              calendar, no explanation — which looks exactly like a broken page
+              and is what sent us hunting for a bug in the booking code. */}
+          {selectedCourse && !seasons[selectedCourse]?.length && (
+            <div className="no-season" data-testid="no-season">
+              <p>
+                <b>
+                  Pre túto zjazdovku nie je vytvorený žiadny aktuálny sezónny
+                  kalendár.
+                </b>
+              </p>
+              <p>
+                {viewer.isAdmin
+                  ? "Vytvorte ho v adminácii v bloku „Pridajte sezónu“ — kalendár sa zobrazuje podľa dátumov sezóny, nie podľa jej názvu."
+                  : "Rezervácie budú dostupné, keď stredisko sezónu vytvorí."}
+              </p>
+            </div>
+          )}
 
           {/* Modal to reserve a session */}
           {selectedSession && (

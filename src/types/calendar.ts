@@ -28,7 +28,11 @@ export interface Week {
 
 export interface Season {
   id: string;
+  /** Free text the admin typed. A label, nothing more — see `currentSeasons`. */
   season: string;
+  /** `YYYY-MM-DD`, which is why these compare correctly as strings. */
+  startDate: string;
+  endDate: string;
   weeks: Week[];
 }
 

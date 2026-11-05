@@ -24,7 +24,8 @@
     "db:verify:migration": "node scripts/verify-migration.mjs",
     "test:concurrency": "node scripts/test-concurrency.mjs",
     "db:migrate:persist": "node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore,storage --import=./.emulator-data \"node scripts/migrate-trainings.mjs --target=emulator && node scripts/export-emulator.mjs\" && node scripts/finalize-export.mjs",
-    "build:functions": "npm --prefix functions run build"
+    "build:functions": "npm --prefix functions run build",
+    "test:unit": "node --test tests/seasons.test.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",

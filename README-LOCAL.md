@@ -112,6 +112,7 @@ account. Override the password with the `DEV_PASSWORD` env var before `db:seed`.
 | `npm run db:migrate` | Run the migration against the emulator. |
 | `npm run db:migrate:persist` | Same, but saves the result to `./.emulator-data`. |
 | `npm run db:verify:migration` | Compare migrated data against the legacy shape. |
+| `npm run test:unit` | Pure-logic tests (season selection). No emulator needed. |
 | `npm run test:rules` | Security-rules tests. |
 | `npm run test:e2e` | End-to-end tests through the real UI. |
 | `npm run deploy` | Deploy hosting only. |
