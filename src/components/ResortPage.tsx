@@ -367,49 +367,27 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     }
   };
 
-  const handleSessionClick = async (
+  /**
+   * Opens the booking form for a free time block.
+   *
+   * Only reachable from a free block: `SessionCell` renders REZERVOVAŤ, which
+   * is what calls this, in its no-training branch alone. A booked block is
+   * opened with `onShowDetails` instead. The branch that used to be here read
+   * the booking back out of the legacy `reservations` collection — unreachable
+   * since the calendar moved onto the trainings model, and it would have
+   * returned nothing once that collection is dropped.
+   */
+  const handleSessionClick = (
     date: string,
     session: { startTime: string; endTime: string },
     course: string,
-    lineNumber: number // Add line number to handle session clicks
+    lineNumber: number
   ) => {
-    const reservationKey = `${date}_${session.startTime}_${session.endTime}_${course}_${lineNumber}`;
-
-    if (bySlot.has(slotKey(date, session.startTime, session.endTime, lineNumber))) {
-      try {
-        const reservationsRef = collection(db, "reservations");
-        const q = query(
-          reservationsRef,
-          where("date", "==", date),
-          where("session.startTime", "==", session.startTime),
-          where("session.endTime", "==", session.endTime),
-          where("reservationDetails.course", "==", course),
-          where("lineNumber", "==", lineNumber)
-        );
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-          const existingReservationDoc = querySnapshot.docs[0];
-          const existingReservationDetails = existingReservationDoc.data();
-          setSelectedSession({
-            date,
-            session,
-            course,
-            lineNumber,
-            existingDetails: {
-              ...existingReservationDetails,
-              id: existingReservationDoc.id, // Capture the Firestore document ID
-            }, // Pass the existing details
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching existing reservation details: ", error);
-      }
-    } else if (isLoggedIn) {
-      setSelectedSession({ date, session, course, lineNumber }); // Set for a new reservation
-    } else {
+    if (!isLoggedIn) {
       alert("Pre rezervovanie trate je potrebné prihlásenie.");
+      return;
     }
+    setSelectedSession({ date, session, course, lineNumber });
   };
 
   const handleReservationSubmit = async (formData: any) => {
@@ -442,8 +420,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
       // await deletePromoCodes(resortId, promoCodes);
 
-      // Create a new document in the 'reservations' collection
-      const reservationRef = doc(collection(db, "reservations"));
       const userEmail = localStorage.getItem("userEmail");
       const userFirstName = localStorage.getItem("userFirstName");
       const userSecondName = localStorage.getItem("userSecondName");

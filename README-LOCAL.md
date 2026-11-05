@@ -97,9 +97,11 @@ account. Override the password with the `DEV_PASSWORD` env var before `db:seed`.
 | `npm run db:verify` | Check the snapshot still contains the orphaned records. |
 | `npm run db:migrate:check` | Dry run of the trainings migration. |
 | `npm run db:migrate` | Run the migration against the emulator. |
+| `npm run db:migrate:persist` | Same, but saves the result to `./.emulator-data`. |
 | `npm run db:verify:migration` | Compare migrated data against the legacy shape. |
 | `npm run test:rules` | Security-rules tests. |
 | `npm run test:e2e` | End-to-end tests through the real UI. |
+| `npm run deploy` | Deploy hosting only. |
 
 ## Trying the migration
 
@@ -113,10 +115,19 @@ rolling back means deleting those three. It is idempotent — document ids come
 from the data and every write is a full `set`, so reruns converge rather than
 duplicate.
 
-Note the migrated collections live only in the running emulator. `npm run dev`
-imports `./.emulator-data`, which is the *pre-migration* snapshot, so rerun
-`db:migrate` after a reseed.
-| `npm run deploy` | Deploy hosting only. |
+`db:migrate` writes into the emulator that is already running and nothing
+exports it, so the migrated collections disappear when you stop the stack. To
+keep them, use the persisting variant instead — it runs the migration in an
+emulator session of its own and writes the result back to `./.emulator-data`,
+which is what `npm run dev` boots from:
+
+```bash
+npm run db:migrate:persist
+```
+
+Run it with the stack **stopped**. Migration writes about 1100 documents, and
+against an emulator that is also serving the app the batch times out with
+`DEADLINE_EXCEEDED`.
 
 Local edits are discarded when you stop `npm run dev`; rerun `npm run db:seed` to get
 back to a known state.
