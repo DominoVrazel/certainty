@@ -1,5 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { ADMIN_EMAIL, DEV_PASSWORD, openAccountMenu } from "./helpers";
+import {
+  ADMIN_EMAIL,
+  DEV_PASSWORD,
+  deleteSeason,
+  openAccountMenu,
+  seasonIds,
+} from "./helpers";
 
 /**
  * Which slope shows a calendar, and what a slope without one says.
@@ -98,4 +104,91 @@ test("the admin screens call a slope a zjazdovka", async ({ page }) => {
   await expect(page.getByText("Maximum pretekárov na jednej trati.")).toHaveCount(
     1
   );
+});
+
+/**
+ * Adding a season: see what is there, and be refused when it clashes.
+ *
+ * Overlap is not cosmetic. The page picks what to show by date, so two seasons
+ * covering the same day would both render, one under the other.
+ */
+test("the season form lists what exists and refuses an overlap", async ({
+  page,
+}) => {
+  const KRAJNAKA = "Tr_ningov__centrum_O_a_V_Kraj_aka";
+  const created = "e2e_nova_sezona";
+  await deleteSeason("Bachledka", KRAJNAKA, created);
+
+  page.on("dialog", (d) => d.accept());
+  await page.goto("/resort/Bachledka");
+  await openAccountMenu(page);
+  await page.getByRole("button", { name: "Prihlásiť" }).first().click();
+  await page.getByPlaceholder("Váš email").first().fill(ADMIN_EMAIL);
+  await page.getByPlaceholder("Vaše heslo").first().fill(DEV_PASSWORD);
+  await page
+    .getByRole("button", { name: "Prihlásiť", exact: true })
+    .last()
+    .click();
+  await expect(page.getByText(/Ahoj/)).toBeVisible({ timeout: 30_000 });
+
+  await page.goto("/AdminPage");
+  await page.getByText(/Tvorba strediska/i).first().click();
+
+  const form = page.locator(".add-season-form");
+  const selects = form.locator("select");
+  await expect(selects.first()).toBeVisible({ timeout: 30_000 });
+  await selects.first().selectOption("Bachledka");
+  await expect(selects.nth(1)).toBeVisible({ timeout: 20_000 });
+  await selects.nth(1).selectOption(KRAJNAKA);
+
+  // What is already there, with the dates — which is the point: a clash should
+  // be apparent before anything is typed.
+  const list = page.getByTestId("existing-seasons");
+  await expect(list).toContainText("dg 2026/2027", { timeout: 20_000 });
+  await expect(list).toContainText("2026-07-21");
+  await expect(list).toContainText("2027-01-21");
+
+  const name = form.getByPlaceholder("Zadajte názov");
+  const dates = form.locator('input[type="date"]');
+  const save = form.getByRole("button", { name: /Pridať kalendár/ });
+
+  // Overlaps dg 2026/2027, which runs to 2027-01-21.
+  await name.fill("e2e nova sezona");
+  await dates.nth(0).fill("2026-12-01");
+  await dates.nth(1).fill("2027-02-28");
+  await save.click();
+
+  const error = page.getByTestId("season-error");
+  await expect(error).toBeVisible({ timeout: 20_000 });
+  await expect(error).toContainText(/Prekrýva sa/i);
+  await expect(error).toContainText("dg 2026/2027");
+  expect(await seasonIds("Bachledka", KRAJNAKA)).not.toContain(created);
+
+  // The end before the start is refused on its own terms.
+  await dates.nth(0).fill("2027-03-01");
+  await dates.nth(1).fill("2027-02-01");
+  await save.click();
+  await expect(error).toContainText(/pred jej začiatkom/i, { timeout: 20_000 });
+  expect(await seasonIds("Bachledka", KRAJNAKA)).not.toContain(created);
+
+  // Clear of the existing season, so it saves and shows up in the list.
+  await dates.nth(0).fill("2027-02-01");
+  await dates.nth(1).fill("2027-04-30");
+  await save.click();
+
+  await expect
+    .poll(() => seasonIds("Bachledka", KRAJNAKA), { timeout: 20_000 })
+    .toContain(created);
+  await expect(list).toContainText("e2e nova sezona");
+
+  // And the same name is now refused as well, whatever the dates.
+  await name.fill("e2e nova sezona");
+  await dates.nth(0).fill("2027-06-01");
+  await dates.nth(1).fill("2027-07-01");
+  await save.click();
+  await expect(error).toContainText(/u\u017e na tejto zjazdovke existuje/i, {
+    timeout: 20_000,
+  });
+
+  await deleteSeason("Bachledka", KRAJNAKA, created);
 });

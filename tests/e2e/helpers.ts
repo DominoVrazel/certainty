@@ -325,6 +325,34 @@ export async function findUserByEmail(email: string) {
   return hit?.document ?? null;
 }
 
+/** Removes a season document, so a test that creates one leaves nothing behind. */
+export async function deleteSeason(
+  resortId: string,
+  courseId: string,
+  seasonId: string
+): Promise<void> {
+  await fetch(
+    `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents` +
+      `/resorts/${resortId}/courses/${courseId}/seasons/${seasonId}`,
+    { method: "DELETE", headers: ADMIN_HEADERS }
+  );
+}
+
+/** The ids of every season on a slope. */
+export async function seasonIds(
+  resortId: string,
+  courseId: string
+): Promise<string[]> {
+  const res = await fetch(
+    `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents` +
+      `/resorts/${resortId}/courses/${courseId}/seasons`,
+    { headers: ADMIN_HEADERS }
+  );
+  if (!res.ok) throw new Error(`seasons not readable: ${res.status}`);
+  const body = (await res.json()) as { documents?: { name: string }[] };
+  return (body.documents ?? []).map((d) => d.name.split("/").pop() as string);
+}
+
 /**
  * Switches a resort's automatic confirmation on or off.
  *

@@ -182,6 +182,75 @@ describe("public catalogue", () => {
     await assertFails(deleteDoc(doc(club, "resorts", "Bachledka")));
   });
 
+  // The calendar decides which season to show from startDate and endDate, so a
+  // season written without them, or ending before it starts, is a slope whose
+  // calendar silently never appears. That is worth refusing at the door.
+  //
+  // What the rules deliberately do NOT check is overlap with the other seasons
+  // on the slope: a rule cannot query a collection, so it cannot see them. The
+  // admin form does that, and the comment in firestore.rules says so.
+  describe("season calendars", () => {
+    const path = (db) =>
+      doc(db, "resorts", "Bachledka", "courses", "C1", "seasons", "S2");
+
+    const season = (over = {}) => ({
+      season: "sezóna 2026/2027",
+      startDate: "2026-12-01",
+      endDate: "2027-04-30",
+      weeks: [],
+      ...over,
+    });
+
+    test("admin can add a season with sane dates", async () => {
+      await seed();
+      await assertSucceeds(setDoc(path(adminUser), season()));
+    });
+
+    test("ordinary club cannot add a season", async () => {
+      await seed();
+      await assertFails(setDoc(path(club), season()));
+      await assertFails(setDoc(path(anon), season()));
+    });
+
+    test("a season ending before it starts is refused", async () => {
+      await seed();
+      await assertFails(
+        setDoc(path(adminUser), season({ endDate: "2026-11-30" }))
+      );
+    });
+
+    test("a season with no dates is refused", async () => {
+      await seed();
+      await assertFails(
+        setDoc(path(adminUser), { season: "bez dátumov", weeks: [] })
+      );
+    });
+
+    test("a season whose dates are not full ISO days is refused", async () => {
+      await seed();
+      await assertFails(
+        setDoc(path(adminUser), season({ startDate: "2026-12" }))
+      );
+    });
+
+    test("a one-day season is allowed", async () => {
+      await seed();
+      await assertSucceeds(
+        setDoc(
+          path(adminUser),
+          season({ startDate: "2026-12-01", endDate: "2026-12-01" })
+        )
+      );
+    });
+
+    test("only an admin can delete a season", async () => {
+      await seed();
+      await assertSucceeds(setDoc(path(adminUser), season()));
+      await assertFails(deleteDoc(path(club)));
+      await assertSucceeds(deleteDoc(path(adminUser)));
+    });
+  });
+
   // Automatic confirmation lives on the resort document, so the rule that
   // guards the catalogue is also the rule that guards the setting. Worth its
   // own test: a club that could flip it would be confirming its own bookings

@@ -31,7 +31,28 @@ service cloud.firestore {
 
         match /seasons/{seasonId} {
           allow read: if true;
-          allow write: if isAdmin();
+
+          // Rules cannot see the other seasons on this slope — there is no way
+          // to query a collection from inside a rule — so whether a new season
+          // overlaps an existing one is not expressible here. That check lives
+          // in the admin form, and a determined admin with the SDK could get
+          // round it; hard enforcement would need a Cloud Function holding the
+          // only write path.
+          //
+          // What is expressible is whether the season makes sense on its own.
+          // The calendar now decides what to show from these two dates, so a
+          // season missing them, or ending before it starts, is not a cosmetic
+          // problem — it is a slope whose calendar silently never appears.
+          allow create, update: if isAdmin()
+                        && request.resource.data.season is string
+                        && request.resource.data.startDate is string
+                        && request.resource.data.endDate is string
+                        && request.resource.data.startDate.size() == 10
+                        && request.resource.data.endDate.size() == 10
+                        && request.resource.data.startDate <= request.resource.data.endDate
+                        && request.resource.data.weeks is list;
+
+          allow delete: if isAdmin();
         }
       }
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { collection, doc, setDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, setDoc, getDocs } from "firebase/firestore";
+import { rangesOverlap } from "../services/seasons";
 import { db } from "../services/FirebaseService"; // Ensure this path is correct
 import { format, addDays, eachDayOfInterval } from "date-fns";
 
@@ -24,6 +25,15 @@ interface Course {
   id: string;
   name: string;
 }
+interface ExistingSeason {
+  id: string;
+  season: string;
+  startDate: string;
+  endDate: string;
+}
+
+/** The document id a season name maps to. Historic scheme, kept as it is. */
+const seasonDocId = (name: string) => name.replace(/[^a-zA-Z0-9]/g, "_");
 
 const AddSeasonData: React.FC = () => {
   const [resorts, setResorts] = useState<Resort[]>([]);
@@ -35,6 +45,8 @@ const AddSeasonData: React.FC = () => {
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** What this slope already has, so a clash can be shown rather than saved. */
+  const [existing, setExisting] = useState<ExistingSeason[]>([]);
 
   useEffect(() => {
     const fetchResorts = async () => {
@@ -79,11 +91,82 @@ const AddSeasonData: React.FC = () => {
     fetchCourses();
   }, [selectedResort]);
 
-  const generateSeasonData = () => {
-    if (!seasonName || !startDate || !endDate) {
-      alert("Please fill in all fields.");
-      return null;
+  // The seasons this slope already has. Loaded as soon as there is a slope,
+  // because they are what the new one must not clash with — and because an
+  // admin who can see them is unlikely to try.
+  useEffect(() => {
+    const fetchExisting = async () => {
+      if (!selectedResort || !selectedCourse) {
+        setExisting([]);
+        return;
+      }
+      try {
+        const snapshot = await getDocs(
+          collection(
+            db,
+            "resorts",
+            selectedResort,
+            "courses",
+            selectedCourse,
+            "seasons"
+          )
+        );
+        setExisting(
+          snapshot.docs
+            .map((d) => ({
+              id: d.id,
+              season: d.data().season ?? d.id,
+              startDate: d.data().startDate ?? "",
+              endDate: d.data().endDate ?? "",
+            }))
+            .sort((a, b) => a.startDate.localeCompare(b.startDate))
+        );
+      } catch (err) {
+        console.error("Chyba napájania sezón: ", err);
+        setError("Existujúce sezóny sa nepodarilo načítať.");
+      }
+    };
+    fetchExisting();
+  }, [selectedResort, selectedCourse]);
+
+  /**
+   * Why this season cannot be saved, or null when it can.
+   *
+   * Overlapping calendars are not a cosmetic problem: the page picks which
+   * season to show by date, so two covering the same day would both be
+   * rendered, one under the other.
+   */
+  const clash = (): string | null => {
+    if (!seasonName.trim() || !startDate || !endDate) {
+      return "Vyplňte názov sezóny aj oba dátumy.";
     }
+    if (endDate < startDate) {
+      return "Koniec sezóny je pred jej začiatkom.";
+    }
+    const overlapping = existing.find(
+      (e) =>
+        !!e.startDate &&
+        !!e.endDate &&
+        rangesOverlap({ startDate, endDate }, e)
+    );
+    if (overlapping) {
+      return (
+        `Prekrýva sa so sezónou „${overlapping.season}“ ` +
+        `(${overlapping.startDate} – ${overlapping.endDate}). ` +
+        `Zmeňte dátumy, alebo najprv zmažte tú existujúcu.`
+      );
+    }
+    // The id is the name with everything non-alphanumeric replaced, so two
+    // different names can land on the same id — and `setDoc` would then
+    // silently overwrite a season that does not overlap and was never shown
+    // as a clash.
+    if (existing.some((e) => e.id === seasonDocId(seasonName))) {
+      return "Sezóna s takým názvom už na tejto zjazdovke existuje.";
+    }
+    return null;
+  };
+
+  const generateSeasonData = () => {
 
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -140,30 +223,54 @@ const AddSeasonData: React.FC = () => {
   };
 
   const addSeasonToDatabase = async () => {
-    setLoading(true);
     setError(null);
 
-    if (!selectedResort || !selectedCourse || !seasonName) {
-      alert("Prosím vyplnte všetky polia.");
+    if (!selectedResort || !selectedCourse) {
+      setError("Vyberte stredisko aj zjazdovku.");
+      return;
+    }
+
+    const problem = clash();
+    if (problem) {
+      setError(problem);
+      return;
+    }
+
+    setLoading(true);
+    const seasonData = generateSeasonData();
+    if (!seasonData) {
+      // Used to return with `loading` still true, leaving the form stuck.
       setLoading(false);
       return;
     }
 
-    const seasonData = generateSeasonData();
-    if (!seasonData) return; // If generation failed, exit
-
     try {
-      const resortDocRef = doc(collection(db, "resorts"), selectedResort);
-      const courseDocRef = doc(
-        collection(resortDocRef, "courses"),
-        selectedCourse
-      );
       const seasonDocRef = doc(
-        collection(courseDocRef, "seasons"),
-        seasonName.replace(/[^a-zA-Z0-9]/g, "_")
+        db,
+        "resorts",
+        selectedResort,
+        "courses",
+        selectedCourse,
+        "seasons",
+        seasonDocId(seasonName)
       );
+
+      // Checked again against the database, not just against what this form
+      // loaded: two admins could be adding a season at the same time, and
+      // `setDoc` overwrites without complaint.
+      if ((await getDoc(seasonDocRef)).exists()) {
+        setError("Sezóna s takým názvom už na tejto zjazdovke existuje.");
+        return;
+      }
 
       await setDoc(seasonDocRef, seasonData);
+      setExisting((prev) =>
+        [...prev, { id: seasonDocRef.id, season: seasonName, startDate, endDate }]
+          .sort((a, b) => a.startDate.localeCompare(b.startDate))
+      );
+      setSeasonName("");
+      setStartDate("");
+      setEndDate("");
       alert("Kalendár úspešne pridaný!");
     } catch (err) {
       console.error("Chyba pri pridávaní kalendáru: ", err);
@@ -214,6 +321,30 @@ const AddSeasonData: React.FC = () => {
         </div>
       )}
 
+      {/* What the slope already has. Shown before the dates are typed, so a
+          clash is apparent rather than something the save has to refuse. */}
+      {selectedResort && selectedCourse && (
+        <div className="form-group existing-seasons" data-testid="existing-seasons">
+          <span className="form-label">Existujúce sezónne kalendáre:</span>
+          {existing.length === 0 ? (
+            <p className="form-hint">
+              Na tejto zjazdovke ešte žiadny nie je.
+            </p>
+          ) : (
+            <ul className="existing-seasons-list">
+              {existing.map((e) => (
+                <li key={e.id}>
+                  <b>{e.season}</b>
+                  {e.startDate && e.endDate
+                    ? ` — ${e.startDate} až ${e.endDate}`
+                    : " — bez dátumov"}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       <div className="form-group">
         <label className="form-label">
           Názov nového sezónneho kalendára:
@@ -261,7 +392,11 @@ const AddSeasonData: React.FC = () => {
       >
         {loading ? "Pridávam..." : "Pridať kalendár"}
       </button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && (
+        <p className="form-error" data-testid="season-error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

@@ -507,3 +507,27 @@ body {
   padding-left: 1vw;
   padding-right: 1vw;
 }
+
+/* The seasons a slope already has, listed above the form that adds another. */
+.existing-seasons-list {
+  margin: 0.3rem 0 0;
+  padding-left: 1.2rem;
+  color: #444;
+  font-size: 0.85vw;
+  text-align: left;
+}
+
+.existing-seasons-list li {
+  margin: 0.15rem 0;
+}
+
+/* Why a season was refused — a clash has to be readable, not just red. */
+.form-error {
+  margin: 0.6rem 0 0;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #e0b4b4;
+  border-radius: 4px;
+  background: #fdf3f3;
+  color: #9f3a38;
+  text-align: center;
+}
