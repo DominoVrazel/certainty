@@ -89,7 +89,7 @@ export function ReservationDeletedNotification({
 
             {date && (
               <p>
-                Zrušený bol tréning {courseName ? <>pre trať <b>{courseName}</b> </> : null}
+                Zrušený bol tréning {courseName ? <>na zjazdovke <b>{courseName}</b> </> : null}
                 na deň <b>{date}</b>
                 {startTime ? (
                   <>

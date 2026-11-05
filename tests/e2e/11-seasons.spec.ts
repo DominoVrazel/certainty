@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { ADMIN_EMAIL, DEV_PASSWORD, openAccountMenu } from "./helpers";
 
 /**
  * Which slope shows a calendar, and what a slope without one says.
@@ -52,4 +53,49 @@ test("a slope whose seasons have all finished says so", async ({ page }) => {
   await expect(message).toBeVisible({ timeout: 30_000 });
   await expect(message).toContainText(/nie je vytvorený/i);
   await expect(page.locator(".res-container")).toHaveCount(0);
+});
+
+/**
+ * A slope is a "zjazdovka"; the lines on it are "trate".
+ *
+ * The admin screens called both of them a "trať", which is why a sentence like
+ * "Rezervovaná trať X v trati 2" was impossible to read. A half-done rename
+ * would be worse than none, so the labels are asserted rather than eyeballed.
+ */
+test("the admin screens call a slope a zjazdovka", async ({ page }) => {
+  page.on("dialog", (d) => d.accept());
+
+  await page.goto("/resort/Bachledka");
+  await openAccountMenu(page);
+  await page.getByRole("button", { name: "Prihlásiť" }).first().click();
+  await page.getByPlaceholder("Váš email").first().fill(ADMIN_EMAIL);
+  await page.getByPlaceholder("Vaše heslo").first().fill(DEV_PASSWORD);
+  await page
+    .getByRole("button", { name: "Prihlásiť", exact: true })
+    .last()
+    .click();
+  await expect(page.getByText(/Ahoj/)).toBeVisible({ timeout: 30_000 });
+
+  await page.goto("/AdminPage");
+  await page.getByText(/Tvorba strediska/i).first().click();
+
+  await expect(
+    page.getByText("Názov tréningovej zjazdovky:", { exact: false })
+  ).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Kapacita zjazdovky:")).toBeVisible();
+
+  // The season block reveals its slope picker only once a resort is chosen.
+  const seasonBlock = page.locator(".add-season-form");
+  await seasonBlock.locator("select").first().selectOption("Bachledka");
+  await expect(
+    seasonBlock.getByText("Vybrať tréningovú zjazdovku:", { exact: false })
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(
+    page.getByRole("button", { name: "Pridať zjazdovku" })
+  ).toBeVisible();
+
+  // The per-line wording stays: these really are lines on a slope.
+  await expect(page.getByText("Maximum pretekárov na jednej trati.")).toHaveCount(
+    1
+  );
 });

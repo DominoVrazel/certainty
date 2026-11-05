@@ -56,7 +56,7 @@ const TrackColumn: React.FC<TrackColumnProps> = ({
           >
             <i className={isClosed ? "fa fa-unlock-alt" : "fa fa-lock"}></i>
             <span className="tooltip-text">
-              {isClosed ? "Otvorit trať" : "Zavrieť trať"}
+              {isClosed ? "Otvoriť trať" : "Zavrieť trať"}
             </span>
           </button>
         )}

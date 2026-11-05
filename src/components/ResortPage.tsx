@@ -822,7 +822,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       );
     } catch (error) {
       console.error("Error closing track: ", error);
-      alert("Trat sa nepodarilo zavriet.");
+      alert("Trať sa nepodarilo zavrieť.");
     }
   };
 
@@ -843,7 +843,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       );
     } catch (error) {
       console.error("Error reopening track: ", error);
-      alert("Trat sa nepodarilo otvorit.");
+      alert("Trať sa nepodarilo otvoriť.");
     }
   };
 

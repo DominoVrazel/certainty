@@ -156,7 +156,7 @@ export function ReservationConfirmation({
                 Disciplína: <b>{discipline}</b>, Kategória: <b>{category}</b>.
               </p>
               <p>
-                Rezervovaná trať: <b>{course}</b> na deň: <b>{date}</b> v trati:{" "}
+                Rezervovaná zjazdovka: <b>{course}</b> na deň: <b>{date}</b> v trati:{" "}
                 <b>{lineNumber}</b>.
               </p>
               <p>

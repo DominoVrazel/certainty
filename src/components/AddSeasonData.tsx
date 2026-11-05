@@ -197,13 +197,13 @@ const AddSeasonData: React.FC = () => {
       {selectedResort && (
         <div className="form-group">
           <label className="form-label">
-            Vybrať tréningovú trať:
+            Vybrať tréningovú zjazdovku:
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
               disabled={loading}
             >
-              <option value="">-- Vybrať trať --</option>
+              <option value="">-- Vybrať zjazdovku --</option>
               {courses.map((course) => (
                 <option key={course.id} value={course.id}>
                   {course.name}

@@ -614,7 +614,7 @@ function AdminPage() {
 
                     {selectedResort && (
                       <div>
-                        <label className="form-label">Vyberte si trať:</label>
+                        <label className="form-label">Vyberte si zjazdovku:</label>
                         <div style={{ display: "flex", alignItems: "center" }}>
                           <select
                             className="reservations-form-select"
@@ -624,7 +624,7 @@ function AdminPage() {
                               setSelectedSeason(null); // Reset selected season when course changes
                             }}
                           >
-                            <option value="">Vyberte trať</option>
+                            <option value="">Vyberte zjazdovku</option>
                             {courses.map((course) => (
                               <option key={course.id} value={course.id}>
                                 {course.name}

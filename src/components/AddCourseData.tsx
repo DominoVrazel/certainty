@@ -76,7 +76,7 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
     // Validate that both resort and course name are provided
     if (!selectedResort || !courseName || courseCapacity <= 0) {
       alert(
-        "Prosím vyberte si stredisko a zadajte názov novej tréningovej trate s jej kapacitou."
+        "Prosím vyberte si stredisko a zadajte názov novej tréningovej zjazdovky s jej kapacitou."
       );
       setLoading(false);
       return;
@@ -120,11 +120,11 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
       });
       onUpdate();
       alert(
-        `Trať "${courseName}" je pridaná do strediska "${selectedResort?.name}" úspešne!`
+        `Zjazdovka "${courseName}" je pridaná do strediska "${selectedResort?.name}" úspešne!`
       );
     } catch (err) {
-      console.error("Chyba pri pridávaní trate: ", err);
-      setError("Chyba pri pridávaní trate.");
+      console.error("Chyba pri pridávaní zjazdovky: ", err);
+      setError("Chyba pri pridávaní zjazdovky.");
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
 
   return (
     <div className="add-course-form">
-      <h2 className="form-heading">Pridajte traťové informácie</h2>
+      <h2 className="form-heading">Pridajte informácie o zjazdovke</h2>
       <div className="form-group">
         <label className="form-label">
           Vyberte si stredisko:
@@ -158,7 +158,7 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
       {/* Course Name Input */}
       <div className="form-group">
         <label className="form-label">
-          Názov tréningovej trate:
+          Názov tréningovej zjazdovky:
           <input
             type="text"
             className="form-string-input"
@@ -173,7 +173,7 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
       {/* Course Capacity Input */}
       <div className="form-number-group">
         <label className="form-label">
-          Traťová kapacita:
+          Kapacita zjazdovky:
           <span className="info-icon">
             <i className="fas fa-info-circle"></i>
             <span className="tooltip-text">
@@ -294,7 +294,7 @@ const AddCourseData: React.FC<AddCourseDataProps> = ({ onUpdate }) => {
         onClick={addCourseToDatabase}
         disabled={loading}
       >
-        {loading ? "Pridávam..." : "Pridať trať"}
+        {loading ? "Pridávam..." : "Pridať zjazdovku"}
       </button>
 
       {/* Error Display */}
