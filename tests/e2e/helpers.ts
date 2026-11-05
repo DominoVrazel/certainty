@@ -8,7 +8,8 @@ export const PROJECT_ID = "certaintyapp";
 /** Password every seeded account gets locally — see scripts/seed-emulator.mjs. */
 export const DEV_PASSWORD = "Heslo123";
 
-export const ADMIN_EMAIL = "viliam.juris@bachledka.sk";
+// export const ADMIN_EMAIL = "viliam.juris@bachledka.sk" pripomen mi ze treba toto vratit spat na Vila;
+export const ADMIN_EMAIL = "dominikvrazel.sk@gmail.com";
 
 /** A fresh address per run, so repeated runs never collide on an account. */
 export function uniqueEmail(prefix: string): string {
@@ -18,14 +19,21 @@ export function uniqueEmail(prefix: string): string {
 /** Opens the header account menu and signs in. */
 export async function login(page: Page, email: string, password: string) {
   await page.goto("/");
-  await page.getByRole("link", { name: /Bachledka/i }).first().click().catch(() => {});
+  await page
+    .getByRole("link", { name: /Bachledka/i })
+    .first()
+    .click()
+    .catch(() => {});
 
   await openAccountMenu(page);
   await page.getByRole("button", { name: "Prihlásiť" }).first().click();
 
   await page.getByPlaceholder("Váš email").first().fill(email);
   await page.getByPlaceholder("Vaše heslo").first().fill(password);
-  await page.getByRole("button", { name: "Prihlásiť", exact: true }).last().click();
+  await page
+    .getByRole("button", { name: "Prihlásiť", exact: true })
+    .last()
+    .click();
 }
 
 /**
@@ -45,10 +53,7 @@ export async function logout(page: Page) {
 
 /** True once the app has stored a session for this address. */
 export async function isLoggedIn(page: Page, email: string) {
-  return page.evaluate(
-    (e) => localStorage.getItem("userEmail") === e,
-    email
-  );
+  return page.evaluate((e) => localStorage.getItem("userEmail") === e, email);
 }
 
 /**
@@ -61,7 +66,7 @@ export async function latestEmailLink(
   page: Page,
   subject: RegExp,
   linkPattern: RegExp,
-  recipient: string
+  recipient: string,
 ): Promise<string> {
   await page.goto(MAILDEV_URL);
 
@@ -80,7 +85,7 @@ export async function latestEmailLink(
       {
         timeout: 45_000,
         message: `no message matching ${subject} arrived in the local inbox`,
-      }
+      },
     )
     .toBeGreaterThan(0);
 
@@ -112,27 +117,59 @@ export async function latestEmailLink(
     const href = await page
       .locator("iframe")
       .first()
-      .evaluate(
-        (iframe: HTMLIFrameElement, pattern: string) => {
-          const doc = iframe.contentDocument;
-          if (!doc) return null;
-          const re = new RegExp(pattern);
-          const anchors = Array.from(doc.querySelectorAll("a"));
-          const match = anchors.find((a) => re.test(a.href));
-          return match ? match.href : null;
-        },
-        linkPattern.source
-      );
+      .evaluate((iframe: HTMLIFrameElement, pattern: string) => {
+        const doc = iframe.contentDocument;
+        if (!doc) return null;
+        const re = new RegExp(pattern);
+        const anchors = Array.from(doc.querySelectorAll("a"));
+        const match = anchors.find((a) => re.test(a.href));
+        return match ? match.href : null;
+      }, linkPattern.source);
 
     if (href) return href;
     throw new Error(
-      `E-mail to ${recipient} matching ${subject} has no link matching ${linkPattern}`
+      `E-mail to ${recipient} matching ${subject} has no link matching ${linkPattern}`,
     );
   }
 
   throw new Error(
-    `No e-mail to ${recipient} matching ${subject} among ${count} message(s)`
+    `No e-mail to ${recipient} matching ${subject} among ${count} message(s)`,
   );
+}
+
+interface InboxMessage {
+  subject: string;
+  to: { address: string }[];
+  html?: string;
+  text?: string;
+}
+
+/**
+ * Every message in the local inbox, read through MailDev's REST API.
+ *
+ * Driving the inbox UI works for pulling a link out of a message, but it is
+ * the wrong tool for asking who received what: the list does not live-update,
+ * and "the first row" is not a promise about ordering. This reads the data.
+ */
+export async function inboxMessages(): Promise<InboxMessage[]> {
+  const res = await fetch(`${MAILDEV_URL}/api/email`);
+  if (!res.ok) throw new Error(`local inbox not readable: ${res.status}`);
+  const body = await res.json();
+  return Array.isArray(body) ? (body as InboxMessage[]) : [];
+}
+
+/** The subjects of everything addressed to one recipient. */
+export async function subjectsFor(recipient: string): Promise<string[]> {
+  const messages = await inboxMessages();
+  return messages
+    .filter((m) => (m.to ?? []).some((t) => t.address === recipient))
+    .map((m) => m.subject);
+}
+
+/** Empties the inbox without needing a page open on it. */
+export async function emptyInbox(): Promise<void> {
+  const res = await fetch(`${MAILDEV_URL}/api/email/all`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`could not empty local inbox: ${res.status}`);
 }
 
 /** Empties the local inbox so a test only ever sees its own mail. */
@@ -142,7 +179,9 @@ export async function clearInbox(page: Page) {
   if (await deleteAll.count()) {
     await deleteAll.click();
     // The UI asks for confirmation in some builds.
-    const confirm = page.getByRole("button", { name: /^(Delete|Confirm|OK)$/i });
+    const confirm = page.getByRole("button", {
+      name: /^(Delete|Confirm|OK)$/i,
+    });
     if (await confirm.count()) await confirm.first().click();
   }
 }
@@ -158,7 +197,7 @@ export async function authAccountExists(email: string): Promise<boolean> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({}),
-    }
+    },
   );
   const body = (await res.json()) as { userInfo?: { email?: string }[] };
   return (body.userInfo ?? []).some((u) => u.email === email);
@@ -178,7 +217,7 @@ export async function createVerifiedAccount(email: string, password: string) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, returnSecureToken: true }),
-    }
+    },
   );
   if (!signUp.ok) {
     throw new Error(`Could not create ${email}: ${await signUp.text()}`);
@@ -189,7 +228,10 @@ export async function createVerifiedAccount(email: string, password: string) {
     `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents/users/${localId}`,
     {
       method: "PATCH",
-      headers: { Authorization: "Bearer owner", "Content-Type": "application/json" },
+      headers: {
+        Authorization: "Bearer owner",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         fields: {
           email: { stringValue: email },
@@ -201,10 +243,12 @@ export async function createVerifiedAccount(email: string, password: string) {
           isVerified: { booleanValue: true },
         },
       }),
-    }
+    },
   );
   if (!profile.ok) {
-    throw new Error(`Could not write profile for ${email}: ${await profile.text()}`);
+    throw new Error(
+      `Could not write profile for ${email}: ${await profile.text()}`,
+    );
   }
 
   return localId;
@@ -213,7 +257,7 @@ export async function createVerifiedAccount(email: string, password: string) {
 /** Signs in through the Auth emulator REST API to verify a password works. */
 export async function canSignIn(
   email: string,
-  password: string
+  password: string,
 ): Promise<boolean> {
   const res = await fetch(
     `${AUTH_EMULATOR}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-key`,
@@ -221,7 +265,7 @@ export async function canSignIn(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, returnSecureToken: true }),
-    }
+    },
   );
   return res.ok;
 }
@@ -242,7 +286,7 @@ const ADMIN_HEADERS = {
 export async function readUserDoc(uid: string) {
   const res = await fetch(
     `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents/users/${uid}`,
-    { headers: ADMIN_HEADERS }
+    { headers: ADMIN_HEADERS },
   );
   if (!res.ok) return null;
   return (await res.json()) as { fields?: Record<string, any> };
@@ -267,16 +311,16 @@ export async function findUserByEmail(email: string) {
           limit: 1,
         },
       }),
-    }
+    },
   );
   const body = await res.json();
   if (!Array.isArray(body)) {
     throw new Error(
-      `runQuery on users failed: ${JSON.stringify(body).slice(0, 200)}`
+      `runQuery on users failed: ${JSON.stringify(body).slice(0, 200)}`,
     );
   }
   const hit = (body as { document?: { name: string; fields: any } }[]).find(
-    (r) => r.document
+    (r) => r.document,
   );
   return hit?.document ?? null;
 }
@@ -290,7 +334,7 @@ export async function findUserByEmail(email: string) {
  */
 export async function setResortAutoConfirm(
   resortId: string,
-  enabled: boolean
+  enabled: boolean,
 ): Promise<void> {
   const res = await fetch(
     `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents/resorts/${resortId}` +
@@ -301,23 +345,22 @@ export async function setResortAutoConfirm(
       body: JSON.stringify({
         fields: { autoConfirmReservations: { booleanValue: enabled } },
       }),
-    }
+    },
   );
   if (!res.ok) {
     throw new Error(
-      `could not set autoConfirmReservations on ${resortId}: ${res.status} ${await res.text()}`
+      `could not set autoConfirmReservations on ${resortId}: ${res.status} ${await res.text()}`,
     );
   }
 }
 
-export async function getResortAutoConfirm(
-  resortId: string
-): Promise<boolean> {
+export async function getResortAutoConfirm(resortId: string): Promise<boolean> {
   const res = await fetch(
     `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents/resorts/${resortId}`,
-    { headers: ADMIN_HEADERS }
+    { headers: ADMIN_HEADERS },
   );
-  if (!res.ok) throw new Error(`resort ${resortId} not readable: ${res.status}`);
+  if (!res.ok)
+    throw new Error(`resort ${resortId} not readable: ${res.status}`);
   const body = (await res.json()) as {
     fields?: { autoConfirmReservations?: { booleanValue?: boolean } };
   };
@@ -349,7 +392,10 @@ async function clearFutureIn(collectionId: string): Promise<number> {
     `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents:runQuery`,
     {
       method: "POST",
-      headers: { Authorization: "Bearer owner", "Content-Type": "application/json" },
+      headers: {
+        Authorization: "Bearer owner",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         structuredQuery: {
           from: [{ collectionId }],
@@ -362,7 +408,7 @@ async function clearFutureIn(collectionId: string): Promise<number> {
           },
         },
       }),
-    }
+    },
   );
 
   const rows = (await res.json()) as { document?: { name: string } }[];
@@ -375,8 +421,8 @@ async function clearFutureIn(collectionId: string): Promise<number> {
       fetch(`${FIRESTORE_EMULATOR}/v1/${name}`, {
         method: "DELETE",
         headers: { Authorization: "Bearer owner" },
-      })
-    )
+      }),
+    ),
   );
   return names.length;
 }

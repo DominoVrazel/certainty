@@ -12,10 +12,26 @@ import {
 
 interface ReservationDeletedNotificationProps {
   userFirstName: string;
+  /**
+   * Which training was cancelled. A club with several bookings could not tell
+   * from this mail which one it had lost — it said only that one of them was
+   * gone. All optional, because the same mail is rendered for older payloads
+   * that carried nothing but the name.
+   */
+  courseName?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  lineNumber?: number;
 }
 
 export function ReservationDeletedNotification({
   userFirstName,
+  courseName,
+  date,
+  startTime,
+  endTime,
+  lineNumber,
 }: ReservationDeletedNotificationProps) {
   return (
     <Html>
@@ -70,6 +86,24 @@ export function ReservationDeletedNotification({
               Vaša rezervácia bola{" "}
               <span className="ResDeletedText">ZRUŠENÁ</span> strediskom.
             </p>
+
+            {date && (
+              <p>
+                Zrušený bol tréning {courseName ? <>pre trať <b>{courseName}</b> </> : null}
+                na deň <b>{date}</b>
+                {startTime ? (
+                  <>
+                    {" "}od <b>{startTime}</b> do <b>{endTime}</b>
+                  </>
+                ) : null}
+                {lineNumber ? (
+                  <>
+                    {" "}v trati <b>{lineNumber}</b>
+                  </>
+                ) : null}
+                .
+              </p>
+            )}
 
             <p>
               Pre viac informácii napíšte na e-mail strediska. Nájdete ho na

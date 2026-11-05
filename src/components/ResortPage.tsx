@@ -578,30 +578,38 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         await leaveTraining(training.id, uid);
       }
 
-      const userEmail = localStorage.getItem("userEmail");
-      const userFirstName = localStorage.getItem("userFirstName");
-      const userSecondName = localStorage.getItem("userSecondName");
-      if (userEmail && userFirstName && userSecondName && isAdmin) {
-        sendEmail(
-          undefined,
-          "Vaša rezervácia bola zrušená",
-          userEmail,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          userFirstName,
-          userSecondName,
-          undefined,
-          undefined,
-          "USER_DELETE_RES"
+      // The clubs that lose the training are the ones who need telling, so the
+      // recipients come off the training itself. Reading them from
+      // localStorage addressed the mail to whoever was clicking — which, since
+      // only an admin ever gets here, meant the admin told themselves and the
+      // affected clubs heard nothing.
+      if (cancellingForEveryone) {
+        await Promise.all(
+          Object.values(training.participants ?? {}).map((p) =>
+            p.email
+              ? sendEmail(
+                  undefined,
+                  `Zrušený tréning ${training.date} ${training.session.startTime}`,
+                  p.email,
+                  training.courseId,
+                  training.courseName ?? undefined,
+                  training.date,
+                  training.session.startTime,
+                  training.session.endTime,
+                  training.lineNumber,
+                  undefined,
+                  training.discipline ?? undefined,
+                  training.category ?? undefined,
+                  undefined,
+                  undefined,
+                  p.firstName ?? "",
+                  p.secondName ?? "",
+                  undefined,
+                  p.email,
+                  "USER_DELETE_RES"
+                )
+              : Promise.resolve()
+          )
         );
       }
     } catch (error) {

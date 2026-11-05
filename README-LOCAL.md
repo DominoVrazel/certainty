@@ -69,6 +69,18 @@ real addresses. Without it, testing a reservation would email an actual person.
 `functions/src/index.ts` picks the transport off `FUNCTIONS_EMULATOR`, so the
 deployed function is untouched and still sends through Gmail.
 
+The Functions emulator runs the **compiled** output in `functions/lib`, not the
+TypeScript in `functions/src`. `npm run dev` and `npm run emu` build it first, so
+starting the stack always picks up your changes — but a template edited while the
+stack is running needs a rebuild before the emulator sees it:
+
+```bash
+npm --prefix functions run build:watch
+```
+
+Without that, you edit a template and keep testing the previously compiled one, and
+nothing anywhere says so.
+
 Links inside those emails point at `http://localhost:5174` rather than the live site,
 because `functions/.env.local` overrides the URL params. The Firebase CLI loads
 `.env.local` **only** under the emulator — it is never deployed.
@@ -92,6 +104,7 @@ account. Override the password with the `DEV_PASSWORD` env var before `db:seed`.
 | `npm run dev` | Emulators + Vite + local inbox. The normal way to work. |
 | `npm run dev:cloud` | Vite alone, against **production** Firebase. Use sparingly. |
 | `npm run emu` | Emulators only, no Vite. |
+| `npm run build:functions` | Compile `functions/src` → `functions/lib`. |
 | `npm run db:pull` | Refresh the production snapshot. |
 | `npm run db:seed` | Reload the emulators from the snapshot. |
 | `npm run db:verify` | Check the snapshot still contains the orphaned records. |
