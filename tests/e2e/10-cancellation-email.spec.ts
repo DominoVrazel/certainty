@@ -7,6 +7,7 @@ import {
   emptyInbox,
   inboxMessages,
   openAccountMenu,
+  setResortAutoConfirm,
   subjectsFor,
   uniqueEmail,
 } from "./helpers";
@@ -20,8 +21,12 @@ import {
  * UI shows this; the only way to catch it is to read the inbox.
  */
 
+// Stated rather than assumed: a test that leaves the resort on manual
+// confirmation would otherwise make the next one fail, and the failure would
+// point at booking rather than at the leftover setting.
 test.beforeEach(async () => {
   await clearFutureTrainings();
+  await setResortAutoConfirm("Bachledka", true);
 });
 
 async function signIn(page: any, email: string) {
@@ -110,3 +115,69 @@ test("an admin cancelling a booking tells the club, not themselves", async ({
     await adminCtx.close();
   }
 });
+
+/**
+ * What the booking mail claims about confirmation.
+ *
+ * It told every club "Rezervácia teraz čaká na potvrdenie strediskom" — true
+ * before the rework, and false twice over after it: the resort no longer
+ * confirms anything, and with automatic confirmation there is nothing to wait
+ * for at all. Wrong copy in a mail is invisible from the UI, so it needs its
+ * own test.
+ */
+test("the booking mail says whether anything is still expected of the club", async ({
+  browser,
+}) => {
+  // One club per context: signing a second club into a page that is already
+  // signed in finds no login button at all.
+  const book = async (email: string, autoConfirm: boolean) => {
+    await setResortAutoConfirm("Bachledka", autoConfirm);
+    await clearFutureTrainings();
+    await emptyInbox();
+
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    page.on("dialog", (d) => d.accept());
+    try {
+      await createVerifiedAccount(email, DEV_PASSWORD);
+      await signIn(page, email);
+      await page.getByRole("button", { name: "REZERVOVAŤ" }).first().click();
+      await page.locator("#racers").fill("2");
+      await page.locator(".RegButton").last().click();
+      await expect(page.locator(".res-container").first()).toBeVisible({
+        timeout: 20_000,
+      });
+      await expect
+        .poll(() => bookingMailText(email), {
+          timeout: 45_000,
+          message: `no booking mail arrived for ${email}`,
+        })
+        .not.toEqual("");
+      return await bookingMailText(email);
+    } finally {
+      await ctx.close();
+    }
+  };
+
+  const auto = await book(uniqueEmail("veta-auto"), true);
+  expect(auto).toMatch(/zárove.{0,3} potvrdená/i);
+  expect(auto).not.toMatch(/čaká na potvrdenie/i);
+
+  // With the setting off the club does have something to do — and it is the
+  // club that does it, not the resort, which is what the old copy claimed.
+  const manual = await book(uniqueEmail("veta-manual"), false);
+  expect(manual).toMatch(/potvrdiť účasť/i);
+  expect(manual).not.toMatch(/čaká na potvrdenie/i);
+
+  await setResortAutoConfirm("Bachledka", true);
+});
+
+/** The booking mail's body, tags stripped, or "" until it arrives. */
+async function bookingMailText(recipient: string): Promise<string> {
+  const sent = (await inboxMessages()).find(
+    (m) =>
+      /Úspešná rezervácie/.test(m.subject ?? "") &&
+      (m.to ?? []).some((t) => t.address === recipient)
+  );
+  return (sent?.html ?? sent?.text ?? "").replace(/<[^>]+>/g, " ");
+}

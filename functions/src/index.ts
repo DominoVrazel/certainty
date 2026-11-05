@@ -110,6 +110,13 @@ interface EmailData {
     discipline: string;
     category: string;
     uuid: string;
+    /**
+     * Set by the booking page when the resort confirms automatically, so the
+     * confirmation mail can say whether anything is still expected of the club.
+     * Optional: the older payloads, and the mails that say nothing about
+     * confirmation, do not carry it.
+     */
+    autoConfirmed?: boolean;
   };
 }
 

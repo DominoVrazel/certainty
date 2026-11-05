@@ -312,7 +312,12 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     userSecondName: string,
     userTelNumber: string | undefined,
     userEmail: string | undefined,
-    emailIdentifier: string
+    emailIdentifier: string,
+    /**
+     * Whether the booking was confirmed on the spot. Trailing and optional so
+     * the mails that have nothing to say about confirmation stay untouched.
+     */
+    autoConfirmed?: boolean
   ) => {
     const sendEmailFunction = httpsCallable<{
       reservationId: string | undefined;
@@ -335,6 +340,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         userTelNumber: string | undefined;
         userEmail: string | undefined;
         emailIdentifier: string;
+        autoConfirmed?: boolean;
       };
     }>(functions, "sendEmail");
     try {
@@ -359,6 +365,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           userTelNumber,
           userEmail,
           emailIdentifier,
+          autoConfirmed,
         },
       });
       console.log("Email sent:", result);
@@ -434,7 +441,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       // One transaction over a slot-derived document id. Capacity is checked
       // against what the transaction reads, not against a number captured when
       // the modal opened.
-      const trainingId = await createTraining(
+      const { id: trainingId, autoConfirmed } = await createTraining(
         {
           resortId,
           courseId: selectedSession.course,
@@ -485,7 +492,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           userSecondName,
           undefined,
           undefined,
-          useremailIdentifier
+          useremailIdentifier,
+          autoConfirmed
         );
       } else {
         console.error("User email is null. Cannot send email.");

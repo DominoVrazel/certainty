@@ -232,7 +232,11 @@ export async function createTraining(
     /** Set when an admin books on a club's behalf, for the audit trail. */
     createdBy?: string | null;
   }
-): Promise<string> {
+  // `autoConfirmed` is reported back rather than left for the caller to look
+  // up, because only the transaction knows which way the setting read at the
+  // moment the booking was written. The confirmation e-mail says one thing or
+  // the other, so a second read could contradict what was stored.
+): Promise<{ id: string; autoConfirmed: boolean }> {
   const id = slotId(slot);
   const ref = doc(db, "trainings", id);
   const resortRef = doc(db, "resorts", slot.resortId);
@@ -244,6 +248,11 @@ export async function createTraining(
   if (owner.racers > details.capacity) {
     throw new TrainingError("full", "Počet pretekárov presahuje kapacitu trate.");
   }
+
+  // Set inside the transaction and read after it, so the caller is told what
+  // was actually written. A transaction can be retried, so this is assigned
+  // on every attempt rather than accumulated.
+  let autoConfirmed = false;
 
   await runTransaction(db, async (tx) => {
     const existing = await tx.get(ref);
@@ -258,6 +267,7 @@ export async function createTraining(
     // left open since before the admin changed the setting still books under
     // the setting that is actually in force.
     const autoConfirm = autoConfirmFrom((await tx.get(resortRef)).data());
+    autoConfirmed = autoConfirm;
 
     const participants = {
       [owner.uid]: newParticipant(owner, "owner", autoConfirm),
@@ -287,7 +297,7 @@ export async function createTraining(
     });
   });
 
-  return id;
+  return { id, autoConfirmed };
 }
 
 /** Adds a club to an existing training. */

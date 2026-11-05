@@ -19,6 +19,12 @@ interface ReservationNotificationProps {
   lineNumber: number;
   baseUrl: string;
   promoCodesString: string;
+  /**
+   * Whether the resort confirms bookings by itself. When it does, nothing is
+   * expected of the club and the mail must not tell it to wait — which is
+   * what this said to everybody before the setting existed.
+   */
+  autoConfirmed?: boolean;
 }
 
 export function ReservationNotification({
@@ -29,6 +35,7 @@ export function ReservationNotification({
   endTime,
   lineNumber,
   promoCodesString,
+  autoConfirmed,
 }: ReservationNotificationProps) {
   return (
     <Html>
@@ -95,11 +102,20 @@ export function ReservationNotification({
               bola vytvorená.
             </p>
 
-            <p>
-              <b>Rezervácia teraz čaká na potvrdenie</b> strediskom. Informácie
-              o potvrdení rezervácie môžete sledovať na rezervačnej stránke v{" "}
-              <b>DETAILE</b> Vašej rezervácie.
-            </p>
+            {autoConfirmed ? (
+              <p>
+                <b>Rezervácia je zároveň potvrdená</b> — stredisko ju
+                potvrdzuje automaticky, takže z Vašej strany už nie je potrebné nič
+                robiť. Detaily nájdete na rezervačnej stránke v <b>DETAILE</b> Vašej
+                rezervácie.
+              </p>
+            ) : (
+              <p>
+                <b>Ešte treba potvrdiť účasť.</b> Na rezervačnej stránke
+                kliknite na Vašej rezervácii na <b>POTVRDIŤ ÚČASŤ</b> — potvrdzuje
+                si ju každý klub sám.
+              </p>
+            )}
 
             <p>
               <b>
