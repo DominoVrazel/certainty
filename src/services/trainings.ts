@@ -4,6 +4,8 @@ import {
   deleteField,
   doc,
   getDoc,
+  getDocs,
+  limit,
   onSnapshot,
   query,
   runTransaction,
@@ -592,6 +594,28 @@ export async function moveTraining(
 export async function getTraining(trainingId: string): Promise<Training | null> {
   const snap = await getDoc(doc(db, "trainings", trainingId));
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as Training) : null;
+}
+
+/**
+ * Finds a training by either id it has ever been known under.
+ *
+ * Mails already in people's inboxes link to the booking's old `reservations`
+ * document id, and those mails outlive the migration — so the link has to keep
+ * working after the legacy collection is dropped. The migration copied that id
+ * onto the training as `legacyId`, which is what the fallback query looks up.
+ * It is an equality match on a single field, so no composite index is needed.
+ */
+export async function getTrainingByAnyId(
+  id: string
+): Promise<Training | null> {
+  const direct = await getTraining(id);
+  if (direct) return direct;
+
+  const legacy = await getDocs(
+    query(collection(db, "trainings"), where("legacyId", "==", id), limit(1))
+  );
+  const hit = legacy.docs[0];
+  return hit ? ({ id: hit.id, ...hit.data() } as Training) : null;
 }
 
 export interface Closure {

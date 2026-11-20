@@ -140,7 +140,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     LoaderState.Loading
   );
 
-  const [isReservationConfirmed, setIsReservationConfirmed] = useState(false); // NEW: State for reservation confirmation
 
   useEffect(() => {
     const fetchCoursesAndSeasons = async () => {
@@ -482,7 +481,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         console.error("User email is null. Cannot send email.");
       }
 
-      const adminEmailSubject = `Potvrdenie rezervácie tréningu na ${selectedSession.date}`;
+      const adminEmailSubject = `Nová rezervácia tréningu na ${selectedSession.date}`;
       const adminEmailRecipient = resortEmail || "";
       const adminemailIdentifier = "ADMIN_SUCCESS_RES";
       const userTelNumber = localStorage.getItem("userTel_number") || "";

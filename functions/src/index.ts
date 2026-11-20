@@ -240,45 +240,10 @@ emailApp.post("*", async (request, response) => {
 
     const data = request.body.data as EmailData;
 
-    const reservationUrl = `${reservationBaseUrl.value()}/${
-      data.reservationId
-    }`;
-
-    let html = "";
-    if (data.emailData.emailIdentifier === EmailType.EmailVerifyUser) {
-      const verifyLink = `${verifyUserBaseUrl.value()}?uuid=${
-        data.emailData.uuid
-      }`;
-      html = await render(UserEmailVerify({ ...data.emailData, verifyLink }));
-    }
-
-    if (data.emailData.emailIdentifier === EmailType.EmailUserRes) {
-      html = await render(
-        UserEmailRES({ ...data.emailData, baseUrl: reservationUrl })
-      );
-    }
-    if (data.emailData.emailIdentifier === EmailType.EmailAdminRes) {
-      html = await render(
-        AdminEmailRES({ ...data.emailData, baseUrl: reservationUrl })
-      );
-    }
-    if (data.emailData.emailIdentifier === EmailType.EmailUserResAccepted) {
-      html = await render(UserEmailRESAccepted({ ...data.emailData }));
-    }
-    if (data.emailData.emailIdentifier === EmailType.EmailUserResDeleted) {
-      html = await render(UserEmailRESDeleted({ ...data.emailData }));
-    }
-    if (data.emailData.emailIdentifier === EmailType.EmailAddedToTraining) {
-      html = await render(EmailAddedToTraining({ ...data.emailData }));
-    }
-    if (data.emailData.emailIdentifier === EmailType.EmailForgottenPassword) {
-      const resetLink = `${resetPassBaseUrl.value()}?uuid=${
-        data.emailData.uuid
-      }`;
-      html = await render(
-        UserEmailForgottenPass({ ...data.emailData, resetLink: resetLink })
-      );
-    }
+    // Template selection used to be written out a second time here, which meant
+    // every change to a mail had to be made twice or the two copies silently
+    // diverged.
+    const html = await renderEmailHtml(data);
 
     return transporter
       .sendMail({

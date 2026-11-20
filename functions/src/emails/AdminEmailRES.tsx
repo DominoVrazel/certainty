@@ -106,8 +106,8 @@ export function ReservationConfirmation({
                 margin-top: 1vw;
               }
   
-              .accept-button {
-                background-color: #4CAF50 !important; 
+              .view-button {
+                background-color: #1c7adf !important; 
                 color: #fff !important;
                 text-decoration: none !important;
              
@@ -124,8 +124,8 @@ export function ReservationConfirmation({
            
               }
   
-              .accept-button:hover {
-                background-color: #45a049;
+              .view-button:hover {
+                background-color: #2187f5;
               }
             `}
         </style>
@@ -166,8 +166,15 @@ export function ReservationConfirmation({
           </Text>
 
           <div className="button-container">
-            <Button href={baseUrl} className="accept-button">
-              POTVRDIŤ REZERVÁCIU
+            {/*
+              This used to read POTVRDIŤ REZERVÁCIU and point at a page that
+              wrote the confirmation. Confirming is not the resort's job any
+              more — a resort either confirms automatically or the club
+              confirms its own attendance — so the link only opens the
+              booking.
+            */}
+            <Button href={baseUrl} className="view-button">
+              ZOBRAZIŤ REZERVÁCIU
             </Button>
           </div>
         </Container>

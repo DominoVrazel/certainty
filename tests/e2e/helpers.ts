@@ -67,6 +67,12 @@ export async function latestEmailLink(
   subject: RegExp,
   linkPattern: RegExp,
   recipient: string,
+  /**
+   * How long to keep waiting for the message. The default suits a stack that
+   * has already sent one mail; the first send after the Functions emulator
+   * boots is far slower, so a spec that triggers it needs longer.
+   */
+  timeoutMs = 45_000,
 ): Promise<string> {
   await page.goto(MAILDEV_URL);
 
@@ -83,7 +89,7 @@ export async function latestEmailLink(
         return n;
       },
       {
-        timeout: 45_000,
+        timeout: timeoutMs,
         message: `no message matching ${subject} arrived in the local inbox`,
       },
     )
@@ -394,6 +400,33 @@ export async function getResortAutoConfirm(resortId: string): Promise<boolean> {
   };
   // Absent counts as on, the same default the app applies.
   return body.fields?.autoConfirmReservations?.booleanValue !== false;
+}
+
+/**
+ * Stamps a training with the id its booking had before the migration.
+ *
+ * Mails sent before the move link to that old id, so the detail page has to
+ * find the training by it. The migration sets the field; a booking made by a
+ * test does not, hence this.
+ */
+export async function setTrainingLegacyId(
+  trainingId: string,
+  legacyId: string
+): Promise<void> {
+  const res = await fetch(
+    `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents/trainings/${trainingId}` +
+      `?updateMask.fieldPaths=legacyId`,
+    {
+      method: "PATCH",
+      headers: ADMIN_HEADERS,
+      body: JSON.stringify({ fields: { legacyId: { stringValue: legacyId } } }),
+    }
+  );
+  if (!res.ok) {
+    throw new Error(
+      `could not set legacyId on ${trainingId}: ${res.status} ${await res.text()}`
+    );
+  }
 }
 
 /**

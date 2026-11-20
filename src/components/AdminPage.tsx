@@ -499,7 +499,7 @@ function AdminPage() {
 
               <div className="add-content-container">
                 <h2 className="form-heading">
-                  Pridajte logo strediska, prípadne promokódy
+                  Nastavenia strediska
                 </h2>
                 <div className="form-group">
                   <label className="form-label-content">
@@ -533,10 +533,15 @@ function AdminPage() {
                     />{" "}
                     Automaticky potvrdzovať rezervácie
                   </label>
+                  {/*
+                    Both directions, not just the current state. Confirming is
+                    the thing you get by switching this OFF, so an admin reading
+                    only "what it does now" cannot tell how to reach it.
+                  */}
                   <p className="form-hint">
                     {autoConfirm
-                      ? "Rezervácia je potvrdená hneď po vytvorení. Kluby nemusia nič potvrdzovať."
-                      : "Každý klub si musí účasť na tréningu potvrdiť sám."}
+                      ? "Zapnuté: rezervácia je potvrdená hneď po vytvorení a kluby nepotvrdzujú nič. Vypnutím zapnete potvrdzovanie — každý klub si účasť potvrdí sám tlačidlom POTVRDIŤ ÚČASŤ."
+                      : "Vypnuté: každý klub si účasť na tréningu potvrdí sám tlačidlom POTVRDIŤ ÚČASŤ. Zapnutím sa rezervácie potvrdzujú automaticky."}
                   </p>
                 </div>
 

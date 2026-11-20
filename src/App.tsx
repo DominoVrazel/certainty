@@ -14,7 +14,7 @@ import Modal from "./components/Modal";
 import EmptyResortsPage from "./components/EmptyResortsPage";
 import GDPRPage from "./components/GDPRPage";
 
-import ReservationConfirm from "./components/ReservationConfirm";
+import ReservationDetail from "./components/ReservationDetail";
 import ForgottenPassword from "./components/ForgottenPassword";
 import { auth, authReady, logoutUser } from "./services/FirebaseService";
 import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
@@ -286,7 +286,7 @@ function App() {
         <Route
           path="/reservations/:reservationId"
           element={
-            <ReservationConfirm
+            <ReservationDetail
               isAdminLoggedIn={!!(isLoggedIn && user?.isAdmin)}
             />
           }

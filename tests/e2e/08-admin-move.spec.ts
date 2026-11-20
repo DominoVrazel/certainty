@@ -64,7 +64,11 @@ test("an admin moves a booking and every club on it comes along", async ({
     await expect(a.getByText(/VOĽNÝCH:\s*41\s*\/\s*50/).first()).toBeVisible({
       timeout: 20_000,
     });
-    expect(await a.getByText(/VOĽNÝCH:/).count()).toBe(1);
+    // Retrying, not a snapshot count: the move deletes one document and writes
+    // another, and the listener can deliver those as two events — so there is a
+    // moment where the old slot is still on screen next to the new one. Counting
+    // once caught that moment and failed a move that had worked.
+    await expect(a.getByText(/VOĽNÝCH:/)).toHaveCount(1, { timeout: 20_000 });
 
     // The club sees it at the new slot too.
     await c.reload();
