@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -8,15 +8,10 @@ import {
 } from "react-router-dom";
 import RegisterModal from "./components/RegisterModal";
 import LoginModal from "./components/LoginModal";
-import AdminPage from "./components/AdminPage";
 import ResortPage from "./components/ResortPage";
 import Modal from "./components/Modal";
-import EmptyResortsPage from "./components/EmptyResortsPage";
-import GDPRPage from "./components/GDPRPage";
 
-import ReservationDetail from "./components/ReservationDetail";
 import MaintenanceBanner from "./components/MaintenanceBanner";
-import ForgottenPassword from "./components/ForgottenPassword";
 import { auth, authReady, logoutUser } from "./services/FirebaseService";
 import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
 
@@ -28,8 +23,22 @@ import ZSLLogo from "./assets/images/Logo-ZSL.png";
 import "./App.css";
 import "./Modal.css";
 import { getFirestore, collection, getDocs, doc } from "firebase/firestore";
-import VerifyUser from "./components/VerifyUser";
-import AccountSettings from "./components/AccountSettings";
+
+/**
+ * Split out of the main bundle.
+ *
+ * Every one of these used to be downloaded by everybody on first load — a
+ * club browsing the calendar was fetching the whole admin screen with it.
+ * ResortPage is deliberately not here: it is the landing page, so deferring
+ * it would add a round trip to the one screen everyone does see.
+ */
+const AdminPage = lazy(() => import("./components/AdminPage"));
+const EmptyResortsPage = lazy(() => import("./components/EmptyResortsPage"));
+const GDPRPage = lazy(() => import("./components/GDPRPage"));
+const ReservationDetail = lazy(() => import("./components/ReservationDetail"));
+const ForgottenPassword = lazy(() => import("./components/ForgottenPassword"));
+const VerifyUser = lazy(() => import("./components/VerifyUser"));
+const AccountSettings = lazy(() => import("./components/AccountSettings"));
 
 export interface User {
   firstName: string;
@@ -252,6 +261,9 @@ function App() {
       </Modal>
 
       {/* Routing functionality */}
+      {/* One boundary around the lot: the screens above arrive as separate
+          files now, and React needs somewhere to wait while one downloads. */}
+      <Suspense fallback={<div className="route-loading">Načítavam…</div>}>
       <Routes>
         <Route
           path="/"
@@ -306,6 +318,7 @@ function App() {
         />
         <Route path="/GDPRPage" element={<GDPRPage />} />
       </Routes>
+      </Suspense>
     </Router>
   );
 }

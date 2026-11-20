@@ -328,3 +328,10 @@ button:hover {
   font-size: 1rem;
   line-height: 1.4;
 }
+
+/* While a lazily loaded screen is on its way — see the Suspense in App.tsx. */
+.route-loading {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #555;
+}
