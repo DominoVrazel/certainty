@@ -15,6 +15,7 @@ import EmptyResortsPage from "./components/EmptyResortsPage";
 import GDPRPage from "./components/GDPRPage";
 
 import ReservationDetail from "./components/ReservationDetail";
+import MaintenanceBanner from "./components/MaintenanceBanner";
 import ForgottenPassword from "./components/ForgottenPassword";
 import { auth, authReady, logoutUser } from "./services/FirebaseService";
 import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
@@ -149,6 +150,8 @@ function App() {
 
   return (
     <Router>
+      <MaintenanceBanner />
+
       {/* Navigation Menu */}
 
       <div className="card-header">

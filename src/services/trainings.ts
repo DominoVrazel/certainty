@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./FirebaseService";
 import { autoConfirmFrom } from "./resorts";
+import { assertWritable } from "./maintenance";
 
 /**
  * Every write to a training goes through here.
@@ -239,6 +240,7 @@ export async function createTraining(
   // moment the booking was written. The confirmation e-mail says one thing or
   // the other, so a second read could contradict what was stored.
 ): Promise<{ id: string; autoConfirmed: boolean }> {
+  assertWritable();
   const id = slotId(slot);
   const ref = doc(db, "trainings", id);
   const resortRef = doc(db, "resorts", slot.resortId);
@@ -308,6 +310,7 @@ export async function joinTraining(
   joiner: ParticipantInput,
   capacity: number
 ): Promise<void> {
+  assertWritable();
   const ref = doc(db, "trainings", trainingId);
 
   await runTransaction(db, async (tx) => {
@@ -363,6 +366,7 @@ export async function leaveTraining(
   trainingId: string,
   uid: string
 ): Promise<"left" | "deleted"> {
+  assertWritable();
   const ref = doc(db, "trainings", trainingId);
   let outcome: "left" | "deleted" = "left";
 
@@ -413,6 +417,7 @@ export async function leaveTraining(
 
 /** Cancels the whole training, for every club on it. */
 export async function cancelTraining(trainingId: string): Promise<void> {
+  assertWritable();
   await deleteDoc(doc(db, "trainings", trainingId));
 }
 
@@ -423,6 +428,7 @@ export async function updateParticipant(
   changes: { racers?: number; coaches?: number },
   capacity: number
 ): Promise<void> {
+  assertWritable();
   const ref = doc(db, "trainings", trainingId);
 
   await runTransaction(db, async (tx) => {
@@ -463,6 +469,7 @@ export async function updateTrainingDetails(
   trainingId: string,
   changes: { discipline?: string; category?: string; note?: string }
 ): Promise<void> {
+  assertWritable();
   await runTransaction(db, async (tx) => {
     const ref = doc(db, "trainings", trainingId);
     const snap = await tx.get(ref);
@@ -484,6 +491,7 @@ export async function confirmAttendance(
   trainingId: string,
   uid: string
 ): Promise<void> {
+  assertWritable();
   await runTransaction(db, async (tx) => {
     const ref = doc(db, "trainings", trainingId);
     const snap = await tx.get(ref);
@@ -524,6 +532,7 @@ export async function checkIn(
   uid: string,
   attended: boolean
 ): Promise<void> {
+  assertWritable();
   await updateDoc(doc(db, "trainings", trainingId), {
     [`participants.${uid}.checkedInAt`]: attended ? Timestamp.now() : null,
     [`participants.${uid}.attended`]: attended,
@@ -543,6 +552,7 @@ export async function moveTraining(
   trainingId: string,
   target: SlotRef
 ): Promise<string> {
+  assertWritable();
   const fromRef = doc(db, "trainings", trainingId);
   const toId = slotId(target);
   const toRef = doc(db, "trainings", toId);

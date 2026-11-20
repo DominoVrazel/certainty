@@ -1,0 +1,60 @@
+rules_version = '2';
+
+/**
+ * The migration window, and nothing else.
+ *
+ * Deployed for the few minutes between taking the production snapshot and
+ * bringing the new app up. Anything written in that gap would land in the old
+ * collections after the copy had been taken, and would quietly vanish — so
+ * this denies every client write while leaving the calendar readable.
+ *
+ * It has to be the rules rather than the frontend: a browser tab opened before
+ * the window is still running the old bundle, and that bundle will happily
+ * write. Only the server can refuse it.
+ *
+ * The Cloud Functions are unaffected. They use the Admin SDK, which bypasses
+ * rules entirely, so account verification and password resets keep working.
+ *
+ *   npm run deploy:maintenance      (put it up)
+ *   npm run deploy:rules            (the real rules, at step 9)
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Reads stay as the real ruleset has them, so nothing on the public
+    // calendar changes shape during the window.
+    match /resorts/{document=**} {
+      allow read: if true;
+    }
+
+    match /trainings/{trainingId} {
+      allow read: if true;
+    }
+
+    match /closures/{closureId} {
+      allow read: if true;
+    }
+
+    match /reservations/{document=**} {
+      allow read: if true;
+    }
+
+    match /closedTracks/{trackId} {
+      allow read: if true;
+    }
+
+    // A signed-in club still needs its own profile to render the header.
+    match /users/{userId} {
+      allow get: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Nothing above grants a write, and an unmatched request is denied by
+    // default, so every write is already refused. This says so out loud —
+    // a reader should not have to infer the ban from an absence. Note a deny
+    // cannot override an allow in Firestore, so this adds nothing: it is the
+    // missing `allow write` above that does the work.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

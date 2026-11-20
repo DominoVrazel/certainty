@@ -29,6 +29,7 @@ import CalendarWeek from "./calendar/CalendarWeek";
 import MoveTrainingModal from "./MoveTrainingModal";
 import { slotKey, useTrainingWeek } from "../hooks/useTrainingWeek";
 import { currentSeasons, todayIso } from "../services/seasons";
+import { ReadOnlyError, assertWritable } from "../services/maintenance";
 import {
   cancelTraining,
   checkIn,
@@ -522,7 +523,11 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       setVerifyLoadingState(LoaderState.Finished);
     } catch (error) {
       console.error("Error saving reservation: ", error);
-      alert("There was an error saving the reservation.");
+      alert(
+        error instanceof TrainingError || error instanceof ReadOnlyError
+          ? error.message
+          : "Rezerváciu sa nepodarilo uložiť."
+      );
     }
   };
 
@@ -605,7 +610,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     } catch (error) {
       console.error("Error leaving training: ", error);
       alert(
-        error instanceof TrainingError
+        error instanceof TrainingError || error instanceof ReadOnlyError
           ? error.message
           : "Pri zrušení rezervácie došlo k chybe."
       );
@@ -796,6 +801,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     session: { startTime: string; endTime: string } | null
   ) => {
     try {
+      assertWritable();
       // A whole-day closure and a single-block one are the same document with
       // a different scope, so one query serves both.
       await setDoc(
@@ -821,7 +827,11 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       );
     } catch (error) {
       console.error("Error closing track: ", error);
-      alert("Trať sa nepodarilo zavrieť.");
+      alert(
+        error instanceof ReadOnlyError
+          ? error.message
+          : "Trať sa nepodarilo zavrieť."
+      );
     }
   };
 
@@ -833,6 +843,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     startTime?: string
   ) => {
     try {
+      assertWritable();
       await deleteDoc(
         doc(
           db,
@@ -842,7 +853,11 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       );
     } catch (error) {
       console.error("Error reopening track: ", error);
-      alert("Trať sa nepodarilo otvoriť.");
+      alert(
+        error instanceof ReadOnlyError
+          ? error.message
+          : "Trať sa nepodarilo otvoriť."
+      );
     }
   };
 

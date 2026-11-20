@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Training } from "../../services/trainings";
+import { READ_ONLY } from "../../services/maintenance";
 import type {
   CalendarActions,
   TimeSession,
@@ -44,7 +45,7 @@ const SessionCell: React.FC<SessionCellProps> = ({
           <div className="session-course-times">
             {session.startTime} - {session.endTime}
           </div>
-          {date !== today && (
+          {date !== today && !READ_ONLY && (
             <button
               className="reservation-button"
               onClick={() => actions.onReserve(date, session, lineNumber)}
@@ -75,7 +76,8 @@ const SessionCell: React.FC<SessionCellProps> = ({
   const isParticipant = !!mine;
   const isOwner = !!(myUid && training.participants?.[myUid]?.role === "owner");
 
-  const mayManage = (viewer.isLoggedIn && isParticipant) || viewer.isAdmin;
+  const mayManage =
+    !READ_ONLY && ((viewer.isLoggedIn && isParticipant) || viewer.isAdmin);
   // Editable while the training is still ahead. It used to lock once the
   // status was "confirmed", which meant the resort had accepted it — now the
   // clubs confirm their own attendance, so that same rule would have a club
@@ -91,7 +93,9 @@ const SessionCell: React.FC<SessionCellProps> = ({
   const mayCancelNow = mayEditNow || (viewer.isAdmin && date >= today);
 
   const canJoin =
-    racersFree > 0 && (!viewer.isLoggedIn || (!isParticipant && viewer.isLoggedIn));
+    !READ_ONLY &&
+    racersFree > 0 &&
+    (!viewer.isLoggedIn || (!isParticipant && viewer.isLoggedIn));
 
   return (
     <div className={`res-container ${statusClass}`}>
@@ -194,7 +198,7 @@ const SessionCell: React.FC<SessionCellProps> = ({
           </div>
         </div>
 
-        {viewer.isAdmin && date !== today && (
+        {viewer.isAdmin && date !== today && !READ_ONLY && (
           <button
             className="detail-button"
             onClick={() => actions.onMove(training)}
@@ -234,7 +238,7 @@ const SessionCell: React.FC<SessionCellProps> = ({
 
         {/* Confirming is the club's own job now; the resort no longer has to
             chase every booking. */}
-        {isParticipant && !mine?.confirmedAt && (
+        {isParticipant && !mine?.confirmedAt && !READ_ONLY && (
           <button
             className="accept-training-button"
             onClick={() => actions.onConfirm(training.id)}
@@ -245,7 +249,7 @@ const SessionCell: React.FC<SessionCellProps> = ({
         )}
 
         {/* On the day itself, the club marks that it actually turned up. */}
-        {isParticipant && date === today && (
+        {isParticipant && date === today && !READ_ONLY && (
           <button
             className="accept-training-button"
             onClick={() => actions.onCheckIn(training.id, !mine?.attended)}

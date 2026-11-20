@@ -1,5 +1,6 @@
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "./FirebaseService";
+import { assertWritable } from "./maintenance";
 
 /**
  * Settings the resort administrator controls, stored on the resort document.
@@ -32,6 +33,7 @@ export async function setAutoConfirm(
   resortId: string,
   enabled: boolean
 ): Promise<void> {
+  assertWritable();
   await updateDoc(doc(db, "resorts", resortId), {
     [AUTO_CONFIRM_FIELD]: enabled,
   });

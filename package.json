@@ -15,7 +15,7 @@
     "deploy": "npm run build && firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions",
     "deploy:rules": "firebase deploy --only firestore:rules,storage",
-    "test:rules": "node scripts/with-jdk.mjs firebase emulators:exec --only firestore \"node --test tests/rules.test.mjs tests/rules-trainings.test.mjs\"",
+    "test:rules": "node scripts/with-jdk.mjs firebase emulators:exec --only firestore \"node --test tests/rules.test.mjs tests/rules-trainings.test.mjs tests/rules-maintenance.test.mjs\"",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "db:verify": "node scripts/verify-orphans.mjs",
@@ -25,7 +25,13 @@
     "test:concurrency": "node scripts/test-concurrency.mjs",
     "db:migrate:persist": "node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore,storage --import=./.emulator-data \"node scripts/migrate-trainings.mjs --target=emulator && node scripts/export-emulator.mjs\" && node scripts/finalize-export.mjs",
     "build:functions": "npm --prefix functions run build",
-    "test:unit": "node --test tests/seasons.test.mjs"
+    "test:unit": "node --test tests/seasons.test.mjs",
+    "build:readonly": "tsc && vite build --mode readonly",
+    "deploy:readonly": "npm run build:readonly && firebase deploy --only hosting",
+    "deploy:maintenance": "firebase deploy --config firebase.maintenance.json --only firestore:rules",
+    "db:drop-legacy:check": "node scripts/drop-legacy-collections.mjs --target=emulator --dry-run",
+    "db:drop-legacy": "node scripts/drop-legacy-collections.mjs --target=emulator",
+    "bench": "node scripts/benchmark-reads.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",

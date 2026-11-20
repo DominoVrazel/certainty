@@ -68,6 +68,63 @@ more, so it is no longer needed for day-to-day work.
 **`npm install` is required after a fresh clone** before `npm run dev`, because the
 local mail inbox (MailDev) is a devDependency.
 
+## The migration window
+
+Moving production onto the `trainings` model means copying a snapshot and then
+pointing the app at it. Anything written in between lands in the old collections
+*after* the copy was taken, and is simply lost — a booking a club made and can
+still see on its screen, gone by the time the new app comes up. So the window is
+closed to writes at both ends.
+
+```bash
+npm run db:pull              # 5 — this pull is the backup
+npm run deploy:maintenance   # 6a — rules: every client write refused
+npm run deploy:readonly      # 6b — banner, no booking controls
+```
+
+**The rules are the enforcement, not the banner.** A tab opened before the
+window is still running the old bundle, and that bundle will happily write;
+only the server can refuse it. `firestore.rules.maintenance` leaves the calendar
+readable and denies every write, including an admin's. Cloud Functions are
+unaffected — they use the Admin SDK, which bypasses rules, so verification and
+password resets keep working. Covered by `tests/rules-maintenance.test.mjs`.
+
+`npm run build:readonly` loads `.env.readonly`, which sets `VITE_READ_ONLY`.
+That hides the booking, joining, editing, cancelling and confirming controls and
+puts a banner across the top, so a club sees why rather than assuming the site
+is broken. Writes also fail in the service layer, which catches any path that
+was missed.
+
+Then migrate, check, and bring the real thing up:
+
+```bash
+node scripts/migrate-trainings.mjs --target=prod --confirm
+npm run deploy                # 9 — new frontend
+npm run deploy:rules          # 9 — and the tightened rules, together
+```
+
+Rolling back any of this is `firebase hosting:rollback` plus deleting the three
+new collections. Nothing above modifies an existing document.
+
+## Dropping the old collections
+
+Last, and days later — step 11. This is the only irreversible part of the move.
+
+```bash
+npm run db:pull                                                  # the backup
+node scripts/drop-legacy-collections.mjs --target=prod --dry-run
+node scripts/drop-legacy-collections.mjs --target=prod --confirm
+```
+
+It refuses to delete anything until every reservation is accounted for in
+`trainings` (by `legacyId`) or in `trainingsOrphanedParticipants`, and every
+`closedTracks` document has a matching `closures` document. A reservation nobody
+migrated is a bug in the migration, and deleting it would destroy the evidence.
+`--force` overrides the refusal and should not be needed.
+
+On the emulator the dry run currently reports 705 reservations, 604 `addedUsers`
+and 418 closed tracks — 1727 documents — with nothing unmatched.
+
 ## Known blocker for a real launch
 
 The deployed Firestore and Storage rules are `allow read, write: if true`. Deploying
