@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-import { getStorage, ref, uploadBytes } from "firebase/storage";
+import { ref, uploadBytes } from "firebase/storage";
+import { storage } from "../services/FirebaseService";
 
 interface ImageUploadProps {
   selectedResort: string | null;
@@ -36,7 +37,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       setError(null);
 
       try {
-        const storage = getStorage();
         const sanitizedResortName = selectedResort.replace(
           /[^a-zA-Z0-9]/g,
           "_"

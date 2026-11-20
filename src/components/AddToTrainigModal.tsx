@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Modal from "./Modal";
-import { getFirestore, doc, deleteDoc } from "firebase/firestore";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "../services/FirebaseService";
 
 interface ReservationModalProps {
   date: string;
@@ -25,7 +26,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   const [coaches, setCoaches] = useState<number>(0); // Default to 1 racer
   const [discipline, setDiscipline] = useState<string>("Slalom"); // Default discipline
   const [category, setCategory] = useState<string>("Žiaci");
-  const db = getFirestore();
   useEffect(() => {
     // Populate form fields with existing reservation details if applicable
     if (isExistingReservation && existingDetails) {

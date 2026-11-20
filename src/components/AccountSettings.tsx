@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../services/FirebaseService";
 import { User } from "../App";
 import "../AccountSettings.css";
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
@@ -26,7 +27,6 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ user, setUser }) => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const db = getFirestore();
       const userId = localStorage.getItem("userId"); // Assuming user ID is stored in localStorage
 
       if (userId) {
@@ -104,7 +104,6 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ user, setUser }) => {
       return;
     }
 
-    const db = getFirestore();
     const userId = localStorage.getItem("userId");
 
     if (userId) {

@@ -12,8 +12,14 @@ import ResortPage from "./components/ResortPage";
 import Modal from "./components/Modal";
 
 import MaintenanceBanner from "./components/MaintenanceBanner";
-import { auth, authReady, logoutUser } from "./services/FirebaseService";
-import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
+import {
+  auth,
+  authReady,
+  db,
+  logoutUser,
+  storage,
+} from "./services/FirebaseService";
+import { ref, getDownloadURL, listAll } from "firebase/storage";
 
 import Dropdown from "react-bootstrap/Dropdown";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -22,7 +28,7 @@ import ZSLLogo from "./assets/images/Logo-ZSL.png";
 
 import "./App.css";
 import "./Modal.css";
-import { getFirestore, collection, getDocs, doc } from "firebase/firestore";
+import { collection, getDocs, doc } from "firebase/firestore";
 
 /**
  * Split out of the main bundle.
@@ -62,8 +68,6 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [resorts, setResorts] = useState<Resort[]>([]);
 
-  const db = getFirestore();
-  const storage = getStorage();
 
   useEffect(() => {
     /**

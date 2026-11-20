@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import "../AdminPage.css";
 import {
-  getFirestore,
   collection,
   getDocs,
   doc,
@@ -18,7 +17,7 @@ import AddPromocodes from "./AddPromocodes";
 import ImageUpload from "./ImageUpload";
 
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
-import { authReady } from "../services/FirebaseService";
+import { authReady, db } from "../services/FirebaseService";
 import MonthlyReport from "./admin/MonthlyReport";
 import { autoConfirmFrom, setAutoConfirm } from "../services/resorts";
 
@@ -91,7 +90,6 @@ function AdminPage() {
   const [savingAutoConfirm, setSavingAutoConfirm] = useState(false);
   const [users, setUsers] = useState<User[]>([]); // State to hold users
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const db = getFirestore();
   const lang = "sk";
   const [verifyLoadingState, setVerifyLoadingState] = useState(
     LoaderState.Loading

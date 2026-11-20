@@ -1,4 +1,5 @@
-import { doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../services/FirebaseService";
 import { useEffect, useState } from "react";
 
 interface PromoCode {
@@ -11,7 +12,6 @@ export const fetchPromoCodes = async (
   selectedResort: string | null,
   ZSL_code: string
 ): Promise<PromoCode[]> => {
-  const db = getFirestore();
   if (!selectedResort) {
     console.error("Selected resort is null.");
     return [];
@@ -61,7 +61,6 @@ export const deletePromoCodes = async (
   selectedResort: string | null,
   promoCodes: PromoCode[]
 ) => {
-  const db = getFirestore();
   if (!selectedResort) {
     console.error("Selected resort is null.");
     return;

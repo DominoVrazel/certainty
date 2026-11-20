@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  getFirestore,
   collection,
   getDocs,
   getDoc,
@@ -14,7 +13,7 @@ import {
 } from "firebase/firestore";
 import { format, addDays, set } from "date-fns";
 import { httpsCallable } from "firebase/functions";
-import { functions } from "../services/FirebaseService";
+import { db, functions } from "../services/FirebaseService";
 
 import ReservationModal from "./ReservationModal";
 import EditReservationModal from "./EditReservationModal";
@@ -80,7 +79,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     Record<string, number>
   >({});
   const [weekOffset, setWeekOffset] = useState<Record<string, number>>({});
-  const db = getFirestore();
   const lang = "sk";
   const [reservationStatus, setReservationStatus] = useState<
     "vytvorená" | "prijata" | "zrusena"
@@ -388,7 +386,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         return;
       }
 
-      const db = getFirestore();
 
       const courseDoc = await getDoc(
         doc(db, "resorts", resortId, "courses", selectedSession.course)
