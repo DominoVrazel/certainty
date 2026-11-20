@@ -82,6 +82,14 @@ const SessionCell: React.FC<SessionCellProps> = ({
   // lock itself out of its own booking the moment it said it was coming.
   const mayEditNow = date !== today;
 
+  // Cancelling is not editing. A resort closes for weather on the day itself,
+  // so an admin can call off anything dated today or later — including a
+  // session that already finished this afternoon, because "it did not happen"
+  // is noticed in the evening. Mirrors the rules, so the button is not offered
+  // for a delete that would be refused. Clubs are unchanged: dropping out on
+  // the day is a no-show, which check-in records.
+  const mayCancelNow = mayEditNow || (viewer.isAdmin && date >= today);
+
   const canJoin =
     racersFree > 0 && (!viewer.isLoggedIn || (!isParticipant && viewer.isLoggedIn));
 
@@ -92,8 +100,9 @@ const SessionCell: React.FC<SessionCellProps> = ({
           {session.startTime} - {session.endTime}
         </div>
 
-        {mayManage && mayEditNow && (
+        {mayManage && (mayEditNow || mayCancelNow) && (
           <div className="delEditButtons-group">
+            {mayEditNow && (
             <button
               className="handler-edit"
               onClick={() => actions.onEdit(training)}
@@ -107,6 +116,8 @@ const SessionCell: React.FC<SessionCellProps> = ({
                   : "Editovať rezerváciu"}
               </span>
             </button>
+            )}
+            {mayCancelNow && (
             <button
               className="handler-delete"
               onClick={() => actions.onLeaveOrCancel(training)}
@@ -120,6 +131,7 @@ const SessionCell: React.FC<SessionCellProps> = ({
                   : "Odhlásiť sa z tréningu"}
               </span>
             </button>
+            )}
           </div>
         )}
 

@@ -402,6 +402,121 @@ export async function getResortAutoConfirm(resortId: string): Promise<boolean> {
   return body.fields?.autoConfirmReservations?.booleanValue !== false;
 }
 
+/** The slope the e2e calendar opens on, and the blocks it offers. */
+export const E2E_COURSE_ID = "Tr_ningov__centrum_O_a_V_Kraj_aka";
+export const E2E_COURSE_NAME = "Tréningové cetrum O a V Krajňáka - Jezersko";
+
+/** Today in Bratislava, the same way the calendar works it out. */
+export function todayIsoLocal(): string {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Bratislava",
+  }).format(new Date());
+}
+
+/**
+ * Puts a training on today's calendar, already finished.
+ *
+ * It cannot be booked through the UI — today is closed to booking — and that
+ * is exactly the state worth testing: the resort is standing there in the
+ * evening looking at a training that did not happen.
+ *
+ * The id is arbitrary on purpose. The calendar keys cells by date, session and
+ * line, never by document id, so a test that hand-built the real slot id would
+ * be re-implementing production logic in order to check it.
+ */
+export async function seedFinishedTrainingToday(
+  ownerUid: string,
+  sportClub: string
+): Promise<{ id: string; date: string; startTime: string; endTime: string }> {
+  const date = todayIsoLocal();
+  const startTime = "09:00";
+  const endTime = "11:00";
+  const id = `e2e-today-${Date.now()}`;
+
+  // Local wall-clock times; the emulator and this process share a time zone.
+  const startAt = new Date(`${date}T${startTime}:00`);
+  const endAt = new Date(`${date}T${endTime}:00`);
+
+  const res = await fetch(
+    `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents/trainings/${id}`,
+    {
+      method: "PATCH",
+      headers: ADMIN_HEADERS,
+      body: JSON.stringify({
+        fields: {
+          resortId: { stringValue: "Bachledka" },
+          courseId: { stringValue: E2E_COURSE_ID },
+          courseName: { stringValue: E2E_COURSE_NAME },
+          date: { stringValue: date },
+          session: {
+            mapValue: {
+              fields: {
+                startTime: { stringValue: startTime },
+                endTime: { stringValue: endTime },
+              },
+            },
+          },
+          lineNumber: { integerValue: "1" },
+          startAt: { timestampValue: startAt.toISOString() },
+          endAt: { timestampValue: endAt.toISOString() },
+          discipline: { stringValue: "Slalom" },
+          category: { stringValue: "Žiaci" },
+          status: { stringValue: "created" },
+          note: { stringValue: "" },
+          participants: {
+            mapValue: {
+              fields: {
+                [ownerUid]: {
+                  mapValue: {
+                    fields: {
+                      sportClub: { stringValue: sportClub },
+                      firstName: { stringValue: "E2E" },
+                      secondName: { stringValue: "Fixture" },
+                      email: { stringValue: `${ownerUid}@e2e.test` },
+                      tel_number: { stringValue: "+421900000001" },
+                      racers: { integerValue: "5" },
+                      coaches: { integerValue: "0" },
+                      tickets: { integerValue: "0" },
+                      role: { stringValue: "owner" },
+                      confirmedAt: { nullValue: null },
+                      checkedInAt: { nullValue: null },
+                      attended: { nullValue: null },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          participantUids: {
+            arrayValue: { values: [{ stringValue: ownerUid }] },
+          },
+          clubs: { arrayValue: { values: [{ stringValue: sportClub }] } },
+          racersTotal: { integerValue: "5" },
+          coachesTotal: { integerValue: "0" },
+          participantCount: { integerValue: "1" },
+          confirmedCount: { integerValue: "0" },
+          createdBy: { stringValue: ownerUid },
+        },
+      }),
+    }
+  );
+  if (!res.ok) {
+    throw new Error(
+      `could not seed today's training: ${res.status} ${await res.text()}`
+    );
+  }
+  return { id, date, startTime, endTime };
+}
+
+/** Whether a training document is still there. */
+export async function trainingExists(id: string): Promise<boolean> {
+  const res = await fetch(
+    `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents/trainings/${id}`,
+    { headers: ADMIN_HEADERS }
+  );
+  return res.ok;
+}
+
 /**
  * Stamps a training with the id its booking had before the migration.
  *

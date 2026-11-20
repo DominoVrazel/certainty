@@ -169,9 +169,28 @@ service cloud.firestore {
 
       // `resource` is null when the document does not exist; without the guard
       // the rule throws an evaluation error instead of simply refusing.
+      //
+      // A resort closes for weather on the day itself, so "must start in the
+      // future" was no use to the one person who needs to cancel: by the time
+      // it mattered, the admin was locked out too. An admin may cancel any
+      // training dated today or later — including one whose session has
+      // already finished this afternoon, because "it did not happen" is
+      // usually noticed after the fact, not before.
+      //
+      // A club is unchanged: it still cannot drop out once its training has
+      // started. That is a no-show, and check-in is what records it.
+      //
+      // `request.time.date()` is midnight UTC, not midnight in Bratislava, so
+      // "today" here is the UTC day. The two differ only between 00:00 and
+      // 01:00 local time in winter, and the earliest session on the calendar
+      // starts at 09:00 — so no training can fall in that gap.
       allow delete: if resource != null
-                    && startsInFuture(resource.data)
-                    && (isAdmin() || isParticipant());
+                    && (
+                         (isAdmin()
+                          && resource.data.startAt is timestamp
+                          && resource.data.startAt >= request.time.date())
+                         || (isParticipant() && startsInFuture(resource.data))
+                       );
     }
 
     // Rendered on the public calendar; only admins open and close anything.

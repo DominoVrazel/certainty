@@ -40,6 +40,19 @@ const PAST = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
 const RUNNING_START = new Date(Date.now() - 60 * 60 * 1000);
 const RUNNING_END = new Date(Date.now() + 60 * 60 * 1000);
 
+/** Today at the given hour, UTC — the day the rules compare against. */
+function todayAt(hour) {
+  const d = new Date();
+  d.setUTCHours(hour, 0, 0, 0);
+  return d;
+}
+// 09:00–11:00 today. Long over by the evening, but still today.
+const EARLIER_TODAY_START = todayAt(9);
+const EARLIER_TODAY_END = todayAt(11);
+// 09:00–11:00 yesterday, which is the first day that must stay frozen.
+const YESTERDAY_START = new Date(todayAt(9).getTime() - 24 * 60 * 60 * 1000);
+const YESTERDAY_END = new Date(todayAt(11).getTime() - 24 * 60 * 60 * 1000);
+
 let env;
 let anon, club, other, adminUser;
 
@@ -162,6 +175,26 @@ async function seed() {
         participants: { [CLUB]: participant("Alpha") },
       }),
       endAt: RUNNING_END,
+    });
+
+    // Earlier today: over, but still the day the resort is standing in.
+    await setDoc(doc(db, "trainings", "earlier-today"), {
+      ...trainingDoc({
+        startAt: EARLIER_TODAY_START,
+        participantUids: [CLUB],
+        participants: { [CLUB]: participant("Alpha") },
+      }),
+      endAt: EARLIER_TODAY_END,
+    });
+
+    // Yesterday morning: the first day that has to stay frozen.
+    await setDoc(doc(db, "trainings", "yesterday"), {
+      ...trainingDoc({
+        startAt: YESTERDAY_START,
+        participantUids: [CLUB],
+        participants: { [CLUB]: participant("Alpha") },
+      }),
+      endAt: YESTERDAY_END,
     });
 
     await setDoc(doc(db, "closures", "Bachledka__C1__2099-01-11__ALL__L1"), {
@@ -314,6 +347,36 @@ describe("cancelling", () => {
   test("admin can delete any future training", async () => {
     await seed();
     await assertSucceeds(deleteDoc(doc(adminUser, "trainings", "future-shared")));
+  });
+
+  // A resort closes for weather on the day itself. Requiring the training to
+  // start in the future locked out the one person who needs to call it off.
+  test("admin can cancel a training that is under way", async () => {
+    await seed();
+    await assertSucceeds(deleteDoc(doc(adminUser, "trainings", "running")));
+  });
+
+  test("a club still cannot drop out once the training has started", async () => {
+    // That is a no-show, and check-in is what records it — deleting would
+    // take the training away from everybody else on it.
+    await seed();
+    await assertFails(deleteDoc(doc(club, "trainings", "running")));
+  });
+
+  test("admin can cancel a training that finished earlier today", async () => {
+    // "It did not happen" is usually noticed in the evening, not at 09:00.
+    await seed();
+    await assertSucceeds(deleteDoc(doc(adminUser, "trainings", "earlier-today")));
+  });
+
+  test("the day before is where it stops, even for an admin", async () => {
+    await seed();
+    await assertFails(deleteDoc(doc(adminUser, "trainings", "yesterday")));
+  });
+
+  test("a club cannot cancel a training that finished earlier today", async () => {
+    await seed();
+    await assertFails(deleteDoc(doc(club, "trainings", "earlier-today")));
   });
 });
 
