@@ -232,6 +232,12 @@ export async function createTraining(
     category: string;
     courseName?: string | null;
     capacity: number;
+    /**
+     * Written with the booking rather than added afterwards. It is where the
+     * coaches agree who sets the course and who brings what, and the club
+     * booking the slot usually knows that already.
+     */
+    note?: string;
     /** Set when an admin books on a club's behalf, for the audit trail. */
     createdBy?: string | null;
   }
@@ -288,7 +294,7 @@ export async function createTraining(
       endAt: Timestamp.fromDate(localInstant(slot.date, slot.session.endTime)),
       discipline: details.discipline,
       category: details.category,
-      note: "",
+      note: details.note?.trim() ?? "",
       noteUpdatedBy: null,
       noteUpdatedAt: null,
       participants,

@@ -7,30 +7,22 @@
  * inside a component and compared a season's *name* to a string built from
  * today's date, so there was nothing to test and nothing to notice.
  *
- *   node --test tests/seasons.test.mjs
+ *   npm run test:unit
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 
-// The source is TypeScript and these are two small pure functions, so rather
-// than add a build step for the test runner, strip the annotations.
-const source = readFileSync("src/services/seasons.ts", "utf8")
-  .replace(/^import[^;]+;$/gm, "")
-  .replace(/export function (\w+)\(([\s\S]*?)\):[^{]+\{/g, "function $1($2) {")
-  .replace(/export const/g, "const")
-  .replace(/: Season\[\]/g, "")
-  .replace(/: string/g, "")
-  .replace(/: \{ startDate[^}]+\}/g, "")
-  .replace(/\(seasons: Season\[\]\)/g, "(seasons)")
-  .replace(/\(s\) =>/g, "(s) =>")
-  .replace(/timeZone = "Europe\/Bratislava"/, 'timeZone = "Europe/Bratislava"');
-
-const { currentSeasons, rangesOverlap } = await import(
-  `data:text/javascript,${encodeURIComponent(
-    source + "\nexport { currentSeasons, rangesOverlap };"
-  )}`
-);
+/*
+ * Imported as TypeScript, which Node strips for us.
+ *
+ * This used to hand-roll a stripper out of a chain of regexes, and it broke
+ * on the first annotation its author had not foreseen: the rule that removed
+ * `: string` turned `let last: string | null = null` into
+ * `let last | null = null`, and the whole module failed to parse. A test that
+ * breaks when somebody writes ordinary TypeScript in the file under test is a
+ * trap rather than a safety net.
+ */
+import { currentSeasons, rangesOverlap } from "../src/services/seasons.ts";
 
 const season = (name, startDate, endDate) => ({
   id: name,

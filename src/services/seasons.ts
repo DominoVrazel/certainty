@@ -46,3 +46,60 @@ export function todayIso(timeZone = "Europe/Bratislava"): string {
   // `sv-SE` formats as YYYY-MM-DD, which is the shape the season dates use.
   return new Intl.DateTimeFormat("sv-SE", { timeZone }).format(new Date());
 }
+
+/**
+ * The last date the loaded calendars actually have a day for.
+ *
+ * Derived from the days themselves rather than from `endDate`, because that is
+ * what decides when the grid runs out: the week view keeps only the days whose
+ * date is on screen, so once it is past the final day there is nothing left to
+ * render. A season whose `endDate` outruns its last day would otherwise still
+ * hand out empty weeks.
+ */
+export function lastCalendarDay(seasons: Season[]): string | null {
+  let last: string | null = null;
+  for (const season of seasons) {
+    for (const week of season.weeks ?? []) {
+      for (const day of week.days ?? []) {
+        if (day.date && (last === null || day.date > last)) last = day.date;
+      }
+    }
+  }
+  return last;
+}
+
+/**
+ * How far forward the week navigation may go, as `YYYY-MM-DD`.
+ *
+ * Two bounds, whichever comes first:
+ *
+ *   - by role — a club books a fortnight ahead, an admin a year;
+ *   - by data — the last day the calendar has.
+ *
+ * The role bound used to be the only one, computed separately in the page and
+ * in the calendar component. An admin could therefore page ten months past the
+ * end of the season, every week of it showing "no further training day" with
+ * the arrow still lit. Clamping to the data makes the arrow go dead where the
+ * calendar does.
+ *
+ * Measured against the *last* loaded day, not the current season's `endDate`:
+ * `currentSeasons` deliberately hands back a season that has not started yet
+ * when none is running, and an admin who has just built next winter has to be
+ * able to reach it.
+ */
+export function forwardLimit(
+  seasons: Season[],
+  isAdmin: boolean,
+  today: string
+): string {
+  const byRole = isoAddDays(today, isAdmin ? 365 : 14);
+  const lastDay = lastCalendarDay(seasons);
+  return lastDay && lastDay < byRole ? lastDay : byRole;
+}
+
+/** `YYYY-MM-DD` plus n days, staying in that shape. */
+function isoAddDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const moved = new Date(y, m - 1, d + days);
+  return new Intl.DateTimeFormat("sv-SE").format(moved);
+}

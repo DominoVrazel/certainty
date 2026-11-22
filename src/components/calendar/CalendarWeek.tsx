@@ -31,6 +31,12 @@ interface CalendarWeekProps {
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onShowInfo: () => void;
+  /**
+   * Latest date the navigation may reach, `YYYY-MM-DD`. Computed by the page
+   * from the role and the loaded days — see `forwardLimit` in the seasons
+   * service — so the arrow and the handler cannot disagree about where to stop.
+   */
+  forwardLimit: string;
   /** Weekday name in the active language, keyed by date. */
   dayLabel: (day: Day) => string;
   lang: string;
@@ -50,6 +56,7 @@ const CalendarWeek: React.FC<CalendarWeekProps> = ({
   onPreviousWeek,
   onNextWeek,
   onShowInfo,
+  forwardLimit,
   dayLabel,
 }) => {
   const today = format(new Date(), "yyyy-MM-dd");
@@ -66,7 +73,10 @@ const CalendarWeek: React.FC<CalendarWeekProps> = ({
   }, [weeks, weekStart]);
 
   const now = new Date();
-  const forwardLimit = viewer.isAdmin ? addDays(now, 365) : addDays(now, 14);
+  // Compared as `YYYY-MM-DD` rather than as Dates: `weekStart` carries the
+  // clock time it was built at, so comparing the instants would rule out the
+  // week that begins on the very last day the calendar has.
+  const nextWeekStart = format(addDays(weekStart, 7), "yyyy-MM-dd");
 
   return (
     <div className="current-week-container">
@@ -86,7 +96,7 @@ const CalendarWeek: React.FC<CalendarWeekProps> = ({
         <div className="navigate-forwards">
           <button
             onClick={onNextWeek}
-            disabled={addDays(weekStart, 7) > forwardLimit}
+            disabled={nextWeekStart > forwardLimit}
           >
             <span className="tooltip-text">dopredu</span>
             <i className="fas fa-arrow-circle-right"></i>

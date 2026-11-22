@@ -31,6 +31,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   const [tickets, setTickets] = useState<number>(0);
   const [discipline, setDiscipline] = useState<string>("Slalom"); // Default discipline
   const [category, setCategory] = useState<string>("Žiaci");
+  /** Shared with every club that joins, so it is worth having from the start. */
+  const [note, setNote] = useState<string>("");
   useEffect(() => {
     // Populate form fields with existing reservation details if applicable
     if (isExistingReservation && existingDetails) {
@@ -43,7 +45,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ racers, coaches, discipline, course, category, tickets });
+    onSubmit({ racers, coaches, discipline, course, category, tickets, note });
     onClose(); // Close the modal after submission
   };
 
@@ -145,6 +147,20 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                 <option value="Žiaci">Žiaci u14/u16</option>
                 <option value="Juniori">Juniori/FIS</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="note">
+                Poznámka (kto stavia trať, kto čo prinesie):
+              </label>
+              <textarea
+                className="form-control"
+                id="note"
+                name="note"
+                rows={3}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
             </div>
 
             <button className="RegButton" type="submit">

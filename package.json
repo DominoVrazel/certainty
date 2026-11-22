@@ -25,7 +25,7 @@
     "test:concurrency": "node scripts/test-concurrency.mjs",
     "db:migrate:persist": "node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore,storage --import=./.emulator-data \"node scripts/migrate-trainings.mjs --target=emulator && node scripts/export-emulator.mjs\" && node scripts/finalize-export.mjs",
     "build:functions": "npm --prefix functions run build",
-    "test:unit": "node --test tests/seasons.test.mjs",
+    "test:unit": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/seasons.test.mjs",
     "build:readonly": "tsc && vite build --mode readonly",
     "deploy:readonly": "npm run build:readonly && firebase deploy --only hosting",
     "deploy:maintenance": "firebase deploy --config firebase.maintenance.json --only firestore:rules",

@@ -27,7 +27,7 @@ import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
 import CalendarWeek from "./calendar/CalendarWeek";
 import MoveTrainingModal from "./MoveTrainingModal";
 import { slotKey, useTrainingWeek } from "../hooks/useTrainingWeek";
-import { currentSeasons, todayIso } from "../services/seasons";
+import { currentSeasons, forwardLimit, todayIso } from "../services/seasons";
 import { ReadOnlyError, assertWritable } from "../services/maintenance";
 import {
   cancelTraining,
@@ -128,6 +128,19 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   const weekStart = selectedCourse
     ? currentDates[selectedCourse] || new Date()
     : new Date();
+
+  // One rule, read by both the arrow and the handler below. Keeping it in two
+  // places is how the arrow stayed lit for ten months of empty weeks after the
+  // season had ended.
+  const forwardLimitIso = useMemo(
+    () =>
+      forwardLimit(
+        selectedCourse ? seasons[selectedCourse] ?? [] : [],
+        isAdmin,
+        todayIso()
+      ),
+    [seasons, selectedCourse, isAdmin]
+  );
 
   const { bySlot, closureBySlot } = useTrainingWeek(
     resortId,
@@ -238,14 +251,13 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     return format(new Date(date), "dd.MM");
   }
 
-  const handleNextWeek = (course: string, isAdmin: boolean) => {
-    const futureLimit = isAdmin
-      ? addDays(new Date(), 365)
-      : addDays(new Date(), 14); // Admin can go up to 1 year forward
+  const handleNextWeek = (course: string) => {
     const nextOffset = (weekOffset[course] || 0) + 1;
     const nextDate = addDays(new Date(), nextOffset * 7);
 
-    if (nextDate <= futureLimit) {
+    // The same comparison the arrow is disabled by, so a click that slipped
+    // through anyway cannot land somewhere the arrow would have refused.
+    if (format(nextDate, "yyyy-MM-dd") <= forwardLimitIso) {
       setWeekOffset((prev) => ({ ...prev, [course]: nextOffset }));
       setCurrentDates((prev) => ({
         ...prev,
@@ -446,6 +458,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           category: formData.category,
           courseName,
           capacity: individualLineCapacities[selectedSession.course],
+          note: formData.note,
         }
       );
 
@@ -1081,8 +1094,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                   viewer={viewer}
                   actions={calendarActions}
                   onPreviousWeek={() => handlePreviousWeek(selectedCourse)}
-                  onNextWeek={() => handleNextWeek(selectedCourse, isAdmin)}
+                  onNextWeek={() => handleNextWeek(selectedCourse)}
                   onShowInfo={handleInfoClick}
+                  forwardLimit={forwardLimitIso}
                   dayLabel={dayLabel}
                   lang={lang}
                 />
