@@ -31,7 +31,10 @@
     "deploy:maintenance": "firebase deploy --config firebase.maintenance.json --only firestore:rules",
     "db:drop-legacy:check": "node scripts/drop-legacy-collections.mjs --target=emulator --dry-run",
     "db:drop-legacy": "node scripts/drop-legacy-collections.mjs --target=emulator",
-    "bench": "node scripts/benchmark-reads.mjs"
+    "bench": "node scripts/benchmark-reads.mjs",
+    "db:load": "node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore,storage --import=./.emulator-data \"node scripts/seed-load-test.mjs && node scripts/export-emulator.mjs\" && node scripts/finalize-export.mjs",
+    "db:load:clear": "node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore,storage --import=./.emulator-data \"node scripts/seed-load-test.mjs --clear && node scripts/export-emulator.mjs\" && node scripts/finalize-export.mjs",
+    "db:load:live": "node scripts/seed-load-test.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",

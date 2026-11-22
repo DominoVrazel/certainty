@@ -301,8 +301,15 @@ function AdminPage() {
    *
    * Now it reads a bounded window of `trainings`, where participants travel
    * inside the booking.
+   *
+   * The window has to follow what the admin is looking at. It used to be a
+   * fixed month back and six forward, while the calendar below lets them walk
+   * every week of a season — so a season starting earlier than that window
+   * rendered its first weeks completely empty, which reads as "nobody booked"
+   * rather than "not loaded". On a season running July to January that was
+   * thirteen weeks of twenty-seven showing nothing.
    */
-  const fetchReservations = async () => {
+  const fetchReservations = async (range?: { from: string; to: string }) => {
     try {
       setVerifyLoadingState(LoaderState.Loading);
 
@@ -312,11 +319,14 @@ function AdminPage() {
       to.setMonth(to.getMonth() + 6);
       const iso = (d: Date) => d.toISOString().slice(0, 10);
 
+      const fromDate = range?.from ?? iso(from);
+      const toDate = range?.to ?? iso(to);
+
       const snap = await getDocs(
         query(
           collection(db, "trainings"),
-          where("date", ">=", iso(from)),
-          where("date", "<=", iso(to))
+          where("date", ">=", fromDate),
+          where("date", "<=", toDate)
         )
       );
 
@@ -364,9 +374,34 @@ function AdminPage() {
   };
 
 
+  /**
+   * Nothing is fetched until a season is chosen.
+   *
+   * This used to run on mount. The bookings it loads are rendered only inside
+   * the season block below, so on a page where no season had been picked the
+   * work was wasted — and it was not free: with a full season in the database
+   * the query returns hundreds of documents, and every other read on the page
+   * goes down the same connection. The resort dropdowns beside it came back
+   * empty and stayed empty, which is the symptom that made the admin screen
+   * look broken under load.
+   *
+   * The range follows the season the admin picked, over exactly the days its
+   * calendar can show. Derived from the weeks rather than from `startDate`/`endDate`,
+   * because the weeks are what the grid below renders — the two would have to
+   * agree, and this way they cannot disagree.
+   */
   useEffect(() => {
-    fetchReservations();
-  }, [db]);
+    if (!selectedSeason) return;
+    const season = seasons.find((s) => s.id === selectedSeason);
+    const dates = (season?.weeks ?? [])
+      .flatMap((w) => w.days ?? [])
+      .map((d) => d.date)
+      .filter(Boolean)
+      .sort();
+    if (dates.length === 0) return;
+    fetchReservations({ from: dates[0], to: dates[dates.length - 1] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSeason, seasons]);
 
   const handleDeletePromoCode = async (promoCodeId: string) => {
     if (!selectedResort) return;
@@ -538,8 +573,8 @@ function AdminPage() {
                   */}
                   <p className="form-hint">
                     {autoConfirm
-                      ? "Zapnuté: rezervácia je potvrdená hneď po vytvorení a kluby nepotvrdzujú nič. Vypnutím zapnete potvrdzovanie — každý klub si účasť potvrdí sám tlačidlom POTVRDIŤ ÚČASŤ."
-                      : "Vypnuté: každý klub si účasť na tréningu potvrdí sám tlačidlom POTVRDIŤ ÚČASŤ. Zapnutím sa rezervácie potvrdzujú automaticky."}
+                      ? "Zapnuté: rezervácia je potvrdená hneď po vytvorení a nikto nemusí nič robiť. Vypnutím preberáte potvrdzovanie na seba — každú rezerváciu potvrdíte v kalendári tlačidlom POTVRDIŤ REZERVÁCIU."
+                      : "Vypnuté: každú rezerváciu potvrdzujete vy, v kalendári tlačidlom POTVRDIŤ REZERVÁCIU. Klub o potvrdení dostane e-mail. Zapnutím sa rezervácie potvrdzujú automaticky."}
                   </p>
                 </div>
 

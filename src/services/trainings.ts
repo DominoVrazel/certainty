@@ -421,6 +421,42 @@ export async function cancelTraining(trainingId: string): Promise<void> {
   await deleteDoc(doc(db, "trainings", trainingId));
 }
 
+/**
+ * The resort takes its confirmation back.
+ *
+ * Confirming locks the booking: the clubs on it can no longer change or cancel
+ * it, because the resort has planned trails and lifts around it. That lock
+ * needs a way out — conditions change, and a resort that confirmed by mistake
+ * would otherwise have to cancel the whole training to undo one click.
+ *
+ * Clearing every confirmation rather than the admin's own: the resort accepted
+ * the session as a whole, so it withdraws it as a whole.
+ */
+export async function unconfirmTraining(trainingId: string): Promise<void> {
+  assertWritable();
+  await runTransaction(db, async (tx) => {
+    const ref = doc(db, "trainings", trainingId);
+    const snap = await tx.get(ref);
+    if (!snap.exists()) {
+      throw new TrainingError("gone", "Tento tréning už neexistuje.");
+    }
+
+    const data = snap.data() as Training;
+    const participants = Object.fromEntries(
+      Object.entries(data.participants ?? {}).map(([uid, p]) => [
+        uid,
+        { ...p, confirmedAt: null },
+      ])
+    );
+
+    tx.update(ref, {
+      participants,
+      ...totals(participants),
+      updatedAt: serverTimestamp(),
+    });
+  });
+}
+
 /** Changes one club's own numbers. */
 export async function updateParticipant(
   trainingId: string,
@@ -487,10 +523,21 @@ export async function updateTrainingDetails(
  * chase every booking. Each club now confirms its own attendance, and the
  * training counts as confirmed once every club on it has.
  */
-export async function confirmAttendance(
-  trainingId: string,
-  uid: string
-): Promise<void> {
+/**
+ * The resort accepts a booking.
+ *
+ * Confirming briefly belonged to the clubs, each one ticking off its own
+ * attendance. That asked a club to restate what booking the slot already said,
+ * and it left the resort — the party that actually plans trails and lifts
+ * around these — with no say at all. It is the resort's decision again, and it
+ * covers the whole training: a resort accepts the session, not one club of
+ * three on it.
+ *
+ * Only reachable when the resort has switched automatic confirmation off. With
+ * it on there is nothing to confirm, because the booking was confirmed as it
+ * was written.
+ */
+export async function confirmTraining(trainingId: string): Promise<void> {
   assertWritable();
   await runTransaction(db, async (tx) => {
     const ref = doc(db, "trainings", trainingId);
@@ -500,22 +547,18 @@ export async function confirmAttendance(
     }
 
     const data = snap.data() as Training;
-    if (!data.participants?.[uid]) {
-      throw new TrainingError(
-        "not-a-participant",
-        "Na tomto tréningu nie ste prihlásení."
-      );
-    }
+    const now = Timestamp.now();
 
-    const participants = {
-      ...data.participants,
-      [uid]: { ...data.participants[uid], confirmedAt: Timestamp.now() },
-    };
-    const next = totals(participants);
+    const participants = Object.fromEntries(
+      Object.entries(data.participants ?? {}).map(([uid, p]) => [
+        uid,
+        { ...p, confirmedAt: p.confirmedAt ?? now },
+      ])
+    );
 
     tx.update(ref, {
-      [`participants.${uid}.confirmedAt`]: Timestamp.now(),
-      ...next,
+      participants,
+      ...totals(participants),
       updatedAt: serverTimestamp(),
     });
   });

@@ -60,7 +60,7 @@ test("with automatic confirmation on, a new booking is confirmed straight away",
   });
   // Nothing left to click: that is the chore the setting removes.
   await expect(
-    page.getByRole("button", { name: /POTVRDIŤ ÚČASŤ/ })
+    page.getByRole("button", { name: /POTVRDIŤ REZERVÁCIU/ })
   ).toHaveCount(0);
 
   await page.locator(".handler-delete").first().click();
@@ -104,7 +104,7 @@ test("a club joining an automatic resort is confirmed too", async ({
       { timeout: 20_000 }
     );
     await expect(
-      joiner.getByRole("button", { name: /POTVRDIŤ ÚČASŤ/ })
+      joiner.getByRole("button", { name: /POTVRDIŤ REZERVÁCIU/ })
     ).toHaveCount(0);
     await expect(joiner.locator(".res-container.potvrdená").first()).toBeVisible();
   } finally {
@@ -162,9 +162,10 @@ test("the admin switches automatic confirmation off, and it sticks", async ({
     await expect(club.getByText(/POTVRDENÉ:\s*0\s*\/\s*1/).first()).toBeVisible({
       timeout: 20_000,
     });
+    // Waiting on the resort, not on the club — the club has nothing to click.
     await expect(
-      club.getByRole("button", { name: /POTVRDIŤ ÚČASŤ/ }).first()
-    ).toBeVisible();
+      club.getByRole("button", { name: /POTVRDIŤ/ })
+    ).toHaveCount(0);
     await club.locator(".handler-delete").first().click();
   } finally {
     await clubCtx.close();

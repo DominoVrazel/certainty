@@ -675,3 +675,13 @@ button:hover {
     border-top-right-radius: 2px !important;
   }
 }
+
+/* Shown on a booking the resort has confirmed, where the club's own edit and
+   cancel controls have just disappeared. */
+.locked-note {
+  margin: 0.4vw 0 0;
+  font-size: 0.75vw;
+  color: #4a4a4a;
+  font-style: italic;
+  text-align: center;
+}

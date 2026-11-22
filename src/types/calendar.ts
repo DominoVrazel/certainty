@@ -81,7 +81,10 @@ export interface CalendarActions {
     lineNumber: number,
     sportClub: string
   ) => void;
-  onConfirm: (trainingId: string) => void;
+  /** Admin only, and only when the resort confirms bookings by hand. */
+  onConfirm: (training: Training) => void;
+  /** Admin only: take a confirmation back, releasing the lock on the clubs. */
+  onUnconfirm: (training: Training) => void;
   /** Admin only: move a booking to another slot. */
   onMove: (training: Training) => void;
   onCheckIn: (trainingId: string, attended: boolean) => void;

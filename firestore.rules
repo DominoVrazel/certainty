@@ -149,10 +149,21 @@ service cloud.firestore {
                     && (isAdmin()
                         || request.auth.uid in request.resource.data.participantUids);
 
+      // A confirmed booking is locked to the clubs on it. Confirming is the
+      // resort saying it has planned trails and lifts around this session, so
+      // from then on a change goes through the resort. Joining is still open:
+      // a club that joins is not confirmed yet, which drops the training back
+      // to unconfirmed and puts it in front of the admin again.
+      function lockedToClubs() {
+        return resource.data.status == 'confirmed';
+      }
+
       allow update: if signedIn()
                     && startsInFuture(resource.data)
                     && startsInFuture(request.resource.data)
-                    && (isAdmin() || isParticipant() || isJoining());
+                    && (isAdmin()
+                        || isJoining()
+                        || (isParticipant() && !lockedToClubs()));
 
       // Checking in happens when a club actually turns up, which is after the
       // session has started — so it needs a carve-out from the rule above. It
@@ -189,7 +200,9 @@ service cloud.firestore {
                          (isAdmin()
                           && resource.data.startAt is timestamp
                           && resource.data.startAt >= request.time.date())
-                         || (isParticipant() && startsInFuture(resource.data))
+                         || (isParticipant()
+                             && startsInFuture(resource.data)
+                             && resource.data.status != 'confirmed')
                        );
     }
 

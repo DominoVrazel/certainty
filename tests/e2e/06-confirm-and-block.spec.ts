@@ -34,35 +34,61 @@ async function signIn(page: any, email: string) {
   await expect(page.getByText(/Ahoj/)).toBeVisible({ timeout: 30_000 });
 }
 
-test("a club confirms its own attendance, without the resort doing it", async ({
-  page,
+test("the resort confirms a booking, and the club is only told", async ({
+  browser,
 }) => {
+  // Confirming is the resort's decision again. A club restating that it will
+  // turn up adds nothing to having booked the slot, and it left the party that
+  // plans trails and lifts around these bookings with no say at all.
   const email = uniqueEmail("confirm");
   await createVerifiedAccount(email, DEV_PASSWORD);
   await setResortAutoConfirm("Bachledka", false);
-  page.on("dialog", (d) => d.accept());
 
-  await signIn(page, email);
+  const clubCtx = await browser.newContext();
+  const adminCtx = await browser.newContext();
+  const club = await clubCtx.newPage();
+  const admin = await adminCtx.newPage();
+  club.on("dialog", (d) => d.accept());
+  admin.on("dialog", (d) => d.accept());
 
-  await page.getByRole("button", { name: "REZERVOVAŤ" }).first().click();
-  await page.locator("#racers").fill("3");
-  await page.locator(".RegButton").last().click();
+  try {
+    await signIn(club, email);
+    await club.getByRole("button", { name: "REZERVOVAŤ" }).first().click();
+    await club.locator("#racers").fill("3");
+    await club.locator(".RegButton").last().click();
 
-  await expect(page.getByText(/POTVRDENÉ:\s*0\s*\/\s*1/).first()).toBeVisible({
-    timeout: 20_000,
-  });
+    await expect(club.getByText(/POTVRDENÉ:\s*0\s*\/\s*1/).first()).toBeVisible(
+      { timeout: 20_000 }
+    );
+    // Nothing for the club to click: it has already said it is coming.
+    await expect(
+      club.getByRole("button", { name: /POTVRDIŤ/ })
+    ).toHaveCount(0);
 
-  await page.getByRole("button", { name: /POTVRDIŤ ÚČASŤ/ }).first().click();
+    await signIn(admin, ADMIN_EMAIL);
+    await admin
+      .getByRole("button", { name: /POTVRDIŤ REZERVÁCIU/ })
+      .first()
+      .click();
 
-  await expect(page.getByText(/POTVRDENÉ:\s*1\s*\/\s*1/).first()).toBeVisible({
-    timeout: 20_000,
-  });
-  // Once every club has confirmed, the booking itself counts as confirmed.
-  await expect(
-    page.getByRole("button", { name: /POTVRDIŤ ÚČASŤ/ })
-  ).toHaveCount(0);
+    await expect(admin.getByText(/POTVRDENÉ:\s*1\s*\/\s*1/).first()).toBeVisible(
+      { timeout: 20_000 }
+    );
+    // Confirmed once, and there is nothing left to confirm.
+    await expect(
+      admin.getByRole("button", { name: /POTVRDIŤ REZERVÁCIU/ })
+    ).toHaveCount(0);
 
-  await page.locator(".handler-delete").first().click();
+    await club.reload();
+    await expect(club.locator(".res-container.potvrdená").first()).toBeVisible({
+      timeout: 20_000,
+    });
+
+    await admin.locator(".handler-delete").first().click();
+  } finally {
+    await clubCtx.close();
+    await adminCtx.close();
+  }
 });
 
 test("an admin can close a single time block instead of the whole track", async ({

@@ -157,6 +157,17 @@ async function seed() {
       })
     );
 
+    // Confirmed by the resort, and therefore locked to the clubs on it.
+    await setDoc(doc(db, "trainings", "future-confirmed"), {
+      ...trainingDoc({
+        startAt: FUTURE,
+        participantUids: [CLUB],
+        participants: { [CLUB]: participant("Alpha") },
+      }),
+      status: "confirmed",
+      confirmedCount: 1,
+    });
+
     // One that has already happened.
     await setDoc(
       doc(db, "trainings", "past"),
@@ -377,6 +388,73 @@ describe("cancelling", () => {
   test("a club cannot cancel a training that finished earlier today", async () => {
     await seed();
     await assertFails(deleteDoc(doc(club, "trainings", "earlier-today")));
+  });
+});
+
+describe("a confirmed booking belongs to the resort", () => {
+  // Confirming says the resort has planned trails and lifts around this
+  // session. Before the rework that was an admin action and it locked the
+  // club out; the lock came back with it, because without it confirming
+  // decided nothing at all.
+  test("a club cannot edit a training the resort has confirmed", async () => {
+    await seed();
+    await assertFails(
+      updateDoc(doc(club, "trainings", "future-confirmed"), { note: "zmena" })
+    );
+  });
+
+  test("a club cannot cancel one either", async () => {
+    await seed();
+    await assertFails(deleteDoc(doc(club, "trainings", "future-confirmed")));
+  });
+
+  test("but the admin can still edit it", async () => {
+    // The point of the lock is that changes go through the resort, not that
+    // the booking is frozen for everybody.
+    await seed();
+    await assertSucceeds(
+      updateDoc(doc(adminUser, "trainings", "future-confirmed"), {
+        note: "presun na trať 2",
+      })
+    );
+  });
+
+  test("and the admin can still cancel it", async () => {
+    await seed();
+    await assertSucceeds(
+      deleteDoc(doc(adminUser, "trainings", "future-confirmed"))
+    );
+  });
+
+  test("the admin can take the confirmation back", async () => {
+    await seed();
+    await assertSucceeds(
+      updateDoc(doc(adminUser, "trainings", "future-confirmed"), {
+        status: "created",
+        confirmedCount: 0,
+      })
+    );
+  });
+
+  test("a club can still change an unconfirmed booking", async () => {
+    // The lock must not leak onto everything else.
+    await seed();
+    await assertSucceeds(
+      updateDoc(doc(club, "trainings", "future-open"), { note: "ok" })
+    );
+  });
+
+  test("another club can still join a confirmed training", async () => {
+    // Joining leaves it unconfirmed again, which is what puts it back in
+    // front of the admin — so it must not be blocked by the lock.
+    await seed();
+    await assertSucceeds(
+      updateDoc(doc(other, "trainings", "future-confirmed"), {
+        participantUids: [CLUB, OTHER],
+        status: "created",
+        confirmedCount: 1,
+      })
+    );
   });
 });
 

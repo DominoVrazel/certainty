@@ -82,7 +82,17 @@ const SessionCell: React.FC<SessionCellProps> = ({
   // status was "confirmed", which meant the resort had accepted it — now the
   // clubs confirm their own attendance, so that same rule would have a club
   // lock itself out of its own booking the moment it said it was coming.
-  const mayEditNow = date !== today;
+  /**
+   * A confirmed booking is the resort's to change.
+   *
+   * Confirming says the resort has planned trails and lifts around this
+   * session, so from then on a club asks rather than edits. That is what the
+   * step meant before the rework, and without it confirming decided nothing
+   * — it only changed a colour. The admin is deliberately unaffected.
+   */
+  const clubLocked = training.status === "confirmed" && !viewer.isAdmin;
+
+  const mayEditNow = date !== today && !clubLocked;
 
   // Cancelling is not editing. A resort closes for weather on the day itself,
   // so an admin can call off anything dated today or later — including a
@@ -91,6 +101,11 @@ const SessionCell: React.FC<SessionCellProps> = ({
   // for a delete that would be refused. Clubs are unchanged: dropping out on
   // the day is a no-show, which check-in records.
   const mayCancelNow = mayEditNow || (viewer.isAdmin && date >= today);
+
+  /** The rules refuse any update once a training has started. */
+  const startsInPast = training.startAt
+    ? training.startAt.toMillis() <= Date.now()
+    : date < today;
 
   const canJoin =
     !READ_ONLY &&
@@ -236,16 +251,56 @@ const SessionCell: React.FC<SessionCellProps> = ({
           </button>
         )}
 
-        {/* Confirming is the club's own job now; the resort no longer has to
-            chase every booking. */}
-        {isParticipant && !mine?.confirmedAt && !READ_ONLY && (
-          <button
-            className="accept-training-button"
-            onClick={() => actions.onConfirm(training.id)}
-          >
-            <i className="fa fa-check"></i>
-            POTVRDIŤ ÚČASŤ
-          </button>
+        {/*
+          The resort confirms, not the club.
+          
+          No separate flag is needed to know whether this resort confirms by
+          hand: with automatic confirmation on, a booking is confirmed as it is
+          written, so an unconfirmed one can only exist where the setting is
+          off. The button therefore appears exactly where there is something to
+          decide.
+          
+          Gated on the training still being ahead, which is what the rules
+          require of any update — so no click is offered that would come back
+          refused.
+        */}
+        {viewer.isAdmin &&
+          training.status !== "confirmed" &&
+          !startsInPast &&
+          !READ_ONLY && (
+            <button
+              className="accept-training-button"
+              onClick={() => actions.onConfirm(training)}
+            >
+              <i className="fa fa-check"></i>
+              POTVRDIŤ REZERVÁCIU
+            </button>
+          )}
+
+        {/*
+          The way out of the lock. Conditions change, and a resort that
+          confirmed by mistake would otherwise have to cancel the whole
+          training to undo one click.
+        */}
+        {viewer.isAdmin &&
+          training.status === "confirmed" &&
+          !startsInPast &&
+          !READ_ONLY && (
+            <button
+              className="detail-button"
+              onClick={() => actions.onUnconfirm(training)}
+            >
+              <i className="fa fa-undo"></i>
+              ZRUŠIŤ POTVRDENIE
+            </button>
+          )}
+
+        {/* A club that cannot change it should be told why, not just find the
+            buttons missing. */}
+        {clubLocked && isParticipant && (
+          <p className="locked-note" data-testid="locked-note">
+            Rezerváciu potvrdilo stredisko. Zmeny a zrušenie už riešte s ním.
+          </p>
         )}
 
         {/* On the day itself, the club marks that it actually turned up. */}

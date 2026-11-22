@@ -32,7 +32,8 @@ import { ReadOnlyError, assertWritable } from "../services/maintenance";
 import {
   cancelTraining,
   checkIn,
-  confirmAttendance,
+  confirmTraining,
+  unconfirmTraining,
   createTraining,
   closureId,
   getTraining,
@@ -623,25 +624,95 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   };
 
   /**
-   * The club confirms its own attendance.
+   * The resort confirms a booking.
    *
-   * This used to be an admin action, with a link e-mailed to the resort — which
-   * meant somebody had to chase every booking. The training flips to confirmed
-   * once every club on it has confirmed.
+   * Briefly this was the club's own job, each one ticking off its attendance.
+   * That asked a club to restate what booking the slot had already said, and
+   * left the party that plans trails and lifts around these with no say. It is
+   * the resort's again — and it covers the whole training, because a resort
+   * accepts the session rather than one club of the three on it.
+   *
+   * Only offered when the resort has switched automatic confirmation off.
    */
-  const handleConfirmAttendance = async (trainingId: string) => {
-    const uid = localStorage.getItem("userId");
-    if (!uid) return;
+  const handleConfirmTraining = async (training: Training) => {
+    if (!isAdmin) return;
+    if (
+      !window.confirm(
+        `Potvrdiť rezerváciu na ${training.date} o ${training.session.startTime}?`
+      )
+    )
+      return;
 
     try {
       setVerifyLoadingState(LoaderState.Loading);
-      await confirmAttendance(trainingId, uid);
+      await confirmTraining(training.id);
+
+      // The clubs on it are the ones who need telling.
+      await Promise.all(
+        Object.values(training.participants ?? {}).map((p) =>
+          p.email
+            ? sendEmail(
+                training.id,
+                `Vaša rezervácia na ${training.date} bola potvrdená`,
+                p.email,
+                training.courseId,
+                training.courseName ?? undefined,
+                training.date,
+                training.session.startTime,
+                training.session.endTime,
+                training.lineNumber,
+                undefined,
+                training.discipline ?? undefined,
+                training.category ?? undefined,
+                undefined,
+                undefined,
+                p.firstName ?? "",
+                p.secondName ?? "",
+                undefined,
+                p.email,
+                "USER_ACCEPTED_RES"
+              )
+            : Promise.resolve()
+        )
+      );
     } catch (error) {
-      console.error("Error confirming attendance: ", error);
+      console.error("Error confirming training: ", error);
       alert(
-        error instanceof TrainingError
+        error instanceof TrainingError || error instanceof ReadOnlyError
           ? error.message
-          : "Ucast sa nepodarilo potvrdit."
+          : "Rezerváciu sa nepodarilo potvrdiť."
+      );
+    } finally {
+      setVerifyLoadingState(LoaderState.Finished);
+    }
+  };
+
+  /**
+   * The resort takes a confirmation back.
+   *
+   * Confirming locks the booking to the clubs on it, so there has to be a way
+   * out that is not "cancel the whole training". Asked for explicitly, because
+   * it un-tells the clubs something they were told.
+   */
+  const handleUnconfirmTraining = async (training: Training) => {
+    if (!isAdmin) return;
+    if (
+      !window.confirm(
+        `Zrušiť potvrdenie rezervácie na ${training.date} o ${training.session.startTime}? ` +
+          "Kluby ju budú môcť znova meniť."
+      )
+    )
+      return;
+
+    try {
+      setVerifyLoadingState(LoaderState.Loading);
+      await unconfirmTraining(training.id);
+    } catch (error) {
+      console.error("Error unconfirming training: ", error);
+      alert(
+        error instanceof TrainingError || error instanceof ReadOnlyError
+          ? error.message
+          : "Potvrdenie sa nepodarilo zrušiť."
       );
     } finally {
       setVerifyLoadingState(LoaderState.Finished);
@@ -947,7 +1018,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           lineNumber,
           sportClub
         ),
-      onConfirm: (trainingId) => handleConfirmAttendance(trainingId),
+      onConfirm: (training) => handleConfirmTraining(training),
+      onUnconfirm: (training) => handleUnconfirmTraining(training),
       onMove: (training) => {
         setMoveTraining(training);
       },

@@ -553,6 +553,41 @@ export async function setTrainingLegacyId(
  * one instead of its own.
  */
 export async function clearFutureTrainings(): Promise<number> {
+  // The load-test calendar lives in the same emulator, and it is dated from
+  // today onwards, so this would quietly delete most of it. Deleting hours of
+  // seeded data because somebody ran the tests is not a trade worth making
+  // silently — refuse, and say how to put it aside.
+  const seeded = await fetch(
+    `${FIRESTORE_EMULATOR}/v1/projects/${PROJECT_ID}/databases/(default)/documents:runQuery`,
+    {
+      method: "POST",
+      headers: ADMIN_HEADERS,
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: "trainings" }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: "loadTest" },
+              op: "EQUAL",
+              value: { booleanValue: true },
+            },
+          },
+          limit: 1,
+        },
+      }),
+    }
+  );
+  const seededRows = seeded.ok ? await seeded.json() : [];
+  if (Array.isArray(seededRows) && seededRows.some((r) => r.document)) {
+    throw new Error(
+      [
+        "The emulator holds load-test data, which these tests would delete.",
+        "  Put it aside first:  npm run db:load:clear",
+        "  Then bring it back:  npm run db:load",
+      ].join("\n")
+    );
+  }
+
   // Closures are test leftovers too: a failed run leaves a blocked time block
   // behind, and the next run then counts one fewer bookable slot than it
   // expects — a failure that looks like a product bug.

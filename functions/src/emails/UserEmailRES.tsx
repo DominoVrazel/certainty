@@ -111,9 +111,8 @@ export function ReservationNotification({
               </p>
             ) : (
               <p>
-                <b>Ešte treba potvrdiť účasť.</b> Na rezervačnej stránke
-                kliknite na Vašej rezervácii na <b>POTVRDIŤ ÚČASŤ</b> — potvrdzuje
-                si ju každý klub sám.
+                <b>Rezerváciu ešte potvrdí stredisko.</b> Z Vašej strany nie je
+                potrebné nič robiť — o potvrdení Vám príde e-mail.
               </p>
             )}
 
