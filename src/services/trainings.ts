@@ -63,6 +63,18 @@ export interface Training {
   discipline: string | null;
   category: string | null;
   status: "created" | "confirmed";
+  /**
+   * How the booking came to be confirmed, which is not the same question as
+   * whether it is.
+   *
+   * "resort" means somebody at the resort looked at it and accepted it, and
+   * that decision is what locks the booking to the clubs on it. "auto" means
+   * the resort has switched confirmation off altogether, so nobody decided
+   * anything and there is nothing to lock. Missing on everything written
+   * before the distinction existed, which reads as "not by hand" — the safe
+   * direction, since it leaves those bookings editable.
+   */
+  confirmedBy?: "auto" | "resort" | null;
   note: string;
   participants: Record<string, Participant>;
   participantUids: string[];
@@ -299,6 +311,7 @@ export async function createTraining(
       noteUpdatedAt: null,
       participants,
       ...totals(participants),
+      confirmedBy: autoConfirm ? "auto" : null,
       createdBy: details.createdBy ?? owner.uid,
       createdOnBehalfOf:
         details.createdBy && details.createdBy !== owner.uid ? owner.uid : null,
@@ -458,6 +471,7 @@ export async function unconfirmTraining(trainingId: string): Promise<void> {
     tx.update(ref, {
       participants,
       ...totals(participants),
+      confirmedBy: null,
       updatedAt: serverTimestamp(),
     });
   });
@@ -565,6 +579,7 @@ export async function confirmTraining(trainingId: string): Promise<void> {
     tx.update(ref, {
       participants,
       ...totals(participants),
+      confirmedBy: "resort",
       updatedAt: serverTimestamp(),
     });
   });

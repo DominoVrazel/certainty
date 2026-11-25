@@ -83,14 +83,23 @@ const SessionCell: React.FC<SessionCellProps> = ({
   // clubs confirm their own attendance, so that same rule would have a club
   // lock itself out of its own booking the moment it said it was coming.
   /**
-   * A confirmed booking is the resort's to change.
+   * A booking the resort accepted is the resort's to change.
    *
-   * Confirming says the resort has planned trails and lifts around this
-   * session, so from then on a club asks rather than edits. That is what the
-   * step meant before the rework, and without it confirming decided nothing
-   * — it only changed a colour. The admin is deliberately unaffected.
+   * Only one the resort accepted *by hand*. Locking on `status` alone was
+   * wrong and it broke the common case: with automatic confirmation on — the
+   * default — a booking is confirmed in the same instant it is written, so
+   * the club lost its own pencil and bin the moment it finished booking, and
+   * could not even correct a mistyped racer count. Nobody had decided
+   * anything; there was nothing to protect.
+   *
+   * `confirmedBy` records which of the two happened. Missing on everything
+   * written before the distinction existed, which reads as "not by hand" and
+   * leaves those bookings editable — the safe direction.
    */
-  const clubLocked = training.status === "confirmed" && !viewer.isAdmin;
+  const clubLocked =
+    training.status === "confirmed" &&
+    training.confirmedBy === "resort" &&
+    !viewer.isAdmin;
 
   const mayEditNow = date !== today && !clubLocked;
 
@@ -100,6 +109,15 @@ const SessionCell: React.FC<SessionCellProps> = ({
   // is noticed in the evening. Mirrors the rules, so the button is not offered
   // for a delete that would be refused. Clubs are unchanged: dropping out on
   // the day is a no-show, which check-in records.
+  /**
+   * What the bin will actually do, worked out exactly as the handler does.
+   *
+   * An admin who is not on the training cancels it for everybody; anyone on it
+   * leaves, and the training survives as long as somebody else is still there.
+   */
+  const hasOtherClubs = participants.some(([uid]) => uid !== myUid);
+  const cancelsForEveryone = viewer.isAdmin && !isParticipant;
+
   const mayCancelNow = mayEditNow || (viewer.isAdmin && date >= today);
 
   /** The rules refuse any update once a training has started. */
@@ -143,11 +161,22 @@ const SessionCell: React.FC<SessionCellProps> = ({
             >
               <i className="fas fa-trash-alt"></i>
               <span className="tooltip-text">
-                {/* Leaving no longer cancels the training for the clubs that
-                    joined it — the defect that stranded 101 records. */}
-                {isOwner || viewer.isAdmin
-                  ? "Zmazať svoju rezerváciu"
-                  : "Odhlásiť sa z tréningu"}
+                {/*
+                  One icon, three outcomes, so it has to say which one.
+
+                  It used to read "Zmazať svoju rezerváciu" for any admin —
+                  including on a booking that was not theirs, where the click
+                  cancels the training for every club on it. The wording
+                  promised the smallest of the three while doing the largest.
+
+                  Same condition as handleLeaveOrCancel, so the label and the
+                  action cannot drift apart.
+                */}
+                {cancelsForEveryone
+                  ? "Zrušiť tréning pre všetky kluby"
+                  : hasOtherClubs
+                  ? "Odhlásiť sa z tréningu"
+                  : "Zmazať svoju rezerváciu"}
               </span>
             </button>
             )}

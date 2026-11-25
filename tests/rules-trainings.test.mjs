@@ -157,8 +157,33 @@ async function seed() {
       })
     );
 
-    // Confirmed by the resort, and therefore locked to the clubs on it.
+    // Accepted by the resort by hand, and therefore locked to the clubs.
     await setDoc(doc(db, "trainings", "future-confirmed"), {
+      ...trainingDoc({
+        startAt: FUTURE,
+        participantUids: [CLUB],
+        participants: { [CLUB]: participant("Alpha") },
+      }),
+      status: "confirmed",
+      confirmedCount: 1,
+      confirmedBy: "resort",
+    });
+
+    // Confirmed because the resort confirms everything automatically. Same
+    // status, no decision behind it, so it must NOT be locked.
+    await setDoc(doc(db, "trainings", "future-autoconfirmed"), {
+      ...trainingDoc({
+        startAt: FUTURE,
+        participantUids: [CLUB],
+        participants: { [CLUB]: participant("Alpha") },
+      }),
+      status: "confirmed",
+      confirmedCount: 1,
+      confirmedBy: "auto",
+    });
+
+    // Written before `confirmedBy` existed. Reads as "not by hand".
+    await setDoc(doc(db, "trainings", "future-legacy-confirmed"), {
       ...trainingDoc({
         startAt: FUTURE,
         participantUids: [CLUB],
@@ -432,6 +457,33 @@ describe("a confirmed booking belongs to the resort", () => {
       updateDoc(doc(adminUser, "trainings", "future-confirmed"), {
         status: "created",
         confirmedCount: 0,
+      })
+    );
+  });
+
+  test("automatic confirmation does not lock anything", async () => {
+    // The default setting. A booking is confirmed in the instant it is
+    // written, so locking on status alone took a club's own booking away
+    // from it before it could correct a typo.
+    await seed();
+    await assertSucceeds(
+      updateDoc(doc(club, "trainings", "future-autoconfirmed"), { note: "ok" })
+    );
+  });
+
+  test("and the club can still cancel an automatically confirmed one", async () => {
+    await seed();
+    await assertSucceeds(
+      deleteDoc(doc(club, "trainings", "future-autoconfirmed"))
+    );
+  });
+
+  test("a booking from before the distinction stays editable", async () => {
+    // Missing `confirmedBy` must read as "not by hand", not blow up the rule.
+    await seed();
+    await assertSucceeds(
+      updateDoc(doc(club, "trainings", "future-legacy-confirmed"), {
+        note: "ok",
       })
     );
   });
