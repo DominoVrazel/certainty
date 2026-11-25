@@ -119,11 +119,14 @@ test("an admin cancelling a booking tells the club, not themselves", async ({
 /**
  * What the booking mail claims about confirmation.
  *
- * It told every club "Rezervácia teraz čaká na potvrdenie strediskom" — true
- * before the rework, and false twice over after it: the resort no longer
- * confirms anything, and with automatic confirmation there is nothing to wait
- * for at all. Wrong copy in a mail is invisible from the UI, so it needs its
- * own test.
+ * It told every club "Rezervácia teraz čaká na potvrdenie strediskom", which
+ * was false whichever way the setting was turned: with automatic confirmation
+ * there is nothing to wait for, and without it the mail named the wrong party.
+ *
+ * Who that party is has since moved twice — briefly the club confirmed its own
+ * attendance, and now the resort decides again — and this test has to move
+ * with it. Wrong copy in a mail is invisible from the UI, so it needs saying
+ * out loud here.
  */
 test("the booking mail says whether anything is still expected of the club", async ({
   browser,
@@ -163,10 +166,11 @@ test("the booking mail says whether anything is still expected of the club", asy
   expect(auto).toMatch(/zárove.{0,3} potvrdená/i);
   expect(auto).not.toMatch(/čaká na potvrdenie/i);
 
-  // With the setting off the club does have something to do — and it is the
-  // club that does it, not the resort, which is what the old copy claimed.
+  // With the setting off the booking waits on the resort, and the club is told
+  // so rather than sent after a button that no longer exists.
   const manual = await book(uniqueEmail("veta-manual"), false);
-  expect(manual).toMatch(/potvrdiť účasť/i);
+  expect(manual).toMatch(/potvrdí stredisko/i);
+  expect(manual).not.toMatch(/potvrdiť účasť/i);
   expect(manual).not.toMatch(/čaká na potvrdenie/i);
 
   await setResortAutoConfirm("Bachledka", true);
