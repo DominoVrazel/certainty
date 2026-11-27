@@ -19,7 +19,13 @@ import ImageUpload from "./ImageUpload";
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
 import { authReady, db } from "../services/FirebaseService";
 import MonthlyReport from "./admin/MonthlyReport";
-import { autoConfirmFrom, setAutoConfirm } from "../services/resorts";
+import { autoConfirmFrom, setAutoConfirm, setCutoffs } from "../services/resorts";
+import {
+  cutoffsFrom,
+  DEFAULT_CUTOFFS,
+  type CutoffMode,
+  type ResortCutoffs,
+} from "../services/policy";
 
 interface Resort {
   id: string;
@@ -88,6 +94,9 @@ function AdminPage() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [autoConfirm, setAutoConfirmState] = useState(true);
   const [savingAutoConfirm, setSavingAutoConfirm] = useState(false);
+  /** How late this resort lets clubs book and change their bookings. */
+  const [cutoffs, setCutoffsState] = useState<ResortCutoffs>(DEFAULT_CUTOFFS);
+  const [savingCutoffs, setSavingCutoffs] = useState(false);
   const [users, setUsers] = useState<User[]>([]); // State to hold users
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const lang = "sk";
@@ -227,6 +236,7 @@ function AdminPage() {
             );
             setPromoCodes(promoCodesData);
             setAutoConfirmState(autoConfirmFrom(data));
+            setCutoffsState(cutoffsFrom(data));
           } else {
             console.log("No such document!");
           }
@@ -258,6 +268,29 @@ function AdminPage() {
       alert("Nastavenie sa nepodarilo uložiť.");
     } finally {
       setSavingAutoConfirm(false);
+    }
+  };
+
+  /**
+   * Saves a deadline the moment it changes, like the toggle above it.
+   *
+   * Optimistic, with the previous value put back if the write fails: an
+   * admin who sees the field change and then finds it did not stick has been
+   * told something untrue about their own resort.
+   */
+  const saveCutoffs = async (next: ResortCutoffs) => {
+    if (!selectedResort) return;
+    const previous = cutoffs;
+    setCutoffsState(next);
+    setSavingCutoffs(true);
+    try {
+      await setCutoffs(selectedResort, next);
+    } catch (error) {
+      console.error("Nastavenie sa nepodarilo uložiť: ", error);
+      setCutoffsState(previous);
+      alert("Nastavenie sa nepodarilo uložiť.");
+    } finally {
+      setSavingCutoffs(false);
     }
   };
 
@@ -575,6 +608,104 @@ function AdminPage() {
                     {autoConfirm
                       ? "Zapnuté: rezervácia je potvrdená hneď po vytvorení a nikto nemusí nič robiť. Vypnutím preberáte potvrdzovanie na seba — každú rezerváciu potvrdíte v kalendári tlačidlom POTVRDIŤ REZERVÁCIU."
                       : "Vypnuté: každú rezerváciu potvrdzujete vy, v kalendári tlačidlom POTVRDIŤ REZERVÁCIU. Klub o potvrdení dostane e-mail. Zapnutím sa rezervácie potvrdzujú automaticky."}
+                  </p>
+                </div>
+
+                {/*
+                  The two deadlines, below the toggle because they answer the
+                  same question from the other side: the toggle decides who
+                  confirms, these decide how late a club may still act.
+
+                  Both default to what the app did before they existed, so a
+                  resort that never opens this screen sees no change.
+                */}
+                <div className="form-group">
+                  <label className="form-label-content" htmlFor="booking-cutoff-mode">
+                    Dokedy sa dá rezervovať voľný termín
+                  </label>
+                  <div className="cutoff-row">
+                    <select
+                      id="booking-cutoff-mode"
+                      className="form-control"
+                      value={cutoffs.bookingCutoffMode}
+                      disabled={!selectedResort || savingCutoffs}
+                      onChange={(e) =>
+                        saveCutoffs({
+                          ...cutoffs,
+                          bookingCutoffMode: e.target.value as CutoffMode,
+                        })
+                      }
+                    >
+                      <option value="day">deň vopred (v deň tréningu už nie)</option>
+                      <option value="minutes">určitý čas pred začiatkom</option>
+                    </select>
+                    {cutoffs.bookingCutoffMode === "minutes" && (
+                      <label className="cutoff-minutes">
+                        <input
+                          id="booking-cutoff-minutes"
+                          className="form-control"
+                          type="number"
+                          min={1}
+                          value={cutoffs.bookingCutoffMinutes}
+                          disabled={!selectedResort || savingCutoffs}
+                          onChange={(e) =>
+                            setCutoffsState({
+                              ...cutoffs,
+                              bookingCutoffMinutes: Number(e.target.value),
+                            })
+                          }
+                          onBlur={() => saveCutoffs(cutoffs)}
+                        />{" "}
+                        minút pred začiatkom
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label-content" htmlFor="change-cutoff-mode">
+                    Dokedy môže klub meniť a rušiť svoju rezerváciu
+                  </label>
+                  <div className="cutoff-row">
+                    <select
+                      id="change-cutoff-mode"
+                      className="form-control"
+                      value={cutoffs.changeCutoffMode}
+                      disabled={!selectedResort || savingCutoffs}
+                      onChange={(e) =>
+                        saveCutoffs({
+                          ...cutoffs,
+                          changeCutoffMode: e.target.value as CutoffMode,
+                        })
+                      }
+                    >
+                      <option value="day">deň vopred (v deň tréningu už nie)</option>
+                      <option value="minutes">určitý čas pred začiatkom</option>
+                    </select>
+                    {cutoffs.changeCutoffMode === "minutes" && (
+                      <label className="cutoff-minutes">
+                        <input
+                          id="change-cutoff-minutes"
+                          className="form-control"
+                          type="number"
+                          min={1}
+                          value={cutoffs.changeCutoffMinutes}
+                          disabled={!selectedResort || savingCutoffs}
+                          onChange={(e) =>
+                            setCutoffsState({
+                              ...cutoffs,
+                              changeCutoffMinutes: Number(e.target.value),
+                            })
+                          }
+                          onBlur={() => saveCutoffs(cutoffs)}
+                        />{" "}
+                        minút pred začiatkom
+                      </label>
+                    )}
+                  </div>
+                  <p className="form-hint">
+                    Vás ako stredisko sa tieto lehoty netýkajú — meniť a rušiť
+                    môžete aj potom.
                   </p>
                 </div>
 

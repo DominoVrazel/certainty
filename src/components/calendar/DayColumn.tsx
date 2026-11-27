@@ -7,6 +7,7 @@ import type {
   Day,
   Viewer,
 } from "../../types/calendar";
+import type { ResortCutoffs } from "../../services/policy";
 
 interface DayColumnProps {
   day: Day;
@@ -25,6 +26,7 @@ interface DayColumnProps {
   ) => Training | undefined;
   individualLineCapacity: number;
   today: string;
+  cutoffs: ResortCutoffs;
   label: string;
   viewer: Viewer;
   actions: CalendarActions;
@@ -38,6 +40,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
   trainingFor,
   individualLineCapacity,
   today,
+  cutoffs,
   label,
   viewer,
   actions,
@@ -61,6 +64,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
               trainingFor={trainingFor}
               individualLineCapacity={individualLineCapacity}
               today={today}
+              cutoffs={cutoffs}
               viewer={viewer}
               actions={actions}
             />

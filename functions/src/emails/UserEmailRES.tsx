@@ -103,10 +103,15 @@ export function ReservationNotification({
             </p>
 
             {autoConfirmed ? (
+              /*
+                Nothing about confirmation here. Where the resort confirms
+                automatically, "confirmed" is not news to the club — the
+                booking exists, which the line above already says. Telling
+                somebody there is nothing for them to do is itself something
+                to read.
+              */
               <p>
-                <b>Rezervácia je zároveň potvrdená</b> — stredisko ju
-                potvrdzuje automaticky, takže z Vašej strany už nie je potrebné nič
-                robiť. Detaily nájdete na rezervačnej stránke v <b>DETAILE</b> Vašej
+                Detaily nájdete na rezervačnej stránke v <b>DETAILE</b> Vašej
                 rezervácie.
               </p>
             ) : (
@@ -115,19 +120,6 @@ export function ReservationNotification({
                 potrebné nič robiť — o potvrdení Vám príde e-mail.
               </p>
             )}
-
-            <p>
-              <b>
-                Neustále sa snažíme pracovať na zlepšovaní rezervačného systému.
-                Boli by sme Vám veľmi vďační za Vašu spätnú väzbu.
-              </b>
-              <a
-                href="https://forms.gle/TqmnM8KrWeteQyqQ6"
-                className="feedback-link"
-              >
-                Link na formulár.
-              </a>
-            </p>
 
             {promoCodesString && (
               <p>

@@ -163,8 +163,16 @@ test("the booking mail says whether anything is still expected of the club", asy
   };
 
   const auto = await book(uniqueEmail("veta-auto"), true);
-  expect(auto).toMatch(/zárove.{0,3} potvrdená/i);
+  // Where the resort confirms automatically the mail says nothing about
+  // confirmation at all: "confirmed" is not news when the booking exists,
+  // and telling somebody there is nothing for them to do is itself
+  // something to read.
+  expect(auto).toMatch(/Detaily nájdete na rezervačnej stránke/i);
   expect(auto).not.toMatch(/čaká na potvrdenie/i);
+  expect(auto).not.toMatch(/potvrdzuje automaticky/i);
+  expect(auto).not.toMatch(/nie je potrebné nič robiť/i);
+  // The feedback appeal went with it.
+  expect(auto).not.toMatch(/zlepšovaní rezervačného systému/i);
 
   // With the setting off the booking waits on the resort, and the club is told
   // so rather than sent after a button that no longer exists.
@@ -172,6 +180,7 @@ test("the booking mail says whether anything is still expected of the club", asy
   expect(manual).toMatch(/potvrdí stredisko/i);
   expect(manual).not.toMatch(/potvrdiť účasť/i);
   expect(manual).not.toMatch(/čaká na potvrdenie/i);
+  expect(manual).not.toMatch(/zlepšovaní rezervačného systému/i);
 
   await setResortAutoConfirm("Bachledka", true);
 });

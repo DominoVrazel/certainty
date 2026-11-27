@@ -36,6 +36,10 @@ const ADMIN = "admin-uid";
 
 const FUTURE = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 const PAST = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+// Inside and outside the two-hour window the clubs have before the start.
+const IN_THREE_HOURS = new Date(Date.now() + 3 * 60 * 60 * 1000);
+const IN_ONE_HOUR = new Date(Date.now() + 60 * 60 * 1000);
+
 // A session that started an hour ago and runs for another hour.
 const RUNNING_START = new Date(Date.now() - 60 * 60 * 1000);
 const RUNNING_END = new Date(Date.now() + 60 * 60 * 1000);
@@ -134,6 +138,11 @@ async function seed() {
       isVerified: true,
     });
 
+    // The rules read the booking and change deadlines off the resort, so it
+    // has to exist. No fields: the defaults are what matters here, and they
+    // are what every resort document actually looks like today.
+    await setDoc(doc(db, "resorts", "Bachledka"), { name: "Bachledka" });
+
     // A future training owned by CLUB, with OTHER joined.
     await setDoc(
       doc(db, "trainings", "future-shared"),
@@ -192,6 +201,26 @@ async function seed() {
       status: "confirmed",
       confirmedCount: 1,
     });
+
+    // Three hours off: still the club's to change.
+    await setDoc(
+      doc(db, "trainings", "soon-open"),
+      trainingDoc({
+        startAt: IN_THREE_HOURS,
+        participantUids: [CLUB],
+        participants: { [CLUB]: participant("Alpha") },
+      })
+    );
+
+    // One hour off: inside the two-hour cut-off.
+    await setDoc(
+      doc(db, "trainings", "soon-closed"),
+      trainingDoc({
+        startAt: IN_ONE_HOUR,
+        participantUids: [CLUB],
+        participants: { [CLUB]: participant("Alpha") },
+      })
+    );
 
     // One that has already happened.
     await setDoc(
@@ -413,6 +442,168 @@ describe("cancelling", () => {
   test("a club cannot cancel a training that finished earlier today", async () => {
     await seed();
     await assertFails(deleteDoc(doc(club, "trainings", "earlier-today")));
+  });
+});
+
+describe("the two hours before a training", () => {
+  // The screen used to close editing for the whole calendar day while these
+  // rules allowed a write until the training began — the visible rule and the
+  // enforced one disagreed by up to a working day. One rule now, measured
+  // from the start of the session.
+  test("a club can still change its booking three hours out", async () => {
+    await seed();
+    await assertSucceeds(
+      updateDoc(doc(club, "trainings", "soon-open"), { note: "este sa da" })
+    );
+  });
+
+  test("but not one hour out", async () => {
+    await seed();
+    await assertFails(
+      updateDoc(doc(club, "trainings", "soon-closed"), { note: "uz nie" })
+    );
+  });
+
+  test("and it cannot cancel inside the two hours either", async () => {
+    await seed();
+    await assertFails(deleteDoc(doc(club, "trainings", "soon-closed")));
+  });
+
+  test("it can still cancel three hours out", async () => {
+    await seed();
+    await assertSucceeds(deleteDoc(doc(club, "trainings", "soon-open")));
+  });
+
+  test("the resort is not subject to the cut-off", async () => {
+    // Weather turns an hour before the session; somebody has to be able to
+    // act on it.
+    await seed();
+    await assertSucceeds(
+      updateDoc(doc(adminUser, "trainings", "soon-closed"), { note: "zmena" })
+    );
+    await assertSucceeds(deleteDoc(doc(adminUser, "trainings", "soon-closed")));
+  });
+});
+
+describe("the deadlines are the resort's to set", () => {
+  /** Puts the two cut-offs on the resort, as the admin screen would. */
+  async function withCutoffs(fields) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "resorts", "Bachledka"), {
+        name: "Bachledka",
+        ...fields,
+      });
+    });
+  }
+
+  test("a longer change window closes a booking that was still open", async () => {
+    // Three hours out is fine by default. A resort that wants four hours'
+    // notice says so, and the same booking is shut.
+    await seed();
+    await withCutoffs({ changeCutoffMode: "minutes", changeCutoffMinutes: 240 });
+    await assertFails(
+      updateDoc(doc(club, "trainings", "soon-open"), { note: "uz nie" })
+    );
+  });
+
+  test("a shorter one opens a booking that was closed", async () => {
+    await seed();
+    await withCutoffs({ changeCutoffMode: "minutes", changeCutoffMinutes: 30 });
+    await assertSucceeds(
+      updateDoc(doc(club, "trainings", "soon-closed"), { note: "este ano" })
+    );
+  });
+
+  test("the day mode closes the whole day of the training", async () => {
+    await seed();
+    await withCutoffs({ changeCutoffMode: "day" });
+    await assertFails(
+      updateDoc(doc(club, "trainings", "soon-open"), { note: "dnes uz nie" })
+    );
+  });
+
+  test("the resort is still exempt whatever it sets", async () => {
+    await seed();
+    await withCutoffs({ changeCutoffMode: "minutes", changeCutoffMinutes: 600 });
+    await assertSucceeds(
+      updateDoc(doc(adminUser, "trainings", "soon-open"), { note: "stredisko" })
+    );
+  });
+
+  test("booking closes on the day by default", async () => {
+    // What the app did before any of this was configurable.
+    await seed();
+    await assertFails(
+      setDoc(doc(club, "trainings", "today-new"), {
+        ...trainingDoc({
+          startAt: IN_THREE_HOURS,
+          participantUids: [CLUB],
+          participants: { [CLUB]: participant("Alpha") },
+        }),
+      })
+    );
+  });
+
+  test("and a resort can open it to a couple of hours before", async () => {
+    await seed();
+    await withCutoffs({ bookingCutoffMode: "minutes", bookingCutoffMinutes: 120 });
+    await assertSucceeds(
+      setDoc(doc(club, "trainings", "today-new"), {
+        ...trainingDoc({
+          startAt: IN_THREE_HOURS,
+          participantUids: [CLUB],
+          participants: { [CLUB]: participant("Alpha") },
+        }),
+      })
+    );
+  });
+
+  test("joining keeps the booking deadline, not none at all", async () => {
+    // Joining somebody else's training is booking by another name. It used
+    // to have no deadline whatsoever: a club could join a session that was
+    // already under way.
+    await seed();
+    await withCutoffs({ bookingCutoffMode: "minutes", bookingCutoffMinutes: 120 });
+    await assertSucceeds(
+      updateDoc(doc(other, "trainings", "soon-open"), {
+        participantUids: [CLUB, OTHER],
+        participantCount: 2,
+      })
+    );
+  });
+
+  test("and it closes with it", async () => {
+    await seed();
+    await withCutoffs({ bookingCutoffMode: "minutes", bookingCutoffMinutes: 120 });
+    await assertFails(
+      updateDoc(doc(other, "trainings", "soon-closed"), {
+        participantUids: [CLUB, OTHER],
+        participantCount: 2,
+      })
+    );
+  });
+
+  test("nobody joins a training that has already started", async () => {
+    await seed();
+    await assertFails(
+      updateDoc(doc(other, "trainings", "running"), {
+        participantUids: [CLUB, OTHER],
+        participantCount: 2,
+      })
+    );
+  });
+
+  test("an admin may book on the day regardless", async () => {
+    await seed();
+    await assertSucceeds(
+      setDoc(doc(adminUser, "trainings", "today-admin"), {
+        ...trainingDoc({
+          startAt: IN_THREE_HOURS,
+          participantUids: [CLUB],
+          participants: { [CLUB]: participant("Alpha") },
+        }),
+      })
+    );
   });
 });
 

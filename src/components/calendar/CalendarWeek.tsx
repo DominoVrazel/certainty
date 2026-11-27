@@ -9,6 +9,7 @@ import type {
   Viewer,
   Week,
 } from "../../types/calendar";
+import type { ResortCutoffs } from "../../services/policy";
 
 interface CalendarWeekProps {
   weeks: Week[];
@@ -27,6 +28,8 @@ interface CalendarWeekProps {
     lineNumber: number
   ) => Training | undefined;
   viewer: Viewer;
+  /** The resort's booking and change deadlines, set by its admin. */
+  cutoffs: ResortCutoffs;
   actions: CalendarActions;
   onPreviousWeek: () => void;
   onNextWeek: () => void;
@@ -52,6 +55,7 @@ const CalendarWeek: React.FC<CalendarWeekProps> = ({
   closureForSessionFor,
   trainingFor,
   viewer,
+  cutoffs,
   actions,
   onPreviousWeek,
   onNextWeek,
@@ -129,6 +133,7 @@ const CalendarWeek: React.FC<CalendarWeekProps> = ({
               trainingFor={trainingFor}
               individualLineCapacity={individualLineCapacity}
               today={today}
+              cutoffs={cutoffs}
               label={dayLabel(day)}
               viewer={viewer}
               actions={actions}

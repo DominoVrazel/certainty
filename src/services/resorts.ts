@@ -1,5 +1,6 @@
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "./FirebaseService";
+import { cutoffsFrom, type ResortCutoffs } from "./policy";
 import { assertWritable } from "./maintenance";
 
 /**
@@ -37,4 +38,25 @@ export async function setAutoConfirm(
   await updateDoc(doc(db, "resorts", resortId), {
     [AUTO_CONFIRM_FIELD]: enabled,
   });
+}
+
+/**
+ * The two deadlines the resort controls: how late a club may book a slot, and
+ * how late it may change one it is already on.
+ *
+ * Read through `cutoffsFrom`, which fills in what a resort document does not
+ * have — every resort predates these fields, and the defaults are what the
+ * app did before they existed.
+ */
+export async function getCutoffs(resortId: string): Promise<ResortCutoffs> {
+  const snap = await getDoc(doc(db, "resorts", resortId));
+  return cutoffsFrom(snap.exists() ? snap.data() : null);
+}
+
+/** Only an admin may call this; `firestore.rules` enforces it. */
+export async function setCutoffs(
+  resortId: string,
+  cutoffs: ResortCutoffs
+): Promise<void> {
+  await updateDoc(doc(db, "resorts", resortId), { ...cutoffs });
 }

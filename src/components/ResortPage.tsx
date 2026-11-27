@@ -28,6 +28,7 @@ import CalendarWeek from "./calendar/CalendarWeek";
 import MoveTrainingModal from "./MoveTrainingModal";
 import { slotKey, useTrainingWeek } from "../hooks/useTrainingWeek";
 import { currentSeasons, forwardLimit, todayIso } from "../services/seasons";
+import { cutoffsFrom, DEFAULT_CUTOFFS, type ResortCutoffs } from "../services/policy";
 import { ReadOnlyError, assertWritable } from "../services/maintenance";
 import {
   cancelTraining,
@@ -149,6 +150,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   );
 
   const [resortEmail, setResortEmail] = useState<string | null>(null);
+  /** How late this resort lets clubs book and change. Defaults until read. */
+  const [cutoffs, setCutoffs] = useState<ResortCutoffs>(DEFAULT_CUTOFFS);
   const [verifyLoadingState, setVerifyLoadingState] = useState(
     LoaderState.Loading
   );
@@ -235,6 +238,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
         if (resortDoc.exists()) {
           const resortData = resortDoc.data();
           setResortEmail(resortData.email);
+          setCutoffs(cutoffsFrom(resortData));
         } else {
           console.error("Resort document does not exist.");
         }
@@ -427,7 +431,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       const uid = localStorage.getItem("userId");
       if (!uid) {
         alert("Musíte sa najprv prihlásiť.");
-        setVerifyLoadingState(LoaderState.Finished);
         return;
       }
 
@@ -526,12 +529,9 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
 
       console.log("Rezervácia úspešne uložená!");
 
-      const reservationKey = `${selectedSession.date}_${selectedSession.session.startTime}_${selectedSession.session.endTime}_${selectedSession.course}_${selectedSession.lineNumber}`;
-
       setSelectedSession(null);
 
       alert("Ďakujeme za rezerváciu, tešíme sa na vás.");
-      setVerifyLoadingState(LoaderState.Finished);
     } catch (error) {
       console.error("Error saving reservation: ", error);
       alert(
@@ -539,6 +539,16 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           ? error.message
           : "Rezerváciu sa nepodarilo uložiť."
       );
+    } finally {
+      // In a `finally`, because the spinner replaces the whole calendar.
+      //
+      // It was switched off on the success path only, so every refusal left
+      // it turning for ever and the page had to be reloaded to get the
+      // calendar back. The commonest refusal is the one that matters most:
+      // two clubs going for the same slot, where the second is told somebody
+      // beat them to it and then loses the page that would show them what is
+      // still free. Every other handler here already does this.
+      setVerifyLoadingState(LoaderState.Finished);
     }
   };
 
@@ -1092,6 +1102,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
                   closureForSessionFor={closureForSessionFor}
                   trainingFor={trainingFor}
                   viewer={viewer}
+                  cutoffs={cutoffs}
                   actions={calendarActions}
                   onPreviousWeek={() => handlePreviousWeek(selectedCourse)}
                   onNextWeek={() => handleNextWeek(selectedCourse)}

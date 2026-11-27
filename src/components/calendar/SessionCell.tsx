@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import type { Training } from "../../services/trainings";
 import { READ_ONLY } from "../../services/maintenance";
+import {
+  clubMayChange,
+  describeCutoff,
+  mayBook,
+  type ResortCutoffs,
+} from "../../services/policy";
 import type {
   CalendarActions,
   TimeSession,
@@ -15,6 +21,8 @@ interface SessionCellProps {
   /** Maximum racers allowed on one track for one block. */
   individualLineCapacity: number;
   today: string;
+  /** The resort's booking and change deadlines, set by its admin. */
+  cutoffs: ResortCutoffs;
   viewer: Viewer;
   actions: CalendarActions;
 }
@@ -33,10 +41,34 @@ const SessionCell: React.FC<SessionCellProps> = ({
   training,
   individualLineCapacity,
   today,
+  cutoffs,
   viewer,
   actions,
 }) => {
   const [clubsVisible, setClubsVisible] = useState(false);
+
+  /**
+   * Whether a free slot may still be booked, by the resort's own rule.
+   *
+   * The default is still "not on the day itself", which is how the app behaved
+   * before this was a setting — but a resort that wants to take a booking two
+   * hours before the lift opens can now say so.
+   *
+   * A free cell has no training, so there is no stored start instant to
+   * measure from; it is built from the slot the cell stands for.
+   */
+  const bookingOpen = mayBook(
+    cutoffs,
+    {
+      dateIso: date,
+      // The stored instant where there is one: it was written in the resort's
+      // zone, while a date built here is built in the browser's.
+      startAtMs:
+        training?.startAt?.toMillis() ??
+        new Date(`${date}T${session.startTime}:00`).getTime(),
+    },
+    { todayIso: today, nowMs: Date.now() }
+  );
 
   if (!training) {
     return (
@@ -45,11 +77,10 @@ const SessionCell: React.FC<SessionCellProps> = ({
           <div className="session-course-times">
             {session.startTime} - {session.endTime}
           </div>
-          {date !== today && !READ_ONLY && (
+          {bookingOpen && !READ_ONLY && (
             <button
               className="reservation-button"
               onClick={() => actions.onReserve(date, session, lineNumber)}
-              disabled={date === today}
             >
               REZERVOVAŤ
             </button>
@@ -101,7 +132,22 @@ const SessionCell: React.FC<SessionCellProps> = ({
     training.confirmedBy === "resort" &&
     !viewer.isAdmin;
 
-  const mayEditNow = date !== today && !clubLocked;
+  /**
+   * Two hours before the start the booking stops being the club's.
+   *
+   * This used to be "not today", which was never a decision: it fell out of
+   * comparing date strings, and it gave a 09:00 training nine hours of notice
+   * and a 13:30 one thirteen and a half. The rules disagreed with it too,
+   * allowing writes until the training actually began. One rule now, shared
+   * with `firestore.rules`, measured from the start of the session.
+   */
+  const clubWindowOpen = clubMayChange(
+    cutoffs,
+    { dateIso: date, startAtMs: training.startAt?.toMillis() },
+    { todayIso: today, nowMs: Date.now() }
+  );
+
+  const mayEditNow = (viewer.isAdmin ? date !== today : clubWindowOpen) && !clubLocked;
 
   // Cancelling is not editing. A resort closes for weather on the day itself,
   // so an admin can call off anything dated today or later — including a
@@ -120,14 +166,26 @@ const SessionCell: React.FC<SessionCellProps> = ({
 
   const mayCancelNow = mayEditNow || (viewer.isAdmin && date >= today);
 
+
   /** The rules refuse any update once a training has started. */
   const startsInPast = training.startAt
     ? training.startAt.toMillis() <= Date.now()
     : date < today;
 
+  /** Said out loud, so a club is not left guessing why its buttons went. */
+  const closedToClub =
+    !viewer.isAdmin && isParticipant && !clubWindowOpen && !startsInPast;
+
+  /**
+   * Joining somebody else's training is booking by another name, so it keeps
+   * the booking deadline rather than none at all. It had none: the button was
+   * offered during the session itself, and the rules would have taken the
+   * write.
+   */
   const canJoin =
     !READ_ONLY &&
     racersFree > 0 &&
+    (viewer.isAdmin || bookingOpen) &&
     (!viewer.isLoggedIn || (!isParticipant && viewer.isLoggedIn));
 
   return (
@@ -329,6 +387,13 @@ const SessionCell: React.FC<SessionCellProps> = ({
         {clubLocked && isParticipant && (
           <p className="locked-note" data-testid="locked-note">
             Rezerváciu potvrdilo stredisko. Zmeny a zrušenie už riešte s ním.
+          </p>
+        )}
+
+        {closedToClub && !clubLocked && (
+          <p className="locked-note" data-testid="cutoff-note">
+            Zmeny sú uzavreté {describeCutoff(cutoffs, "change")}. Potrebujete
+            ešte niečo zmeniť? Ozvite sa stredisku.
           </p>
         )}
 

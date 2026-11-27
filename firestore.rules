@@ -128,6 +128,32 @@ service cloud.firestore {
         return data.startAt > request.time;
       }
 
+      // How late a club may still change its booking is the resort's to set,
+      // so the rule has to read the resort document. Mirrors `clubMayChange`
+      // in src/services/policy.ts, including the defaults — the two must be
+      // changed together, or the screen and the database will disagree about
+      // what a club is allowed to do.
+      //
+      // Before any of this the screen closed editing for the whole calendar
+      // day while these rules allowed a write until the training actually
+      // began: the visible rule and the enforced one were a working day
+      // apart. An admin is never subject to either: the resort can always act.
+      //
+      // `get` with a default throughout, because no resort document had these
+      // fields before the setting existed and reading a missing field is an
+      // error rather than a miss.
+      function resortOf(data) {
+        return get(/databases/$(database)/documents/resorts/$(data.resortId)).data;
+      }
+
+      function clubWindowOpen(data) {
+        return resortOf(data).get('changeCutoffMode', 'minutes') == 'day'
+          ? data.startAt >= request.time.date() + duration.value(1, 'd')
+          : data.startAt > request.time + duration.value(
+              resortOf(data).get('changeCutoffMinutes', 120) * 60, 's'
+            );
+      }
+
       function isParticipant() {
         return signedIn() && request.auth.uid in resource.data.participantUids;
       }
@@ -143,11 +169,25 @@ service cloud.firestore {
       allow read: if true;
 
       // An admin may book on a club's behalf, so the writer is not
-      // necessarily among the participants.
+      // necessarily among the participants, and is not held to the deadline.
+      //
+      // The day form is expressed against `request.time.date()`, which is
+      // midnight UTC rather than midnight in Bratislava. The two differ only
+      // between 00:00 and 01:00 local in winter and the earliest session on
+      // the calendar starts at 09:00, so nothing can fall in the gap.
+      function bookingWindowOpen(data) {
+        return resortOf(data).get('bookingCutoffMode', 'day') == 'day'
+          ? data.startAt >= request.time.date() + duration.value(1, 'd')
+          : data.startAt > request.time + duration.value(
+              resortOf(data).get('bookingCutoffMinutes', 120) * 60, 's'
+            );
+      }
+
       allow create: if signedIn()
                     && startsInFuture(request.resource.data)
                     && (isAdmin()
-                        || request.auth.uid in request.resource.data.participantUids);
+                        || (request.auth.uid in request.resource.data.participantUids
+                            && bookingWindowOpen(request.resource.data)));
 
       // A booking the resort accepted by hand is locked to the clubs on it:
       // the resort has planned trails and lifts around that session, so a
@@ -174,8 +214,13 @@ service cloud.firestore {
                     && startsInFuture(resource.data)
                     && startsInFuture(request.resource.data)
                     && (isAdmin()
-                        || isJoining()
-                        || (isParticipant() && !lockedToClubs()));
+                        // Joining is booking by another name, so it keeps the
+                        // booking deadline. It had none at all before: a club
+                        // could join a session that was already under way.
+                        || (isJoining() && bookingWindowOpen(resource.data))
+                        || (isParticipant()
+                            && !lockedToClubs()
+                            && clubWindowOpen(resource.data)));
 
       // Checking in happens when a club actually turns up, which is after the
       // session has started — so it needs a carve-out from the rule above. It
@@ -213,7 +258,7 @@ service cloud.firestore {
                           && resource.data.startAt is timestamp
                           && resource.data.startAt >= request.time.date())
                          || (isParticipant()
-                             && startsInFuture(resource.data)
+                             && clubWindowOpen(resource.data)
                              && !lockedToClubs())
                        );
     }
