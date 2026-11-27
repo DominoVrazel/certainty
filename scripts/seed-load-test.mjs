@@ -267,6 +267,26 @@ console.log(`▸ slopes   : ${courses.map((c) => c.name).join(", ")}`);
 console.log(`▸ clubs    : ${clubs.length}`);
 console.log(`▸ plan     : ${minPerDay}-${perDay} per slope per day, ${days} days from day ${startOffset}\n`);
 
+// Stale seeded seasons go before the windows are worked out, not after.
+//
+// A season this script left behind from an earlier window counts as
+// overlapping, so the slope is clamped to it rather than given the window
+// that was asked for — a 180-day run after a 90-day one produced 60 days on
+// one slope, and clearing them at write time was already too late to help.
+if (!addOnly) {
+  const staleSeasons = await db
+    .collectionGroup("seasons")
+    .where("loadTest", "==", true)
+    .get();
+  if (!staleSeasons.empty) {
+    await commitInBatches(
+      staleSeasons.docs,
+      (batch, d) => batch.delete(d.ref),
+      "replacing seasons"
+    );
+  }
+}
+
 // --------------------------------------------------------------- seasons ---
 
 const seedStart = isoOffset(startOffset);

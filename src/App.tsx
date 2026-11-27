@@ -19,6 +19,7 @@ import {
   logoutUser,
   storage,
 } from "./services/FirebaseService";
+import { readWithRetry } from "./services/resilience";
 import { ref, getDownloadURL, listAll } from "firebase/storage";
 
 import Dropdown from "react-bootstrap/Dropdown";
@@ -111,7 +112,11 @@ function App() {
   useEffect(() => {
     const fetchResorts = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "resorts"));
+        // With a deadline: the whole navigation is built from this list, and
+        // a stalled read used to leave the site looking like it had no resorts.
+        const querySnapshot = await readWithRetry(() =>
+          getDocs(collection(db, "resorts"))
+        );
         const resortsData: Resort[] = [];
 
         for (const docSnapshot of querySnapshot.docs) {

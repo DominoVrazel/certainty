@@ -15,12 +15,33 @@
 import { rm } from "node:fs/promises";
 import path from "node:path";
 
-const hub = process.env.FIREBASE_EMULATOR_HUB;
+/**
+ * The hub is named by `emulators:exec`, but a stack started with `npm run dev`
+ * has one too, on its default port. Falling back to it means the data can be
+ * saved without taking the running stack down — which is the only reason
+ * anybody was taking it down, and it kept killing the app the developer was
+ * working in.
+ */
+const DEFAULT_HUB = "127.0.0.1:4400";
+let hub = process.env.FIREBASE_EMULATOR_HUB;
+
+if (!hub) {
+  try {
+    const probe = await fetch(`http://${DEFAULT_HUB}/emulators`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    if (probe.ok) hub = DEFAULT_HUB;
+  } catch {
+    // Nothing listening there either; the message below says what to do.
+  }
+}
+
 if (!hub) {
   console.error(
-    "\n✖ FIREBASE_EMULATOR_HUB is not set.\n" +
-      "  Run this inside `firebase emulators:exec`, not against a stack you\n" +
-      "  started separately — otherwise there is no hub to ask for an export.\n"
+    "\n✖ No emulator hub found.\n" +
+      "  Start the stack with `npm run dev`, or run this inside\n" +
+      "  `firebase emulators:exec` — otherwise there is nothing to ask for\n" +
+      "  an export.\n"
   );
   process.exit(1);
 }

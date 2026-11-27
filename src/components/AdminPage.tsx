@@ -18,6 +18,10 @@ import ImageUpload from "./ImageUpload";
 
 import LoadingAnimation, { LoaderState } from "./LoadingAnimation";
 import { authReady, db } from "../services/FirebaseService";
+import {
+  explainFirebaseError,
+  readWithRetry,
+} from "../services/resilience";
 import MonthlyReport from "./admin/MonthlyReport";
 import { autoConfirmFrom, setAutoConfirm, setCutoffs } from "../services/resorts";
 import {
@@ -113,9 +117,23 @@ function AdminPage() {
     setSecondName(storedSecondName);
   }, []);
 
+  /** Set when the resort list could not be loaded, so the screen can say so. */
+  const [resortsError, setResortsError] = useState<string | null>(null);
+
+  /**
+   * Loads the resorts every dropdown on this screen is built from.
+   *
+   * With a deadline and a couple of retries, because without them a stalled
+   * connection left every dropdown here empty for ever: no error, no second
+   * attempt, nothing to click. An admin saw a screen that looked loaded and
+   * was not, and the only way out was to reload the page.
+   */
   const fetchResorts = async () => {
+    setResortsError(null);
     try {
-      const querySnapshot = await getDocs(collection(db, "resorts"));
+      const querySnapshot = await readWithRetry(() =>
+        getDocs(collection(db, "resorts"))
+      );
       const resortsData: Resort[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
@@ -132,6 +150,7 @@ function AdminPage() {
       setSelectedResort((current) => current ?? resortsData[0]?.id ?? null);
     } catch (error) {
       console.error("Chyba napájania kolekcie resorts: ", error);
+      setResortsError(explainFirebaseError(error));
     }
   };
 
@@ -265,7 +284,7 @@ function AdminPage() {
     } catch (error) {
       console.error("Nastavenie sa nepodarilo uložiť: ", error);
       setAutoConfirmState(previous);
-      alert("Nastavenie sa nepodarilo uložiť.");
+      alert(explainFirebaseError(error));
     } finally {
       setSavingAutoConfirm(false);
     }
@@ -288,7 +307,7 @@ function AdminPage() {
     } catch (error) {
       console.error("Nastavenie sa nepodarilo uložiť: ", error);
       setCutoffsState(previous);
-      alert("Nastavenie sa nepodarilo uložiť.");
+      alert(explainFirebaseError(error));
     } finally {
       setSavingCutoffs(false);
     }
@@ -529,6 +548,20 @@ function AdminPage() {
             štatistikou všetkých svojích rezervácii.{" "}
           </p>
         </div>
+
+        {/*
+          An empty dropdown is indistinguishable from a resort that has none.
+          If the list could not be loaded, say so and offer the retry, rather
+          than leaving the screen looking finished.
+        */}
+        {resortsError && (
+          <div className="load-error" role="alert" data-testid="resorts-error">
+            <span>{resortsError}</span>
+            <button type="button" onClick={() => fetchResorts()}>
+              Skúsiť znova
+            </button>
+          </div>
+        )}
 
         <div className="admin-tabs-menu">
           <button

@@ -25,16 +25,16 @@
     "test:concurrency": "node scripts/test-concurrency.mjs",
     "db:migrate:persist": "node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore,storage --import=./.emulator-data \"node scripts/migrate-trainings.mjs --target=emulator && node scripts/export-emulator.mjs\" && node scripts/finalize-export.mjs",
     "build:functions": "npm --prefix functions run build",
-    "test:unit": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/seasons.test.mjs tests/policy.test.mjs",
+    "test:unit": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/seasons.test.mjs tests/policy.test.mjs tests/resilience.test.mjs",
     "build:readonly": "tsc && vite build --mode readonly",
     "deploy:readonly": "npm run build:readonly && firebase deploy --only hosting",
     "deploy:maintenance": "firebase deploy --config firebase.maintenance.json --only firestore:rules",
     "db:drop-legacy:check": "node scripts/drop-legacy-collections.mjs --target=emulator --dry-run",
     "db:drop-legacy": "node scripts/drop-legacy-collections.mjs --target=emulator",
     "bench": "node scripts/benchmark-reads.mjs",
-    "db:load": "node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore,storage --import=./.emulator-data \"node scripts/seed-load-test.mjs && node scripts/export-emulator.mjs\" && node scripts/finalize-export.mjs",
-    "db:load:clear": "node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore,storage --import=./.emulator-data \"node scripts/seed-load-test.mjs --clear && node scripts/export-emulator.mjs\" && node scripts/finalize-export.mjs",
-    "db:load:live": "node scripts/seed-load-test.mjs"
+    "db:load": "node scripts/seed-load-test.mjs && node scripts/export-emulator.mjs",
+    "db:load:clear": "node scripts/seed-load-test.mjs --clear && node scripts/export-emulator.mjs",
+    "db:load:offline": "node scripts/with-jdk.mjs firebase emulators:exec --only auth,firestore,storage --import=./.emulator-data \"node scripts/seed-load-test.mjs && node scripts/export-emulator.mjs\" && node scripts/finalize-export.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",

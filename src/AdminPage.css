@@ -558,3 +558,27 @@ body {
   width: 5vw;
   text-align: center;
 }
+
+/* Shown when a list could not be loaded, in place of a silently empty one. */
+.load-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1vw;
+  flex-wrap: wrap;
+  margin: 0 2vw 1vw;
+  padding: 0.8vw 1vw;
+  border: 1px solid #e0b4b4;
+  border-radius: 5px;
+  background: #fdf3f3;
+  color: #9f3a38;
+}
+
+.load-error button {
+  background: #9f3a38;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.35vw 0.9vw;
+  cursor: pointer;
+}

@@ -29,6 +29,7 @@ import MoveTrainingModal from "./MoveTrainingModal";
 import { slotKey, useTrainingWeek } from "../hooks/useTrainingWeek";
 import { currentSeasons, forwardLimit, todayIso } from "../services/seasons";
 import { cutoffsFrom, DEFAULT_CUTOFFS, type ResortCutoffs } from "../services/policy";
+import { readWithRetry } from "../services/resilience";
 import { ReadOnlyError, assertWritable } from "../services/maintenance";
 import {
   cancelTraining,
@@ -160,8 +161,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
   useEffect(() => {
     const fetchCoursesAndSeasons = async () => {
       try {
-        const coursesSnapshot = await getDocs(
-          collection(db, "resorts", resortId, "courses")
+        const coursesSnapshot = await readWithRetry(() =>
+          getDocs(collection(db, "resorts", resortId, "courses"))
         );
         const fetchedCourses: { id: string; name: string }[] = [];
         const fetchedSeasons: Record<string, Season[]> = {};
@@ -176,7 +177,8 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
           individualLineCapacities[courseName] =
             courseData.individualLineCapacity;
 
-          const seasonsSnapshot = await getDocs(
+          const seasonsSnapshot = await readWithRetry(() =>
+            getDocs(
             collection(
               db,
               "resorts",
@@ -184,6 +186,7 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
               "courses",
               courseName,
               "seasons"
+            )
             )
           );
           const allSeasons: Season[] = seasonsSnapshot.docs.map((seasonDoc) => {
