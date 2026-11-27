@@ -33,7 +33,6 @@ import { readWithRetry } from "../services/resilience";
 import { ReadOnlyError, assertWritable } from "../services/maintenance";
 import {
   cancelTraining,
-  checkIn,
   confirmTraining,
   unconfirmTraining,
   createTraining,
@@ -775,18 +774,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
     }
   };
 
-  /** Marks the club present on the day of the training. */
-  const handleCheckIn = async (trainingId: string, attended: boolean) => {
-    const uid = localStorage.getItem("userId");
-    if (!uid) return;
-
-    try {
-      await checkIn(trainingId, uid, attended);
-    } catch (error) {
-      console.error("Error checking in: ", error);
-      alert("Prichod sa nepodarilo oznacit.");
-    }
-  };
 
   const handleAddToTrainingClick = (
     date: string,
@@ -1049,8 +1036,6 @@ const ResortPage: React.FC<ResortPageProps> = ({ resortId, isLoggedIn }) => {
       onMove: (training) => {
         setMoveTraining(training);
       },
-      onCheckIn: (trainingId, attended) =>
-        handleCheckIn(trainingId, attended),
       onCloseTrack: (lineNumber, date) => {
         setCloseTrackDetails({
           course: selectedCourse ?? "",

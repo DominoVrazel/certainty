@@ -390,25 +390,25 @@ const SessionCell: React.FC<SessionCellProps> = ({
           </p>
         )}
 
+        {/*
+          Short on the cell, the rest behind the info icon the app already
+          uses elsewhere. The whole sentence took three lines inside a cell
+          that is mostly numbers, and it was the loudest thing in it.
+        */}
         {closedToClub && !clubLocked && (
           <p className="locked-note" data-testid="cutoff-note">
-            Zmeny sú uzavreté {describeCutoff(cutoffs, "change")}. Potrebujete
-            ešte niečo zmeniť? Ozvite sa stredisku.
+            Zmeny sú uzavreté
+            <span className="cutoff-info">
+              <i className="fas fa-info-circle"></i>
+              <span className="tooltip-text">
+                Rezerváciu môžete meniť a rušiť do{" "}
+                {describeCutoff(cutoffs, "change")}. Potrebujete ešte niečo
+                zmeniť? Ozvite sa stredisku.
+              </span>
+            </span>
           </p>
         )}
 
-        {/* On the day itself, the club marks that it actually turned up. */}
-        {isParticipant && date === today && !READ_ONLY && (
-          <button
-            className="accept-training-button"
-            onClick={() => actions.onCheckIn(training.id, !mine?.attended)}
-          >
-            <i
-              className={mine?.attended ? "fa fa-user-check" : "fa fa-flag"}
-            ></i>
-            {mine?.attended ? "SME TU" : "OZNAČIŤ PRÍCHOD"}
-          </button>
-        )}
       </div>
     </div>
   );

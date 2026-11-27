@@ -247,8 +247,6 @@ function buildParticipant(source, role, joinedAt, tickets) {
       role,
       joinedAt,
       confirmedAt: null,
-      checkedInAt: null,
-      attended: null,
       unresolved: uid ? null : true,
     },
   ];

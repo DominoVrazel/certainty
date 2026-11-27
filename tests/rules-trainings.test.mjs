@@ -113,7 +113,6 @@ const participant = (club) => ({
   racers: 5,
   coaches: 0,
   role: "owner",
-  attended: null,
   confirmedAt: null,
 });
 
@@ -730,45 +729,42 @@ describe("the past is frozen", () => {
   });
 });
 
-describe("checking in", () => {
-  test("a club can mark itself present once the session has started", async () => {
+describe("once a training has started", () => {
+  // A club could write to a running training through the check-in carve-out,
+  // which is gone with the feature. Nothing a club does outlives the start
+  // of a session now.
+  test("a club cannot write to it at all", async () => {
     await seed();
-    await assertSucceeds(
-      updateDoc(doc(club, "trainings", "running"), {
-        [`participants.${CLUB}.attended`]: true,
-        [`participants.${CLUB}.checkedInAt`]: new Date(),
-      })
+    await assertFails(
+      updateDoc(doc(club, "trainings", "running"), { note: "uz nie" })
     );
   });
 
-  test("checking in cannot be used to rewrite the racer count", async () => {
-    // History feeds the monthly report, so the carve-out must not become a
-    // way to edit a session that has already started.
+  test("not even to its own entry on it", async () => {
     await seed();
     await assertFails(
       updateDoc(doc(club, "trainings", "running"), {
-        [`participants.${CLUB}.attended`]: true,
-        racersTotal: 999,
+        [`participants.${CLUB}.racers`]: 9,
       })
     );
   });
 
-  test("a club not on the training cannot check in", async () => {
+  test("a club not on it cannot write to it either", async () => {
     await seed();
     await assertFails(
-      updateDoc(doc(other, "trainings", "running"), {
-        [`participants.${OTHER}.attended`]: true,
-      })
+      updateDoc(doc(other, "trainings", "running"), { note: "cudzie" })
     );
   });
 
-  test("a finished training still cannot be touched", async () => {
+  test("the resort cannot edit it either, but it can call it off", async () => {
+    // Editing has always required the training to be still ahead, for
+    // everybody. Cancelling is the one thing that survives the start, which
+    // is what a resort actually needs when a session is abandoned.
     await seed();
     await assertFails(
-      updateDoc(doc(club, "trainings", "past"), {
-        [`participants.${CLUB}.attended`]: true,
-      })
+      updateDoc(doc(adminUser, "trainings", "running"), { note: "stredisko" })
     );
+    await assertSucceeds(deleteDoc(doc(adminUser, "trainings", "running")));
   });
 });
 

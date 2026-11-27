@@ -87,7 +87,6 @@ export interface CalendarActions {
   onUnconfirm: (training: Training) => void;
   /** Admin only: move a booking to another slot. */
   onMove: (training: Training) => void;
-  onCheckIn: (trainingId: string, attended: boolean) => void;
   onCloseTrack: (lineNumber: number, date: string) => void;
   onOpenTrack: (lineNumber: number, date: string) => void;
   /** Reopens a single blocked time block. */

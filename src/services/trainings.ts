@@ -46,8 +46,6 @@ export interface Participant {
   role: ParticipantRole;
   joinedAt: Timestamp | null;
   confirmedAt: Timestamp | null;
-  checkedInAt: Timestamp | null;
-  attended: boolean | null;
 }
 
 export interface Training {
@@ -230,8 +228,6 @@ function newParticipant(
     role,
     joinedAt: Timestamp.now(),
     confirmedAt: confirmed ? Timestamp.now() : null,
-    checkedInAt: null,
-    attended: null,
   };
 }
 
@@ -585,24 +581,6 @@ export async function confirmTraining(trainingId: string): Promise<void> {
   });
 }
 
-/**
- * A club marks itself present on the day.
- *
- * One field write, no transaction: it touches only this club's own record and
- * no total depends on it.
- */
-export async function checkIn(
-  trainingId: string,
-  uid: string,
-  attended: boolean
-): Promise<void> {
-  assertWritable();
-  await updateDoc(doc(db, "trainings", trainingId), {
-    [`participants.${uid}.checkedInAt`]: attended ? Timestamp.now() : null,
-    [`participants.${uid}.attended`]: attended,
-    updatedAt: serverTimestamp(),
-  });
-}
 
 /**
  * Moves a training to a different day, time or track.

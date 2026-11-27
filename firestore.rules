@@ -222,18 +222,12 @@ service cloud.firestore {
                             && !lockedToClubs()
                             && clubWindowOpen(resource.data)));
 
-      // Checking in happens when a club actually turns up, which is after the
-      // session has started — so it needs a carve-out from the rule above. It
-      // is deliberately narrow: only while the session is running, only a club
-      // already on the training, only the participants map, and the totals the
-      // monthly report aggregates on must not move.
-      allow update: if signedIn()
-                    && isParticipant()
-                    && request.time < resource.data.endAt
-                    && request.resource.data.racersTotal == resource.data.racersTotal
-                    && request.resource.data.participantCount == resource.data.participantCount
-                    && request.resource.data.diff(resource.data)
-                         .affectedKeys().hasOnly(['participants', 'updatedAt']);
+      // The check-in carve-out that used to sit here is gone with the feature.
+      // It was the one way a club could write to a training after the session
+      // had begun, and it existed solely to let a club mark that it had turned
+      // up — which only ever fed one column of one report, in a two-hour window
+      // while the coaches were on the slope. Nobody used it, and removing it
+      // closes the only write that outlived the start of a training.
 
       // `resource` is null when the document does not exist; without the guard
       // the rule throws an evaluation error instead of simply refusing.

@@ -413,8 +413,6 @@ for (let dayOffset = 0; dayOffset < days; dayOffset += 1) {
           role: p === 0 ? "owner" : "joined",
           joinedAt: Timestamp.now(),
           confirmedAt: confirmed ? Timestamp.now() : null,
-          checkedInAt: null,
-          attended: null,
         };
         uids.push(club.uid);
         if (club.sportClub) clubNames.push(club.sportClub);

@@ -685,3 +685,24 @@ button:hover {
   font-style: italic;
   text-align: center;
 }
+
+/* The info icon beside "Zmeny sú uzavreté", carrying the rest of the
+   sentence so the cell stays readable. Same tooltip as the other controls. */
+.cutoff-info {
+  position: relative;
+  display: inline-block;
+  margin-left: 0.3em;
+  cursor: help;
+}
+
+.cutoff-info:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+.cutoff-info .tooltip-text {
+  width: 16vw;
+  white-space: normal;
+  font-size: 0.75vw;
+  font-style: normal;
+}

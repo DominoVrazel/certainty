@@ -16,7 +16,6 @@ interface ClubRow {
   trainings: number;
   racers: number;
   coaches: number;
-  attended: number;
 }
 
 const MONTHS = [
@@ -100,12 +99,11 @@ const MonthlyReport: React.FC<MonthlyReportProps> = ({ resortId }) => {
         const club = p.sportClub || "(bez klubu)";
         const row =
           byClub.get(club) ??
-          { club, trainings: 0, racers: 0, coaches: 0, attended: 0 };
+          { club, trainings: 0, racers: 0, coaches: 0 };
 
         row.trainings += 1;
         row.racers += p.racers ?? 0;
         row.coaches += p.coaches ?? 0;
-        if (p.attended) row.attended += 1;
         byClub.set(club, row);
       }
     }
@@ -178,7 +176,6 @@ const MonthlyReport: React.FC<MonthlyReportProps> = ({ resortId }) => {
                   <th>Tréningov</th>
                   <th>Pretekárov</th>
                   <th>Trénerov</th>
-                  <th>Potvrdená účasť</th>
                 </tr>
               </thead>
               <tbody>
@@ -188,7 +185,6 @@ const MonthlyReport: React.FC<MonthlyReportProps> = ({ resortId }) => {
                     <td>{r.trainings}</td>
                     <td>{r.racers}</td>
                     <td>{r.coaches}</td>
-                    <td>{r.attended}</td>
                   </tr>
                 ))}
               </tbody>

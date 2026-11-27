@@ -479,8 +479,6 @@ export async function seedFinishedTrainingToday(
                       tickets: { integerValue: "0" },
                       role: { stringValue: "owner" },
                       confirmedAt: { nullValue: null },
-                      checkedInAt: { nullValue: null },
-                      attended: { nullValue: null },
                     },
                   },
                 },
